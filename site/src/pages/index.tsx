@@ -1,13 +1,14 @@
 import type {ReactNode} from 'react';
-import clsx from 'clsx';
 import Link from '@docusaurus/Link';
 import useDocusaurusContext from '@docusaurus/useDocusaurusContext';
+import useBaseUrl from '@docusaurus/useBaseUrl';
 import Layout from '@theme/Layout';
 import Heading from '@theme/Heading';
 import styles from './index.module.css';
 
 function HomepageHeader() {
-  const {siteConfig} = useDocusaurusContext();
+  const introUrl = useBaseUrl('docs/intro');
+  const executiveSummaryUrl = useBaseUrl('docs/executive-summary');
   return (
     <header className={styles.heroBanner}>
       <div className={styles.heroBackdrop} />
@@ -27,10 +28,10 @@ function HomepageHeader() {
               <span>Tradable</span>
             </div>
             <div className={styles.buttons}>
-              <Link className="button button--secondary button--lg" to="/docs/intro">
+              <Link className="button button--secondary button--lg" to={introUrl}>
                 Explore the Whitepaper
               </Link>
-              <Link className="button button--outline button--lg" to="/docs/executive-summary">
+              <Link className="button button--outline button--lg" to={executiveSummaryUrl}>
                 Read the Executive Summary
               </Link>
             </div>

@@ -1,5 +1,9 @@
 name: Deploy to GitHub Pages
 
+env:
+  SITE_URL: https://asilichain.github.io
+  BASE_URL: /docs/
+
 on:
   push:
     branches:
@@ -39,4 +43,3 @@ jobs:
         with:
           github_token: ${{ secrets.GITHUB_TOKEN }}
           publish_dir: ./site/build
-          cname: docs.asilichain.africa

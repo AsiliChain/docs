@@ -29,8 +29,6 @@ const config: Config = {
   projectName: 'docs',
   deploymentBranch: 'gh-pages',
   trailingSlash: false,
-  deploymentBranch: 'gh-pages',
-  trailingSlash: false,
 
   onBrokenLinks: 'throw',
 
@@ -98,7 +96,7 @@ const config: Config = {
           items: [
             {
               label: 'Whitepaper',
-              to: '/docs/intro',
+              to: `${baseUrl}docs/intro`,
             },
           ],
         },
