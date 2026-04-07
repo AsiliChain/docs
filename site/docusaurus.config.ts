@@ -69,11 +69,13 @@ const config: Config = {
       respectPrefersColorScheme: true,
     },
     navbar: {
-      title: 'AsiliChain Docs',
+      title: 'AsiliChain',
       logo: {
-        alt: 'AsiliChain brand logo',
-        src: 'img/logo.png',
+        alt: 'AsiliChain Logo',
+        src: 'img/Logo.png',
       },
+      style: 'dark',
+      hideOnScroll: false,
       items: [
         {
           type: 'docSidebar',
@@ -88,30 +90,7 @@ const config: Config = {
         },
       ],
     },
-    footer: {
-      style: 'dark',
-      links: [
-        {
-          title: 'Docs',
-          items: [
-            {
-              label: 'Whitepaper',
-              to: `${baseUrl}docs/intro`,
-            },
-          ],
-        },
-        {
-          title: 'Project',
-          items: [
-            {
-              label: 'GitHub Org',
-              href: 'https://github.com/AsiliChain',
-            },
-          ],
-        },
-      ],
-      copyright: `Copyright © ${new Date().getFullYear()} AsiliChain.`,
-    },
+    footer: {},
     prism: {
       theme: prismThemes.github,
       darkTheme: prismThemes.dracula,

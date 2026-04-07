@@ -4,4 +4,10 @@ title: 8. AsiliChain Through Three Lenses
 sidebar_position: 9
 ---
 
-At this point in the document, the reader understands the protocol architecture. The following three sections translate that architecture into the specific language of each institutional audience. A cooperative manager, an MFI credit officer, and a European buyer's procurement team have different questions. This section answers each.
+By this point, the protocol architecture is defined. This chapter translates that architecture into the decision language of three core stakeholder groups: lenders, cooperatives, and European buyers. Each subsection addresses the evidence, controls, and outcomes that matter most to that audience.
+
+In this chapter:
+
+- [8.1 For MFI Lenders and Impact Investors](./8-1-mfi-and-impact-investors.md)
+- [8.2 For Cooperatives and Cooperative Unions](./8-2-cooperatives-and-unions.md)
+- [8.3 For European Buyers and Auditors](./8-3-european-buyers-and-auditors.md)

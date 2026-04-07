@@ -24,7 +24,7 @@ This page indexes all visuals currently embedded in the whitepaper docs.
 - [6. Failure Modes and Mitigations](./06-failure-modes-and-mitigations/index.md)
 
 - Figure 9 companion: Collateral lifecycle progression
-- [7.1 The Full Collateral Spectrum](./07-collateral-model/7-1-full-collateral-spectrum.md)
+- [7. Traceability](./07-collateral-model/index.mdx)
 
 - Figure 14 companion: Projected metric shift chart
 - [9. Projected Impact Metrics](./09-projected-impact-metrics/index.md)
