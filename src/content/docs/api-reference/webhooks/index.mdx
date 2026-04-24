@@ -1,0 +1,164 @@
+---
+title: Webhooks Overview
+order: 1
+label: Webhooks Overview
+---
+
+# Webhooks
+
+AsiliChain emits webhook events to your registered endpoint whenever key protocol events occur. Webhooks allow buyer portals, MFI dashboards, cooperative systems, and third-party integrations to react to on-chain events in real time.
+
+## Registering a Webhook
+
+```bash
+curl -X POST https://api.asilichain.africa/webhooks \
+  -H "Authorization: Bearer {cooperative_token}" \
+  -H "Content-Type: application/json" \
+  -d '{
+    "url": "https://your-system.example.com/asilichain-webhook",
+    "events": ["batch.delivered", "batch.exported", "batch.settled", "dds.generated"],
+    "cooperative_id": "COOP-MBALE-001",
+    "secret": "your_webhook_signing_secret"
+  }'
+```
+
+Response:
+```json
+{
+  "webhook_id": "wh_01HXYZ...",
+  "url": "https://your-system.example.com/asilichain-webhook",
+  "events": ["batch.delivered", "batch.exported", "batch.settled", "dds.generated"],
+  "status": "ACTIVE",
+  "created_at": "2026-04-24T10:00:00Z"
+}
+```
+
+## Verifying Webhook Signatures
+
+Every webhook delivery includes an `X-AsiliChain-Signature` header. Always verify it:
+
+```typescript
+import { createHmac } from 'crypto';
+
+function verifyWebhook(body: string, signature: string, secret: string): boolean {
+  const expected = createHmac('sha256', secret)
+    .update(body)
+    .digest('hex');
+  return `sha256=${expected}` === signature;
+}
+
+// In your webhook handler:
+app.post('/asilichain-webhook', (req, res) => {
+  const isValid = verifyWebhook(
+    JSON.stringify(req.body),
+    req.headers['x-asilichain-signature'],
+    process.env.WEBHOOK_SECRET
+  );
+
+  if (!isValid) {
+    return res.status(401).json({ error: 'Invalid signature' });
+  }
+
+  // Process event
+  const { event, data } = req.body;
+  console.log('Received:', event, data);
+  res.json({ received: true });
+});
+```
+
+## Event Catalogue
+
+| Event | Trigger | Useful for |
+|-------|---------|-----------|
+| `farmer.registered` | Farmer added to FarmerRegistry | Cooperative CRM sync |
+| `batch.delivered` | BatchToken minted | MFI dashboards showing new collateral |
+| `batch.graded` | Quality assessment recorded | DDS eligibility tracking |
+| `batch.warehoused` | Storage confirmed | Buyer portal inventory update |
+| `batch.committed` | PurchaseOrder confirmed | Exporter workflow |
+| `batch.exported` | UCDA export confirmed | Loan repayment trigger (internal) / buyer portal |
+| `batch.settled` | Auto-repayment complete, net disbursed | MFI yield reporting |
+| `loan.originated` | Loan disbursed to farmer | MFI loan book update |
+| `loan.repaid` | Loan fully settled | MFI yield confirmation |
+| `loan.defaulted` | Forbearance expired without repayment | MFI risk alert |
+| `dds.generated` | DDS PDF created and IPFS-pinned | Exporter compliance workflow |
+| `dds.filed` | TRACES reference confirmed | Customs documentation complete |
+| `credit.updated` | CreditScore changed | MFI credit decision systems |
+| `payout.completed` | Farmer MTN MoMo credited | Cooperative farmer management |
+| `payout.failed` | Payout retries exhausted | Cooperative operations alert |
+
+## Example Webhook Payload
+
+```json
+{
+  "webhook_id": "wh_01HXYZ...",
+  "event": "batch.exported",
+  "api_version": "2026-04-01",
+  "created_at": "2026-04-20T11:55:00Z",
+  "data": {
+    "batch_id": "BATCH-2026-004821",
+    "token_id": 4821,
+    "farmer_id": "UG-KAS-2024-001234",
+    "cooperative_id": "COOP-MBALE-001",
+    "weight_kg": 67.5,
+    "grade": "screen18",
+    "ucda_export_permit": "UCDA-EXP-2026-04821",
+    "mantle_tx_hash": "0xcde456...",
+    "hedera_sequence_number": "847891",
+    "has_active_loan": true,
+    "auto_repayment_triggered": true,
+    "timestamp": "2026-04-20T11:54:30Z"
+  }
+}
+```
+
+## Delivery and Retry
+
+Webhooks are delivered with at-least-once semantics. Your handler must be idempotent.
+
+| Attempt | Delay after previous failure |
+|---------|------------------------------|
+| 1st | Immediately |
+| 2nd | 30 seconds |
+| 3rd | 5 minutes |
+| 4th | 30 minutes |
+| 5th | 2 hours |
+
+After 5 failed attempts, the webhook is marked `SUSPENDED` and an alert is sent to the registered cooperative email. Reactivate via `PATCH /webhooks/{webhook_id}`.
+
+## Webhook Management
+
+```bash
+# List webhooks
+GET /webhooks
+
+# Get webhook details + recent deliveries
+GET /webhooks/{webhook_id}
+
+# Update webhook URL or events
+PATCH /webhooks/{webhook_id}
+
+# Delete webhook
+DELETE /webhooks/{webhook_id}
+
+# Replay a specific delivery
+POST /webhooks/{webhook_id}/replay/{delivery_id}
+
+# Test webhook with a sample payload
+POST /webhooks/{webhook_id}/test
+```
+
+## Responding to Webhooks
+
+Your endpoint must return `2xx` within **10 seconds**. If processing takes longer, return `200` immediately and process asynchronously:
+
+```typescript
+app.post('/asilichain-webhook', async (req, res) => {
+  // Respond immediately
+  res.json({ received: true });
+
+  // Process asynchronously
+  setImmediate(async () => {
+    await processEvent(req.body);
+  });
+});
+```

@@ -1,0 +1,53 @@
+---
+title: Data Privacy
+order: 2
+label: Data Privacy
+---
+
+# Data Privacy Architecture
+
+## The Question We Knew Was Coming
+
+*"Are you selling farmer data to Europeans?"*
+
+The short answer is no. The longer answer requires distinguishing between two fundamentally different types of information.
+
+## Provenance Data vs Personal Data
+
+What travels to a European buyer is **provenance data about a commodity** — not personal data about a person.
+
+| What travels to Europe | What stays in Uganda |
+|------------------------|---------------------|
+| GPS polygon proving the farm is deforestation-free | Farmer name |
+| EUDR DDS compliance statement | Phone number |
+| Coffee batch weight, grade, processing dates | Credit score (linked to wallet address, not name) |
+| UCDA cooperative licence reference | Income data |
+
+The GPS polygon describes **where a commodity was grown** — the same function as a country-of-origin label or a Rainforest Alliance certification audit. It is not a medical record.
+
+## What Is On-Chain and What Is Not
+
+| Data | Location | Access |
+|------|----------|--------|
+| GPS polygon hash | Mantle (on-chain) | Public — content-addressed hash only |
+| Raw GeoJSON coordinates | IPFS | Requires content hash; not freely browsable |
+| Credit score | Mantle (on-chain) | Public — linked to cooperative wallet address, not name/ID |
+| Phone number | Supabase (off-chain) | AsiliChain internal only |
+| MAAIF national farmer ID | Mantle (on-chain) | Public — government-issued identifier |
+| Financial transaction amounts | Mantle (on-chain) | Public — cooperative level, not individual |
+
+## Five Audiences, Five Answers
+
+**Cooperative manager:** Your farmers' GPS data stays in Uganda's government registry. What goes to Europe is a compliance document confirming the farm is deforestation-free. Your farmers' names, phone numbers, and credit scores are not shared with European buyers.
+
+**MAAIF official:** The GPS data originates in your national registry. AsiliChain reads from the government's system via API. The government retains control of the underlying data — revoking API access closes AsiliChain's primary data path.
+
+**Journalist:** The GPS polygon is a farm boundary record, not a surveillance instrument. It is the same data Rainforest Alliance certification requires. The on-chain record stores a hash of the government's data, not a parallel private database controlled by AsiliChain.
+
+**Farmer directly:** Your data helps prove your coffee is worth more in Europe and can unlock a loan if you want one. The record of your farm stays in Uganda's government system. Your name is not on the compliance document that travels with your coffee.
+
+**Activist:** There are genuine privacy tradeoffs in any system that creates verifiable records. AsiliChain minimises them — hashed data on-chain, raw coordinates on IPFS with access controls, credit scores linked to addresses not names. The alternative is paper-based opacity that excludes these farmers from European markets entirely under EUDR and denies them formal credit. Privacy protection is not binary.
+
+## Uganda Data Protection Act 2019
+
+AsiliChain processes personal data of Ugandan citizens. A data processing agreement with Kotani Pay under the Uganda Data Protection Act 2019 is required before Phase 1 mainnet. Data minimisation principle: AsiliChain collects only what EUDR compliance and lending operations require.

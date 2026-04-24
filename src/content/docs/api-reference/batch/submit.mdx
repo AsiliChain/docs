@@ -1,0 +1,60 @@
+---
+title: POST /batch/submit
+order: 1
+label: POST /batch/submit
+---
+
+# POST /batch/submit
+
+Submits a coffee batch delivery record. Mints a BatchToken on Mantle, writes to Hedera HCS, and triggers Kotani Pay farmer payout.
+
+## Request
+
+```bash
+POST /v1/batch/submit
+Authorization: Bearer YOUR_API_KEY
+Content-Type: application/json
+```
+
+```json
+{
+  "farmer_id": "UG-2024-001234",
+  "cooperative_id": "COOP-MBALE-001",
+  "weight_kg": 67.5,
+  "grade": "screen18",
+  "moisture_pct": 11.2,
+  "collection_point_gps": {
+    "lat": 1.0656,
+    "lng": 34.1772
+  },
+  "weight_slip_photo_url": "ipfs://QmXxx...",
+  "collector_agent_id": "AGENT-001"
+}
+```
+
+## Response
+
+```json
+{
+  "success": true,
+  "data": {
+    "batch_id": "BATCH-2026-004821",
+    "token_id": "4821",
+    "mantle_tx_hash": "0xabc...",
+    "hedera_message_id": "0.0.123456@1713347000.000000000",
+    "payment_status": "INITIATED",
+    "payment_amount_ugx": 168750,
+    "farmer_phone": "+256...",
+    "estimated_payment_time_seconds": 60
+  }
+}
+```
+
+## Error Codes
+
+| Code | Meaning |
+|------|---------|
+| `FARMER_NOT_REGISTERED` | farmer_id not found in FarmerRegistry.sol |
+| `GFW_CHECK_FAILED` | Farm GPS flagged for deforestation — manual review required |
+| `COOPERATIVE_NOT_ACTIVE` | Cooperative MAAIF licence expired or suspended |
+| `WEIGHT_OUT_OF_RANGE` | weight_kg below 1 or above 5000 |

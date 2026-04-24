@@ -1,0 +1,79 @@
+---
+title: MFI Deposit
+order: 2
+label: MFI Deposit
+---
+
+# MFI Deposit
+
+Confirms that a TransFi wire-to-USDC conversion has completed and deposits the USDC into LendingVault on behalf of an MFI. Called after TransFi webhooks confirm settlement.
+
+## Endpoint
+
+```
+POST /payments/mfi-deposit
+```
+
+**Auth:** `ADMIN` token (internal — called by TransFi webhook handler).
+
+## Flow
+
+```
+UGAFODE wires UGX → TransFi converts → USDC sent to LendingVault
+                                              ↓
+                              TransFi fires webhook to AsiliChain API
+                                              ↓
+                          POST /payments/mfi-deposit confirms deposit
+                                              ↓
+                      LendingVault.deposit() called on Mantle
+                                              ↓
+                          MFI portal shows updated pool balance
+```
+
+## Request
+
+```bash
+curl -X POST https://api.asilichain.africa/payments/mfi-deposit \
+  -H "Authorization: Bearer {admin_token}" \
+  -H "Content-Type: application/json" \
+  -d '{
+    "mfi_id": "MFI-UGAFODE-001",
+    "transfi_payment_id": "TF-2026-PAY-0001",
+    "amount_usdc": 97500.00,
+    "source_currency": "UGX",
+    "source_amount": 364000000,
+    "fx_rate": 3733.33,
+    "transfi_fee_usdc": 2500.00
+  }'
+```
+
+## Response
+
+```json
+{
+  "deposit_id": "DEP-2026-MFI-0001",
+  "mfi_id": "MFI-UGAFODE-001",
+  "amount_usdc": 97500.00,
+  "vault_shares_received": 97500000,
+  "mantle_tx_hash": "0xfde789...",
+  "lending_vault_balance_after": 197500.00,
+  "apy_current": 0.085,
+  "confirmed_at": "2026-04-20T14:00:00Z"
+}
+```
+
+## Response Fields
+
+| Field | Description |
+|-------|-------------|
+| `vault_shares_received` | ERC-4626 vault shares issued to MFI (scaled ×1000) |
+| `lending_vault_balance_after` | Total USDC in LendingVault after this deposit |
+| `apy_current` | Current APY based on loan book utilisation |
+
+## Errors
+
+| Code | Trigger |
+|------|---------|
+| `MFI_NOT_FOUND` | `mfi_id` not registered |
+| `DUPLICATE_DEPOSIT` | `transfi_payment_id` already processed |
+| `VAULT_PAUSED` | LendingVault is paused (emergency) — contact support |

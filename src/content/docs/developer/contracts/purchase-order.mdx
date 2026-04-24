@@ -1,0 +1,102 @@
+---
+title: PurchaseOrder.sol
+order: 7
+label: PurchaseOrder.sol
+---
+
+# PurchaseOrder.sol
+
+Records a buyer's committed purchase of a specific BatchToken. Confirming a PurchaseOrder upgrades the BatchToken's collateral tier from WAREHOUSED (70% LTV) to COMMITTED (80% LTV) and automatically advances TraceLog to the COMMITTED stage.
+
+## What a PurchaseOrder Does
+
+```
+Before PO:  BatchToken at WAREHOUSED → LTV 70% → max loan $315 on 67.5kg batch
+After PO:   BatchToken at COMMITTED  → LTV 80% → max loan $360 on 67.5kg batch
+```
+
+The PurchaseOrder is the on-chain proof that a buyer has committed. This commitment is what justifies the higher LTV — the coffee is no longer speculative inventory, it is contracted inventory.
+
+## Key Data Structure
+
+```solidity
+struct PurchaseOrder {
+    uint256 batchTokenId;
+    address buyerWallet;          // EU buyer's wallet (or buyer portal hot wallet)
+    string  buyerOrganisation;    // e.g. "Sucafina SA"
+    uint256 agreedPriceUsdc;      // Total USDC agreed for the batch
+    uint256 createdTimestamp;
+    uint256 confirmedTimestamp;
+    POStatus status;              // PENDING | CONFIRMED | CANCELLED
+}
+
+enum POStatus { PENDING, CONFIRMED, CANCELLED }
+mapping(uint256 => PurchaseOrder) public orders; // orderId → PO
+mapping(uint256 => uint256) public batchToPO;    // batchTokenId → orderId
+```
+
+## Interface
+
+```solidity
+// Create a PO (BUYER_ROLE — buyer portal hot wallet)
+function createPurchaseOrder(
+    uint256 batchTokenId,
+    string calldata buyerOrganisation,
+    uint256 agreedPriceUsdc
+) external onlyRole(BUYER_ROLE) returns (uint256 orderId);
+
+// Confirm a PO (COOP_ROLE — cooperative accepts the order)
+// Automatically advances TraceLog to COMMITTED
+function confirmPurchaseOrder(uint256 orderId) external onlyRole(COOP_ROLE);
+
+// Cancel a PO (BUYER_ROLE or COOP_ROLE — within 48h of creation)
+function cancelPurchaseOrder(uint256 orderId) external;
+
+// Get PO for a batch
+function getPOForBatch(uint256 batchTokenId)
+    external view returns (PurchaseOrder memory);
+```
+
+## Confirmation Side Effects
+
+When `confirmPurchaseOrder` is called:
+
+1. `PurchaseOrder.status → CONFIRMED`
+2. `TraceLog.updateStage(batchTokenId, COMMITTED)` — automatic stage advance
+3. `BatchToken` collateral tier recalculated to COMMITTED LTV (80%)
+4. `LendingVault` notified — existing loan can be topped up to new LTV if requested
+5. HCS event written: `COMMITTED` with PO reference and agreed price
+
+## Events
+
+```solidity
+event PurchaseOrderCreated(
+    uint256 indexed orderId,
+    uint256 indexed batchTokenId,
+    address indexed buyer,
+    uint256 agreedPriceUsdc,
+    uint256 timestamp
+);
+
+event PurchaseOrderConfirmed(
+    uint256 indexed orderId,
+    uint256 indexed batchTokenId,
+    uint256 timestamp
+);
+
+event PurchaseOrderCancelled(
+    uint256 indexed orderId,
+    address cancelledBy,
+    uint256 timestamp
+);
+```
+
+## Buyer Portal Integration
+
+Commodity traders (Sucafina, Olam, Kawacom) access a buyer portal dashboard. From the portal:
+- Browse available COMMITTED or WAREHOUSED BatchTokens by cooperative, grade, and weight
+- View DDS eligibility status per batch
+- Create a PurchaseOrder with agreed USDC price
+- Receive automatic notification when cooperative confirms
+
+The buyer portal calls `PurchaseOrder.createPurchaseOrder()` via AsiliChain API on behalf of the trader.

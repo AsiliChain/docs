@@ -1,0 +1,142 @@
+---
+title: Alchemy
+order: 2
+label: Alchemy
+---
+
+# Alchemy Integration
+
+Alchemy provides two services for AsiliChain: the Mantle mainnet RPC endpoint and webhook-based event detection. The webhook is the mechanism by which the AsiliChain API learns about on-chain events (like EXPORTED) and triggers off-chain actions (like Kotani Pay payout).
+
+## RPC Configuration
+
+```typescript
+// packages/api/lib/mantle.ts
+import { createPublicClient, createWalletClient, http } from 'viem';
+import { mantle } from 'viem/chains';
+
+export const publicClient = createPublicClient({
+  chain: mantle,
+  transport: http(process.env.ALCHEMY_MANTLE_RPC_URL),
+  // Format: https://mantle-mainnet.g.alchemy.com/v2/{API_KEY}
+});
+
+export const walletClient = createWalletClient({
+  chain: mantle,
+  transport: http(process.env.ALCHEMY_MANTLE_RPC_URL),
+});
+```
+
+## Webhook: EXPORTED Event → Kotani Pay Payout
+
+The most critical webhook listens for `StageUpdated` events where `newStage = EXPORTED (5)`. When fired, it calls the auto-repayment and payout flow.
+
+### Setting Up the Webhook (Alchemy Dashboard)
+
+```
+1. Go to https://dashboard.alchemy.com → Webhooks → Create Webhook
+2. Network: Mantle Mainnet
+3. Type: Custom Webhooks (GraphQL)
+4. Webhook URL: https://api.asilichain.africa/webhooks/alchemy
+5. GraphQL filter:
+```
+
+```graphql
+{
+  block {
+    logs(filter: {
+      addresses: ["TRACE_LOG_CONTRACT_ADDRESS"],
+      topics: ["0x<StageUpdated_topic_hash>"]
+    }) {
+      transaction { hash }
+      data
+      topics
+    }
+  }
+}
+```
+
+### Webhook Handler
+
+```typescript
+// packages/api/app/api/webhooks/alchemy/route.ts
+import { NextRequest, NextResponse } from 'next/server';
+import { verifyAlchemySignature } from '@/lib/alchemy';
+import { triggerAutoRepayment } from '@/lib/lendingVault';
+import { triggerFarmerPayout } from '@/lib/kotanipay';
+import { writeHCSEvent } from '@/lib/hedera';
+
+export async function POST(req: NextRequest) {
+  const body = await req.text();
+  const signature = req.headers.get('x-alchemy-signature')!;
+
+  // Verify the webhook is genuinely from Alchemy
+  if (!verifyAlchemySignature(body, signature, process.env.ALCHEMY_WEBHOOK_SECRET!)) {
+    return NextResponse.json({ error: 'Invalid signature' }, { status: 401 });
+  }
+
+  const event = JSON.parse(body);
+  const logs = event.event.data.block.logs;
+
+  for (const log of logs) {
+    const decoded = decodeStageUpdatedLog(log);
+
+    if (decoded.newStage === TraceStage.EXPORTED) {
+      // Auto-repayment: LendingVault.onExported already called on-chain
+      // But we need to trigger the Kotani Pay payout off-chain
+      const loan = await getLoanForBatch(decoded.tokenId);
+
+      if (loan && loan.active) {
+        await writeHCSEvent({
+          event: 'EXPORTED',
+          batch_id: decoded.batchId,
+          mantle_tx_hash: log.transaction.hash,
+        });
+
+        const netPayout = calculateNetPayout(loan);
+        await triggerFarmerPayout({
+          phone: loan.farmerPhone,
+          amount_usdc: netPayout,
+          farmer_id: loan.farmerId,
+          batch_id: decoded.batchId,
+        });
+      }
+    }
+  }
+
+  return NextResponse.json({ received: true });
+}
+```
+
+## Webhook Reliability
+
+Alchemy webhooks have at-least-once delivery — the same event may fire more than once. The handler must be idempotent:
+
+```typescript
+// Check if payout already processed before triggering
+const alreadyProcessed = await supabase
+  .from('payout_records')
+  .select('id')
+  .eq('batch_id', decoded.batchId)
+  .eq('event', 'EXPORTED')
+  .single();
+
+if (alreadyProcessed.data) {
+  console.log('Already processed, skipping:', decoded.batchId);
+  return NextResponse.json({ received: true, skipped: true });
+}
+```
+
+## Gas Estimation (Pre-transaction Checks)
+
+```typescript
+// Before any write transaction, estimate gas
+const gasEstimate = await publicClient.estimateGas({
+  account: deployerAddress,
+  to: BATCH_TOKEN_ADDRESS,
+  data: encodeFunctionData({ abi, functionName: 'mintBatch', args }),
+});
+
+// Add 20% buffer
+const gasLimit = (gasEstimate * 120n) / 100n;
+```

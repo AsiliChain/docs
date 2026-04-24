@@ -1,0 +1,117 @@
+---
+title: Register Farmer
+order: 1
+label: Register Farmer
+---
+
+# Register Farmer
+
+Registers a new farmer on the AsiliChain protocol. Verifies identity via MAAIF NTS, runs a GFW deforestation check, pins the GPS polygon to IPFS, and records the farmer on FarmerRegistry.sol on Mantle.
+
+## Endpoint
+
+```
+POST /farmers/register
+```
+
+**Auth:** `AGENT` or `COOPERATIVE` token.
+
+## Request
+
+```bash
+curl -X POST https://api.asilichain.africa/farmers/register \
+  -H "Authorization: Bearer {agent_token}" \
+  -H "Content-Type: application/json" \
+  -d '{
+    "national_farmer_id": "UG-KAS-2024-001234",
+    "cooperative_id": "COOP-MBALE-001",
+    "phone": "+256701234567",
+    "registration_source": "MAAIF_NTS"
+  }'
+```
+
+## Request Body
+
+| Field | Type | Required | Description |
+|-------|------|----------|-------------|
+| `national_farmer_id` | string | Yes | MAAIF National Traceability System farmer ID |
+| `cooperative_id` | string | Yes | The cooperative this farmer belongs to |
+| `phone` | string | Yes | MTN MoMo phone number (E.164 format). Stored off-chain only. |
+| `registration_source` | string | No | `MAAIF_NTS` (default) or `AGENT_MANUAL` |
+| `manual_farm_polygon` | GeoJSON | Conditional | Required if `registration_source` is `AGENT_MANUAL` |
+
+### Manual Registration (MAAIF NTS unavailable)
+
+```bash
+curl -X POST https://api.asilichain.africa/farmers/register \
+  -H "Authorization: Bearer {agent_token}" \
+  -H "Content-Type: application/json" \
+  -d '{
+    "national_farmer_id": "UG-KAS-2024-001234",
+    "cooperative_id": "COOP-MBALE-001",
+    "phone": "+256701234567",
+    "registration_source": "AGENT_MANUAL",
+    "manual_farm_polygon": {
+      "type": "Polygon",
+      "coordinates": [[[34.1772, 1.0656], [34.1789, 1.0656], [34.1789, 1.0672], [34.1772, 1.0672], [34.1772, 1.0656]]]
+    },
+    "manual_area_hectares": 2.4,
+    "manual_cultivar": "Robusta"
+  }'
+```
+
+## Processing Steps
+
+1. **MAAIF NTS lookup** — fetches farmer record (5s timeout, then fallback)
+2. **GFW deforestation check** — verifies polygon against Dec 31 2020 baseline
+3. **IPFS pinning** — GeoJSON polygon pinned via Pinata
+4. **On-chain registration** — FarmerRegistry.registerFarmer() on Mantle
+5. **HCS event** — REGISTERED message written to Hedera topic
+6. **Phone storage** — phone number stored in Supabase (never on-chain)
+7. **CreditScore initialised** — CreditScore.initialise(farmerId, 500) called
+
+## Response (Success)
+
+```json
+{
+  "farmer_id": "UG-KAS-2024-001234",
+  "status": "REGISTERED",
+  "cooperative_id": "COOP-MBALE-001",
+  "registration_source": "MAAIF_NTS",
+  "farm": {
+    "area_hectares": 2.4,
+    "cultivar": "Robusta",
+    "gfw_deforestation_free": true,
+    "gfw_check_timestamp": "2026-04-24T09:15:00Z",
+    "boundary_ipfs_cid": "bafybeig...",
+    "boundary_ipfs_url": "https://gateway.pinata.cloud/ipfs/bafybeig..."
+  },
+  "credit_score": 500,
+  "mantle_tx_hash": "0xabc123...",
+  "hedera_sequence_number": "847201",
+  "registered_at": "2026-04-24T09:16:00Z"
+}
+```
+
+## Response (202 — MAAIF Unavailable, Manual GPS Required)
+
+```json
+{
+  "status": "PENDING_GPS",
+  "farmer_id": "UG-KAS-2024-001234",
+  "message": "MAAIF NTS is currently unavailable. Agent must complete GPS boundary walk using the agent app before registration can complete.",
+  "agent_app_deep_link": "https://agent.asilichain.africa/register/manual?farmer_id=UG-KAS-2024-001234&cooperative_id=COOP-MBALE-001",
+  "expires_at": "2026-04-25T09:15:00Z"
+}
+```
+
+## Errors
+
+| Code | HTTP | Trigger |
+|------|------|---------|
+| `FARMER_ALREADY_REGISTERED` | 409 | `national_farmer_id` already in FarmerRegistry |
+| `GFW_CHECK_FAILED` | 422 | Farm failed deforestation check — ineligible |
+| `GFW_API_UNAVAILABLE` | 503 | GFW unreachable after 3 retries |
+| `INVALID_COOPERATIVE` | 400 | `cooperative_id` not recognised or not active |
+| `INVALID_PHONE` | 400 | Phone number not valid Uganda MTN format |
+| `INVALID_POLYGON` | 400 | Manual polygon is malformed or self-intersecting |

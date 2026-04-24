@@ -1,0 +1,73 @@
+---
+title: Glossary
+order: 2
+label: Glossary
+---
+
+# Glossary
+
+Key terms used throughout AsiliChain documentation.
+
+## Protocol Terms
+
+| Term | Definition |
+|------|-----------|
+| **BatchToken** | ERC-1155 token representing a weighed, graded coffee batch. Minted on Mantle when coffee is delivered and graded. The primary collateral unit. |
+| **GrowingCropToken** | ERC-721 token representing a standing pre-harvest crop. Issued at planting. LTV: 30–65%. Burned when crop is harvested and converted to a BatchToken. |
+| **WarehouseReceiptToken** | Upgraded BatchToken representing a buyer-committed batch. Issued when a PurchaseOrder is confirmed. LTV: 75–80%. |
+| **LendingVault** | UUPS-upgradeable smart contract on Mantle that holds MFI capital, evaluates BatchToken collateral, and disburses USDC loans. |
+| **CreditScore** | On-chain score starting at 500. +50 per on-time repayment. −100 per default. Portable, permanent, public. |
+| **DDS** | Due Diligence Statement — the document required by EUDR Article 4 for every coffee shipment entering the EU. AsiliChain generates it automatically. |
+| **HCS** | Hedera Consensus Service — the append-only audit log that records every stage event from both Mantle and the AsiliChain API. |
+| **TraceLog** | Smart contract on Mantle that records the eight custody stages of a coffee batch from farm gate to export. |
+| **PurchaseOrder** | Smart contract on Mantle that records a buyer's committed purchase. Upgrades collateral tier from BatchToken to WarehouseReceiptToken. |
+| **ProtocolFee** | Smart contract distributing the 4% AsiliChain margin from each repayment cycle. |
+
+## Chain Terms
+
+| Term | Definition |
+|------|-----------|
+| **Mantle Network** | The Ethereum ZK rollup on which all AsiliChain smart contracts are deployed. ChainId 5000. 1-hour finality via OP Succinct/SP1. |
+| **Hedera HCS** | Hedera Hashgraph's Consensus Service. Used as an independent, immutable audit log. Governed by IBM, Google, FedEx, Boeing consortium. |
+| **USDC** | USD Coin — the stablecoin used for all on-chain settlements, MFI deposits, and LendingVault operations on Mantle. |
+| **cUSD** | Celo Dollar — used in the legacy 3-chain architecture. Replaced by USDC on Mantle in the single-chain design. |
+| **CCIP** | Chainlink Cross-Chain Interoperability Protocol. Referenced in earlier architecture iterations. Eliminated in single-chain design. |
+| **OP Succinct / SP1** | The ZK proof system powering Mantle's rollup. Type-1 zkEVM — full EVM equivalence. |
+
+## Integration Terms
+
+| Term | Definition |
+|------|-----------|
+| **Kotani Pay** | Payment rail for USDC → UGX → MTN Mobile Money conversions. Handles farmer payouts in under 60 seconds. Acquired by Tether October 2025. |
+| **TransFi** | Institutional on-ramp for MFI bank wire deposits (UGX or USD) converted to USDC and delivered to LendingVault. ISO27001 + SOC2 Type 2. |
+| **Kotani Pay API** | The `POST /kotanipay/payout` endpoint called by the AsiliChain API after every BATCH_DELIVERED event. |
+| **MTN MoMo** | MTN Mobile Money — the primary mobile payment account through which farmers receive loan disbursements and coffee sale proceeds. |
+| **MAAIF NTS** | Ministry of Agriculture, Animal Industry and Fisheries National Traceability System — Uganda's government GPS-mapping programme for coffee farmers. |
+| **GFW** | Global Forest Watch — satellite deforestation monitoring API checked at farm registration and DDS generation. |
+| **Africa's Talking** | USSD gateway provider for the `*384#` farmer interface. |
+| **Alchemy** | RPC provider and webhook service for Mantle mainnet event detection. |
+| **Pinata** | IPFS pinning service for DDS documents, weight-slip photos, and farm boundary GeoJSON. |
+
+## Regulatory Terms
+
+| Term | Definition |
+|------|-----------|
+| **EUDR** | EU Deforestation Regulation (EU 2023/1115). Enforcement deadline December 30, 2026. Requires GPS-verified DDS for every EU coffee shipment. |
+| **UCDA** | Uganda Coffee Development Authority — licences coffee exporters. |
+| **MAAIF** | Ministry of Agriculture, Animal Industry and Fisheries — issues the National Traceability System IDs and GPS maps. |
+| **UMRA** | Uganda Microfinance Regulatory Authority — licences Tier IV MFIs. All MFI partners must be UMRA-licensed. |
+| **BoU** | Bank of Uganda — regulates payment service providers and mobile money. |
+| **FIA** | Financial Intelligence Authority — registers Virtual Asset Service Providers (VASPs) in Uganda. Kotani Pay must hold FIA registration. |
+| **UWRSA** | Uganda Warehouse Receipt System Authority Act (2006) — establishes warehouse receipts as negotiable instruments under Ugandan law. The BatchToken's legal anchor. |
+| **TRACES** | EU Trade Control and Expert System — the platform where EUDR DDS documents are filed. |
+
+## Financial Terms
+
+| Term | Definition |
+|------|-----------|
+| **LTV** | Loan-to-Value ratio — the percentage of collateral value that can be borrowed. GrowingCropToken: 30–65%. BatchToken: 60–70%. WarehouseReceiptToken: 75–80%. |
+| **APR** | Annual Percentage Rate. Informal lender APR in Uganda: 60–120%. AsiliChain borrower APR: 14–18%. |
+| **Auto-repayment** | The mechanism by which a loan repays automatically when a BatchToken reaches EXPORTED status — the buyer's USDC payment flows through LendingVault before net balance reaches the cooperative. |
+| **Float** | The cooperative's cUSD or USDC working reserve used to pre-fund farmer payouts before settlement from buyers. |
+| **TaaS** | Tokenization-as-a-Service — Mantle's pre-built KYC tooling and legal structuring framework for RWA tokenisation. |
+| **RWA** | Real-World Asset — tokenised representation of a physical asset. AsiliChain's BatchToken is an agricultural commodity RWA. |

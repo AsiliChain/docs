@@ -1,0 +1,97 @@
+---
+title: Authentication
+order: 1
+label: Authentication
+---
+
+# Authentication
+
+All AsiliChain API endpoints require authentication via a Bearer token issued to cooperative operators, field agents, or buyer portal users.
+
+## Token Types
+
+| Token type | Issued to | Permissions |
+|-----------|-----------|-------------|
+| `COOPERATIVE` | Cooperative manager wallet | All endpoints for that cooperative's batches |
+| `AGENT` | Field agents under a cooperative | `POST /farmers/register`, `POST /batch/submit` |
+| `BUYER` | Commodity trader buyer portal | `POST /purchase-orders`, `GET /batches` (public data) |
+| `MFI` | UGAFODE, ENCOT, aBi Finance | `GET /lending/pool-status`, `GET /loans` |
+| `ADMIN` | AsiliChain internal | All endpoints |
+
+## Getting a Token
+
+Tokens are issued after KYB (Know Your Business) verification of the cooperative or organisation. Contact team@asilichain.africa.
+
+```bash
+# Exchange API key for Bearer token
+curl -X POST https://api.asilichain.africa/auth/token \
+  -H "Content-Type: application/json" \
+  -d '{
+    "api_key": "ask_live_xxxxxxxxxxxxxxxxxxxx",
+    "cooperative_id": "COOP-MBALE-001"
+  }'
+```
+
+Response:
+```json
+{
+  "access_token": "eyJhbGciOiJIUzI1NiIsInR...",
+  "token_type": "Bearer",
+  "expires_in": 86400,
+  "scope": "COOPERATIVE"
+}
+```
+
+## Using the Token
+
+```bash
+# Include in all API requests
+curl https://api.asilichain.africa/batch/BATCH-2026-004821 \
+  -H "Authorization: Bearer eyJhbGciOiJIUzI1NiIsInR..."
+```
+
+## Token Expiry and Refresh
+
+Tokens expire after 24 hours. Refresh before expiry:
+
+```bash
+curl -X POST https://api.asilichain.africa/auth/refresh \
+  -H "Authorization: Bearer {current_token}"
+```
+
+## Webhook Authentication
+
+Incoming Alchemy webhooks are verified using HMAC-SHA256 signature:
+
+```typescript
+import { createHmac } from 'crypto';
+
+function verifyAlchemySignature(body: string, signature: string, secret: string): boolean {
+  const expected = createHmac('sha256', secret).update(body).digest('hex');
+  return `0x${expected}` === signature;
+}
+```
+
+## API Base URL
+
+| Environment | Base URL |
+|------------|---------|
+| Production | `https://api.asilichain.africa` |
+| Staging (Sepolia) | `https://staging-api.asilichain.africa` |
+| Local development | `http://localhost:3000` |
+
+## Rate Limits
+
+| Token type | Rate limit |
+|-----------|-----------|
+| AGENT | 60 requests/minute |
+| COOPERATIVE | 120 requests/minute |
+| BUYER | 60 requests/minute |
+| MFI | 30 requests/minute |
+
+Rate limit headers are returned on every response:
+```
+X-RateLimit-Limit: 120
+X-RateLimit-Remaining: 117
+X-RateLimit-Reset: 1714900800
+```

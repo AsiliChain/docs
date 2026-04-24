@@ -1,0 +1,28 @@
+---
+title: Regulatory Architecture
+order: 1
+label: Regulatory Architecture
+---
+
+# Uganda Regulatory Architecture
+
+:::caution Legal disclaimer
+AsiliChain is a technology infrastructure provider. It does not originate loans, hold customer funds, or set interest rates unilaterally. Lending is conducted by licensed MFIs using the AsiliChain protocol.
+:::
+
+## Four Regulators, Four Obligations
+
+| Regulator | Mandate | AsiliChain obligation |
+|-----------|---------|----------------------|
+| Bank of Uganda (BoU) | Licences PSPs/PSOs. Regulates mobile money. | MTN Uganda is BoU-licensed. AsiliChain documents payment flow for any BoU review. Not a PSP. |
+| Financial Intelligence Authority (FIA) | Registers VASPs. AML compliance. | Kotani Pay must hold current FIA VASP registration in Uganda. Verify before Phase 1 mainnet. |
+| UMRA | Licences Tier IV MFIs. Digital lending guidelines. | MFI partners must be UMRA-licensed. Obtain legal opinion confirming technology provider classification before Phase 2 mainnet. |
+| MAAIF | National Coffee Act 2021. NTS. Export licences. | Every cooperative must hold valid MAAIF export licence. NTS API access conversation is the first action. |
+
+## The Kotani Pay Regulatory Picture
+
+Two separate regulators cover two separate legs of the same transaction:
+- **Mobile money leg** (UGX → farmer MTN wallet): Bank of Uganda NPS framework via MTN Uganda's BoU licence
+- **Crypto conversion leg** (USDC → UGX): FIA VASP framework — Kotani Pay is FIA-registered
+
+Both must be confirmed active before Phase 1 mainnet.

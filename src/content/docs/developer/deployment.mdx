@@ -1,0 +1,182 @@
+---
+title: Deployment Guide
+order: 9
+label: Deployment Guide
+---
+
+# Deployment Guide
+
+Contracts must be deployed in strict order. Each contract's constructor or initializer requires addresses from previously deployed contracts. Do not skip steps or deploy out of order.
+
+## Pre-Deployment Checklist
+
+Before running any deployment script:
+
+- [ ] `MANTLE_RPC_URL` set to `https://rpc.mantle.xyz`
+- [ ] `DEPLOYER_PRIVATE_KEY` loaded (deployer wallet, never commit)
+- [ ] Deployer wallet holds sufficient MNT for gas (~0.1 MNT is more than enough)
+- [ ] Hedera HCS topic created (`hedera-topic-create.ts` script run)
+- [ ] All environment variables in `.env` populated
+- [ ] Kotani Pay live test: $1 USDC → Uganda MTN number confirmed
+- [ ] Alchemy webhook URL set and tested on Sepolia
+
+:::danger Run on Mantle Sepolia first
+Always complete a full deployment and end-to-end test on Mantle Sepolia (chainId 5003) before mainnet. The Sepolia faucet is at https://faucet.sepolia.mantle.xyz.
+:::
+
+## Deployment Order
+
+```
+Step 1:  FarmerRegistry.sol       → no dependencies
+Step 2:  CreditScore.sol          → no dependencies
+Step 3:  BatchToken.sol           → requires FarmerRegistry address
+Step 4:  TraceLog.sol             → requires BatchToken address
+Step 5:  PurchaseOrder.sol        → requires BatchToken + TraceLog addresses
+Step 6:  ProtocolFee.sol          → no dependencies
+Step 7:  LendingVault.sol         → requires all of the above
+Step 8:  Post-deploy: grant roles → VAULT_ROLE, AGENT_ROLE, COOP_ROLE, BUYER_ROLE
+Step 9:  Post-deploy: set env     → copy all deployed addresses to .env
+Step 10: Verify contracts         → Mantle Explorer source verification
+```
+
+## Running the Deployment Script
+
+```bash
+cd packages/contracts
+
+# Deploy to Mantle Sepolia (test first)
+npx hardhat run scripts/deploy.ts --network mantleSepolia
+
+# Deploy to Mantle mainnet (after Sepolia validation)
+npx hardhat run scripts/deploy.ts --network mantle
+```
+
+## deploy.ts (core logic)
+
+```typescript
+import { ethers, upgrades } from 'hardhat';
+
+async function main() {
+  const [deployer] = await ethers.getSigners();
+  console.log('Deploying from:', deployer.address);
+
+  // Step 1: FarmerRegistry
+  const FarmerRegistry = await ethers.getContractFactory('FarmerRegistry');
+  const farmerRegistry = await upgrades.deployProxy(FarmerRegistry, [], {
+    initializer: 'initialize',
+  });
+  await farmerRegistry.waitForDeployment();
+  const farmerRegistryAddr = await farmerRegistry.getAddress();
+  console.log('FarmerRegistry:', farmerRegistryAddr);
+
+  // Step 2: CreditScore
+  const CreditScore = await ethers.getContractFactory('CreditScore');
+  const creditScore = await upgrades.deployProxy(CreditScore, [], {
+    initializer: 'initialize',
+  });
+  const creditScoreAddr = await creditScore.getAddress();
+  console.log('CreditScore:', creditScoreAddr);
+
+  // Step 3: BatchToken
+  const BatchToken = await ethers.getContractFactory('BatchToken');
+  const batchToken = await upgrades.deployProxy(
+    BatchToken,
+    [farmerRegistryAddr],
+    { initializer: 'initialize' }
+  );
+  const batchTokenAddr = await batchToken.getAddress();
+  console.log('BatchToken:', batchTokenAddr);
+
+  // Step 4: TraceLog
+  const TraceLog = await ethers.getContractFactory('TraceLog');
+  const traceLog = await upgrades.deployProxy(
+    TraceLog,
+    [batchTokenAddr],
+    { initializer: 'initialize' }
+  );
+  const traceLogAddr = await traceLog.getAddress();
+  console.log('TraceLog:', traceLogAddr);
+
+  // Step 5: PurchaseOrder
+  const PurchaseOrder = await ethers.getContractFactory('PurchaseOrder');
+  const purchaseOrder = await upgrades.deployProxy(
+    PurchaseOrder,
+    [batchTokenAddr, traceLogAddr],
+    { initializer: 'initialize' }
+  );
+  const purchaseOrderAddr = await purchaseOrder.getAddress();
+  console.log('PurchaseOrder:', purchaseOrderAddr);
+
+  // Step 6: ProtocolFee
+  const ProtocolFee = await ethers.getContractFactory('ProtocolFee');
+  const protocolFee = await upgrades.deployProxy(ProtocolFee, [], {
+    initializer: 'initialize',
+  });
+  const protocolFeeAddr = await protocolFee.getAddress();
+  console.log('ProtocolFee:', protocolFeeAddr);
+
+  // Step 7: LendingVault
+  const LendingVault = await ethers.getContractFactory('LendingVault');
+  const lendingVault = await upgrades.deployProxy(
+    LendingVault,
+    [
+      batchTokenAddr,
+      traceLogAddr,
+      creditScoreAddr,
+      purchaseOrderAddr,
+      protocolFeeAddr,
+    ],
+    { initializer: 'initialize' }
+  );
+  const lendingVaultAddr = await lendingVault.getAddress();
+  console.log('LendingVault:', lendingVaultAddr);
+
+  // Step 8: Grant roles
+  const VAULT_ROLE = ethers.id('VAULT_ROLE');
+  const AGENT_ROLE = ethers.id('AGENT_ROLE');
+
+  await batchToken.grantRole(VAULT_ROLE, lendingVaultAddr);
+  await creditScore.grantRole(VAULT_ROLE, lendingVaultAddr);
+  await traceLog.grantRole(VAULT_ROLE, lendingVaultAddr);
+
+  console.log('\n=== DEPLOYMENT COMPLETE — copy to .env ===');
+  console.log(`FARMER_REGISTRY_ADDRESS=${farmerRegistryAddr}`);
+  console.log(`CREDIT_SCORE_ADDRESS=${creditScoreAddr}`);
+  console.log(`BATCH_TOKEN_ADDRESS=${batchTokenAddr}`);
+  console.log(`TRACE_LOG_ADDRESS=${traceLogAddr}`);
+  console.log(`PURCHASE_ORDER_ADDRESS=${purchaseOrderAddr}`);
+  console.log(`PROTOCOL_FEE_ADDRESS=${protocolFeeAddr}`);
+  console.log(`LENDING_VAULT_ADDRESS=${lendingVaultAddr}`);
+}
+
+main().catch(console.error);
+```
+
+## Hardhat Network Config
+
+```typescript
+// hardhat.config.ts
+networks: {
+  mantle: {
+    url: process.env.MANTLE_RPC_URL || 'https://rpc.mantle.xyz',
+    accounts: [process.env.DEPLOYER_PRIVATE_KEY!],
+    chainId: 5000,
+  },
+  mantleSepolia: {
+    url: 'https://rpc.sepolia.mantle.xyz',
+    accounts: [process.env.DEPLOYER_PRIVATE_KEY!],
+    chainId: 5003,
+  },
+}
+```
+
+## Post-Deployment Verification
+
+```bash
+# Verify on Mantle Explorer
+npx hardhat verify --network mantle FARMER_REGISTRY_ADDRESS
+npx hardhat verify --network mantle BATCH_TOKEN_ADDRESS FARMER_REGISTRY_ADDRESS
+# ... repeat for all contracts with their constructor args
+```
+
+After verification, contract source is public on https://explorer.mantle.xyz — readable by MFI due diligence teams and EU auditors without needing to contact AsiliChain.

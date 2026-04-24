@@ -1,0 +1,32 @@
+---
+title: RWA Overview
+order: 1
+label: RWA Overview
+---
+
+# Real-World Asset Architecture
+
+AsiliChain's BatchToken is a tokenised real-world asset — physical coffee with verifiable GPS provenance and on-chain custody representation.
+
+## The RWA Context
+
+As of October 2025, the total value of tokenised RWAs on-chain exceeded $33 billion, with 224% sector growth since 2024. AsiliChain operates in the agricultural commodity RWA category — the next wave after US Treasuries.
+
+## Token Standards
+
+| Token | Standard | Represents | Collateral value |
+|-------|---------|-----------|-----------------|
+| GrowingCropToken | ERC-721 | Standing pre-harvest crop | 30–65% of estimated yield value |
+| BatchToken | ERC-1155 | Weighed, graded coffee batch | 60–70% of batch value |
+| WarehouseReceiptToken | ERC-1155 upgrade | Buyer-committed batch | 75–80% of batch value |
+
+## Legal Anchor: Uganda Warehouse Receipt System
+
+The Uganda Warehouse Receipt System Authority Act (Act No. 14 of 2006) establishes warehouse receipts as **negotiable instruments** under Ugandan law. AsiliChain's BatchToken on Mantle references the UWRSA warehouse receipt number, creating a dual-anchored asset:
+
+- **Ugandan statutory recognition** on the physical side
+- **Cryptographic verification** and DeFi composability on the on-chain side
+
+:::tip Why not Swiss DLT Act?
+A Swiss DLT Act wrapper is appropriate for tokenised equities sold to European investors. For Ugandan agricultural receipts, the UWRSA Act provides Ugandan statutory backing that Ugandan MFIs, Ugandan courts, and EU EUDR auditors all recognise. Simpler. Cheaper. More legally robust in the operating jurisdiction.
+:::

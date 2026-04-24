@@ -1,0 +1,77 @@
+---
+title: Article 4 Mapping
+order: 11
+label: Article 4 Mapping
+---
+
+# EUDR Article 4 Mapping
+
+EU Regulation 2023/1115 Article 4 specifies the exact requirements for a valid Due Diligence Statement. This page maps each requirement to its AsiliChain implementation.
+
+## Full Article 4 Compliance Matrix
+
+| Article 4 Requirement | AsiliChain Implementation | Source | Status |
+|-----------------------|--------------------------|--------|--------|
+| **GPS coordinates to sufficient precision** | GeoJSON polygon to 6 decimal places (~11cm precision) | MAAIF NTS API primary; agent app fallback | ✅ Architecturally guaranteed |
+| **Polygon for farms > 4 hectares** | Agent app GPS walk-perimeter function; auto-closes polygon | Agent PWA | ✅ Built into registration flow |
+| **Deforestation-free since December 31, 2020** | GFW API checked at registration AND at DDS generation | Global Forest Watch API | ✅ Two-point verification |
+| **No mass-balance blending** | BatchToken carries specific farmer IDs; impossible to blend without detection | BatchToken.sol architecture | ✅ Architecturally impossible to violate |
+| **Legal production** | UCDA cooperative licence verified on-chain; MAAIF NTS provides legal production status | UCDA registry + MAAIF NTS | ✅ Verified at minting |
+| **DDS filed before EU entry** | Auto-generated on GRADED status; IPFS-pinned; TRACES API filed | `/api/eudr/generate-dds` | ✅ Automated pipeline |
+| **Records kept 5 years minimum** | Hedera HCS + Mantle + IPFS: permanent and immutable by design | Three independent systems | ✅ Permanent by architecture |
+| **Supply chain description** | Eight-stage TraceLog provides complete provenance chain | TraceLog.sol + Hedera HCS | ✅ Automatically built |
+| **Risk classification per country** | Uganda benchmarked — standard risk. GFW integration provides site-specific assessment. | GFW + UCDA + MAAIF | ✅ Automated |
+| **Operator due diligence documentation** | DDS document signed with cooperative EIP-712 signature | CreditScore.sol + DDS pipeline | ✅ Cryptographically signed |
+
+## What the DDS Document Contains
+
+The auto-generated DDS includes:
+
+```
+DDS Document Structure:
+│
+├── Header
+│   ├── Shipment ID (SHIP-2026-XXXXX)
+│   ├── Exporter UCDA licence number
+│   ├── Buyer company + country + destination port
+│   └── Shipping date
+│
+├── Supply Chain Section
+│   ├── Cooperative ID + UCDA licence
+│   ├── Number of farms in shipment: N
+│   ├── Total weight: X kg
+│   └── BatchToken IDs: [list]
+│
+├── Farm Verification Section (per farm)
+│   ├── MAAIF Farmer ID
+│   ├── GPS polygon (GeoJSON — IPFS CID reference)
+│   ├── Farm area (hectares)
+│   ├── GFW deforestation status: DEFORESTATION_FREE
+│   └── GFW check timestamp
+│
+├── Traceability Section
+│   ├── Stage history (8 stages from Hedera HCS)
+│   └── Mantle transaction hashes per stage
+│
+└── Signature
+    ├── Cooperative EIP-712 signature
+    ├── IPFS CID of this document
+    └── EU TRACES reference number
+```
+
+## Enforcement Timeline
+
+| Date | EUDR milestone |
+|------|---------------|
+| June 29, 2023 | EUDR regulation published |
+| December 2024 | Enforcement delay granted (original deadline missed) |
+| **December 30, 2026** | **Current enforcement deadline — large operators** |
+| June 30, 2027 | SME deadline |
+
+AsiliChain Phase 1 targets March 2026 pilot launch — nine months ahead of the large-operator enforcement deadline.
+
+## Cost of DDS Generation
+
+**$15–40 per export shipment** (one DDS covers all batches in a container from the same cooperative to the same buyer).
+
+A cooperative exporting 10 containers per season pays $150–400 for full EUDR compliance per season — versus an estimated $2,000–8,000 for consultant-assisted paper-based DDS preparation at equivalent coverage.

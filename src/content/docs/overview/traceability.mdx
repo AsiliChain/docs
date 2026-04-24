@@ -1,0 +1,75 @@
+---
+title: Eight-Stage Traceability
+order: 5
+label: Eight-Stage Traceability
+---
+
+# Eight-Stage Traceability
+
+AsiliChain records every physical custody event of a coffee batch across eight defined stages. Each stage event is written to both Mantle (TraceLog.sol) and Hedera HCS, creating an immutable, auditable chain of custody from farm gate to export container.
+
+:::info EUDR DDS eligibility
+A batch must reach GRADED status before DDS generation is eligible. Batches that have not passed grading cannot be included in a EUDR Due Diligence Statement.
+:::
+
+## Stage Reference
+
+| Stage # | Status | Trigger | Recorded by | DDS relevance |
+|---------|--------|---------|-------------|---------------|
+| 1 | `REGISTERED` | Farm boundary GPS mapped and verified against MAAIF NTS | MAAIF API or field agent | Farm GPS polygon — mandatory for DDS |
+| 2 | `DELIVERED` | Coffee weighed at collection point. BatchToken minted. | Field agent (USSD or agent app) | Collection point GPS — mandatory |
+| 3 | `GRADED` | Quality assessment passed (moisture %, screen size grade) | Cooperative quality officer | Grade data included in DDS — **triggers DDS eligibility** |
+| 4 | `MILLED` | Physical processing complete (hulled, cleaned, sorted) | Mill operator via dashboard | Custody chain — included in DDS |
+| 5 | `WAREHOUSED` | Coffee stored under UWRSA warehouse receipt | Warehouse manager | Storage reference — included in DDS |
+| 6 | `COMMITTED` | PurchaseOrder confirmed on-chain by buyer | Cooperative + buyer portal | Buyer reference — included in DDS |
+| 7 | `EXPORTED` | Shipment confirmed by UCDA export licence | Exporter via dashboard | Export confirmation — included in DDS. **Triggers auto-repayment.** |
+| 8 | `SETTLED` | Buyer USDC payment received, loan repaid, net disbursed | LendingVault auto-executes | Final settlement — HCS record closed |
+
+## What Is Written at Each Stage
+
+Every stage event writes to two systems simultaneously:
+
+**Mantle (TraceLog.sol):**
+```solidity
+event StageUpdated(
+    uint256 indexed batchId,
+    TraceStage indexed newStage,
+    address indexed updatedBy,
+    uint256 timestamp,
+    bytes32 dataHash   // IPFS CID hash of supporting evidence
+);
+```
+
+**Hedera HCS:**
+```json
+{
+  "batch_id": "BATCH-2026-004821",
+  "stage": "GRADED",
+  "cooperative_id": "COOP-MBALE-001",
+  "timestamp": "2026-04-17T14:00:00Z",
+  "grade": "screen18",
+  "moisture_pct": 11.2,
+  "recorded_by": "0xCOOP_WALLET",
+  "mantle_tx_hash": "0xbcd..."
+}
+```
+
+## QR Traceability
+
+Every BatchToken generates a public QR traceability URL:
+
+```
+https://trace.asilichain.africa/batch/BATCH-2026-004821
+```
+
+Scanning this QR code reveals the full 8-stage history, GPS origin, and DDS status — readable by any EU customs official or buyer compliance team without authentication.
+
+## No Mass-Balance Blending
+
+BatchToken's architecture makes mass-balance blending architecturally impossible:
+
+- Each BatchToken carries the specific MAAIF farmer IDs of every contributing farmer
+- A DDS can only be generated for BatchTokens that share the same cooperative ID and shipment
+- Mixing batches from unverified farms into a verified container is detectable and blocked at the smart contract level
+
+This is the key architectural difference from paper-based systems where blending is undetectable.

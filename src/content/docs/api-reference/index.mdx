@@ -1,0 +1,51 @@
+---
+title: API Introduction
+order: 0
+label: API Introduction
+---
+
+# AsiliChain REST API
+
+The AsiliChain API provides programmatic access to batch submission, EUDR DDS generation, farmer payment triggers, and on-chain event webhooks. It is a Next.js API layer that bridges off-chain operations with the Mantle smart contracts and Hedera HCS.
+
+## Base URL
+
+```
+Production:  https://api.asilichain.africa/v1
+Staging:     https://api-staging.asilichain.africa/v1
+```
+
+## Authentication
+
+All API requests require a Bearer token obtained through cooperative or MFI onboarding:
+
+```bash
+curl -X GET https://api.asilichain.africa/v1/farmers/UG-2024-001234 \
+  -H "Authorization: Bearer YOUR_API_KEY" \
+  -H "Content-Type: application/json"
+```
+
+## Response Format
+
+All responses follow a consistent envelope:
+
+```json
+{
+  "success": true,
+  "data": { },
+  "meta": {
+    "timestamp": "2026-04-17T10:23:00Z",
+    "requestId": "req_abc123"
+  }
+}
+```
+
+## Rate Limits
+
+| Endpoint category | Rate limit |
+|------------------|-----------|
+| Batch submission | 100 req/min per cooperative |
+| EUDR DDS generation | 20 req/min per organisation |
+| Payment triggers | 500 req/min |
+| Farmer queries | 1000 req/min |
+| Webhooks (inbound from Alchemy) | Unlimited |

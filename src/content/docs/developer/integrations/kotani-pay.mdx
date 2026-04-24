@@ -1,0 +1,43 @@
+---
+title: Kotani Pay — Farmer Payouts
+order: 1
+label: Kotani Pay — Farmer Payouts
+---
+
+# Kotani Pay Integration
+
+Kotani Pay (Tether-acquired, October 2025) handles all outbound USDC → UGX → MTN Mobile Money payments to farmers. It supports both USSD and API paths from a single integration.
+
+## Payment Flow
+
+```
+BatchToken confirmed on Mantle
+        ↓
+AsiliChain API → POST /kotanipay/payout
+{
+  "phone": "+256...",
+  "amount_usdc": 45.00,
+  "chain": "mantle",
+  "currency": "UGX",
+  "network": "MTN_UG"
+}
+        ↓
+Kotani Pay: USDC → UGX at live rate
+        ↓
+MTN MoMo notification to farmer
+        ↓
+Webhook confirmation → AsiliChain API
+Status: PAYMENT_CONFIRMED
+
+Total elapsed: < 60 seconds
+```
+
+## Pre-Launch Verification
+
+:::danger Required before Phase 1 mainnet
+Run a live API test: send $1 USDC from Mantle Sepolia testnet to a real Uganda MTN Mobile Money number via Kotani Pay. Do not proceed to mainnet without a confirmed passing test.
+:::
+
+## Supported Stablecoins
+
+Kotani Pay supports USDC and USDT on any blockchain platform. The `chain: 'mantle'` parameter routes correctly after confirming Kotani Pay has Mantle mainnet support active for Uganda payouts.

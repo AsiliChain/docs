@@ -1,0 +1,74 @@
+---
+title: Chainlink
+order: 1
+label: Chainlink
+---
+
+# Chainlink Integration
+
+AsiliChain uses Chainlink AggregatorV3 price feeds on Mantle for two purposes: coffee commodity price for BatchToken collateral valuation, and drought/weather risk signals for LendingVault risk parameters.
+
+## Price Feed: Coffee/USD
+
+LendingVault reads the Chainlink coffee price feed when calculating loan amounts against BatchToken collateral.
+
+```solidity
+// In LendingVault.sol
+import "@chainlink/contracts/src/v0.8/interfaces/AggregatorV3Interface.sol";
+
+AggregatorV3Interface internal coffeePriceFeed;
+
+constructor(address _coffeePriceFeedAddress) {
+    coffeePriceFeed = AggregatorV3Interface(_coffeePriceFeedAddress);
+}
+
+function getCoffeePriceUsdc() public view returns (uint256) {
+    (, int256 price, , uint256 updatedAt, ) = coffeePriceFeed.latestRoundData();
+    require(block.timestamp - updatedAt < 3600, "Stale price feed");
+    require(price > 0, "Invalid price");
+    return uint256(price); // 8 decimals
+}
+```
+
+**Feed address on Mantle mainnet:** Confirm at https://docs.chain.link/data-feeds/price-feeds/addresses?network=mantle before deployment. If Coffee/USD is not yet live on Mantle, use Alchemy price API as fallback with TWAP smoothing.
+
+**Fallback:** If Chainlink feed is unavailable or stale (> 1 hour), LendingVault pauses new loan origination. Existing loans are unaffected. Alert fires to cooperative dashboard.
+
+## Collateral Valuation Formula
+
+```typescript
+// Simplified TypeScript representation (matches on-chain logic)
+function calculateLoanAmount(batch: BatchData, stage: TraceStage): bigint {
+  const coffeePriceUsdc = getCoffeePriceUsdc(); // from Chainlink, 8 decimals
+  const gradeMultiplier = GRADE_MULTIPLIERS[batch.grade]; // 85–115 BPS
+  const stageMultiplier = STAGE_LTV[stage]; // 60–80 BPS
+
+  const batchValueUsdc = (
+    BigInt(batch.weightKg) * coffeePriceUsdc * BigInt(gradeMultiplier)
+  ) / BigInt(100);
+
+  const maxLoan = (batchValueUsdc * BigInt(stageMultiplier)) / BigInt(100);
+  return maxLoan;
+}
+```
+
+## Drought / Weather Risk Feed
+
+For pre-harvest GrowingCropToken loans, LendingVault reads a weather risk signal. This is used to:
+- Adjust LTV dynamically during drought conditions (reduces from 65% → 40%)
+- Trigger cooperative notifications when drought risk exceeds threshold
+- Activate LendingVault forbearance pre-emptively for at-risk batches
+
+**Implementation:** Chainlink Any API (if suitable feed exists) or Alchemy Notify + OpenWeatherMap API with on-chain relay. Exact feed configuration to be determined during Phase 1 development based on available Mantle data feeds at launch.
+
+## Eliminating CCIP
+
+An earlier AsiliChain architecture used Chainlink CCIP to bridge tokens between Celo and Mantle. **This is no longer part of the architecture.**
+
+The single-chain Mantle design eliminates all cross-chain complexity:
+- No CCIP fee overhead (~$0.50 per bridge transaction)
+- No 20-minute CCIP settlement delay
+- No bridge failure modes
+- BatchToken and LendingVault are on the same chain — direct reads, no bridging
+
+CCIP documentation from earlier iterations should be disregarded. All contracts are deployed on Mantle only.

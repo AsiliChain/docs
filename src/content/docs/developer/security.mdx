@@ -1,0 +1,93 @@
+---
+title: Security & Audit
+order: 10
+label: Security & Audit
+---
+
+# Security & Audit
+
+## Smart Contract Security Model
+
+All AsiliChain contracts follow OpenZeppelin's battle-tested patterns:
+
+| Pattern | Contracts using it | Purpose |
+|---------|--------------------|---------|
+| UUPS Upgradeable | All contracts | Allow bug fixes without redeployment |
+| AccessControl | All contracts | Role-based permission gating |
+| ReentrancyGuard | LendingVault | Prevent reentrancy on USDC transfers |
+| Pausable | LendingVault, BatchToken | Emergency circuit breaker |
+| ERC-1155 | BatchToken | Semi-fungible batch tokens |
+| ERC-4626 | LendingVault | Standard vault interface for MFI deposits |
+
+## Role Security Matrix
+
+| Role | Granted to | Can do | Cannot do |
+|------|-----------|--------|-----------|
+| `DEFAULT_ADMIN_ROLE` | 3-of-5 multisig | Grant/revoke roles, upgrade contracts | Single-signer actions |
+| `VAULT_ROLE` | LendingVault address only | Lock/unlock collateral, burn settled tokens, record repayment | Register farmers, update stages |
+| `COOP_ROLE` | Cooperative wallet | Update stages (GRADED→EXPORTED), deactivate farmers | Originate loans, collect fees |
+| `AGENT_ROLE` | Field agent wallets | Register farmers, mint BatchTokens | Update later stages, originate loans |
+| `BUYER_ROLE` | Buyer portal hot wallet | Create PurchaseOrders | Confirm POs (coop required), originate loans |
+| `MULTISIG_ROLE` | 3-of-5 multisig | Distribute protocol fees, approve forbearance | Any single-party action |
+
+## Audit Requirement
+
+:::danger External audit required before MFI capital
+LendingVault.sol must be audited by an independent smart contract security firm before any MFI deposits are accepted. This is non-negotiable — MFIs will require audit evidence.
+:::
+
+**Target auditors (in priority order):**
+1. OpenZeppelin Security (https://www.openzeppelin.com/security-audits)
+2. Trail of Bits (https://www.trailofbits.com)
+3. Certik (https://www.certik.com)
+
+**Audit scope:**
+- All 7 contracts (FarmerRegistry, BatchToken, TraceLog, CreditScore, PurchaseOrder, ProtocolFee, LendingVault)
+- Focus: LendingVault USDC handling, collateral locking invariants, upgrade authority
+
+**Timeline:** Commission audit at Week 10 of Phase 1 (after Sepolia testing complete). Receive report by Week 16. Deploy mainnet Week 18.
+
+**Budget estimate:** $15,000–$40,000 depending on auditor and scope complexity.
+
+## Key Invariants to Verify
+
+These invariants must hold at all times. The test suite and auditors should verify these:
+
+```
+1. A BatchToken cannot be used as collateral for two simultaneous loans
+2. batchToken.hasActiveLoan(id) == true iff and only iff LendingVault has active loan for id
+3. TraceStage can only increase (DELIVERED=0 → SETTLED=6), never decrease
+4. Only VAULT_ROLE can call BatchToken.burnSettled() or CreditScore.recordRepayment()
+5. LendingVault cannot originate a loan if Chainlink price feed is stale (> 1 hour)
+6. ProtocolFee distributions require 3-of-5 multisig — no single-signer withdrawal possible
+7. Upgrade authority (UUPS) requires DEFAULT_ADMIN_ROLE (3-of-5 multisig)
+```
+
+## Emergency Procedures
+
+### Pause Protocol
+```solidity
+// If a critical vulnerability is discovered — immediately pause:
+lendingVault.pause();   // Stops loan origination and repayment
+batchToken.pause();     // Stops minting and transfers
+// Existing positions are frozen in place — no liquidation during pause
+```
+
+### Multi-sig Actions
+All multisig actions use Gnosis Safe on Mantle:
+- Protocol fee distributions
+- Contract upgrades
+- Forbearance approvals
+- Emergency pause/unpause
+
+**Safe address:** To be created at deployment. 3-of-5 signers defined above in ProtocolFee.sol documentation.
+
+## Bug Bounty
+
+A bug bounty programme will be announced before Phase 2 mainnet (MFI capital entry). Scope: all deployed contracts on Mantle mainnet.
+
+**Severity → Payout:**
+- Critical (funds at risk): Up to $10,000 USDC
+- High (access control bypass): Up to $3,000 USDC
+- Medium (logic errors): Up to $500 USDC
+- Low (informational): Recognition only

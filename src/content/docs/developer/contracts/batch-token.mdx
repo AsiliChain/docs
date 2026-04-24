@@ -1,0 +1,114 @@
+---
+title: BatchToken.sol (ERC-1155)
+order: 3
+label: BatchToken.sol (ERC-1155)
+---
+
+# BatchToken.sol (ERC-1155)
+
+The central token of the AsiliChain protocol. Each BatchToken ID represents one weighed, graded coffee batch. Minted at DELIVERED stage. Burns at SETTLED stage. The primary collateral unit for LendingVault.
+
+## Why ERC-1155
+
+ERC-1155 is chosen over ERC-721 because:
+- **Semi-fungible:** Batches of the same grade, cooperative, and season are interchangeable for collateral purposes
+- **Batch operations:** A single transaction can mint multiple BatchTokens for multiple farmers in a cooperative delivery
+- **Gas efficiency:** 30–40% cheaper than equivalent ERC-721 operations at scale
+
+## Key Data Structure
+
+```solidity
+struct BatchData {
+    string  batchId;              // e.g. "BATCH-2026-004821"
+    string  farmerId;             // MAAIF farmer ID
+    string  cooperativeId;        // e.g. "COOP-MBALE-001"
+    uint256 weightKg;             // Scaled ×10 (e.g. 675 = 67.5 kg)
+    string  grade;                // "screen18", "screen15", "FAQ"
+    uint256 moisturePct;          // Scaled ×10 (e.g. 112 = 11.2%)
+    bytes32 collectionPointHash;  // GPS hash of collection point
+    bytes32 weightSlipIpfsCid;    // IPFS CID of weight slip photo
+    uint256 mintTimestamp;
+    TraceStage currentStage;      // DELIVERED through SETTLED
+    bool    hasActiveLoan;        // Prevents double-collateralisation
+}
+
+mapping(uint256 => BatchData) public batchData;
+uint256 public nextTokenId;
+```
+
+## Interface
+
+```solidity
+// Mint a new BatchToken (AGENT_ROLE required, farmer must be registered)
+function mintBatch(
+    address cooperativeWallet,
+    string calldata farmerId,
+    uint256 weightKg,
+    string calldata grade,
+    uint256 moisturePct,
+    bytes32 collectionPointHash,
+    bytes32 weightSlipIpfsCid
+) external onlyRole(AGENT_ROLE) returns (uint256 tokenId);
+
+// Get batch data (read by LendingVault for collateral valuation)
+function getBatchData(uint256 tokenId) external view returns (BatchData memory);
+
+// Check if batch has active loan (prevents double-collateralisation)
+function hasActiveLoan(uint256 tokenId) external view returns (bool);
+
+// Lock batch as collateral (called by LendingVault on loan origination)
+function lockAsCollateral(uint256 tokenId) external onlyRole(VAULT_ROLE);
+
+// Unlock collateral (called by LendingVault on repayment or liquidation)
+function unlockCollateral(uint256 tokenId) external onlyRole(VAULT_ROLE);
+
+// Burn on SETTLED (loan repaid and export settled)
+function burnSettled(uint256 tokenId) external onlyRole(VAULT_ROLE);
+```
+
+## Collateral Locking
+
+When LendingVault originates a loan against a BatchToken:
+1. `LendingVault.originate(tokenId)` is called
+2. LendingVault calls `BatchToken.lockAsCollateral(tokenId)`
+3. `hasActiveLoan[tokenId] = true` — prevents cooperative from transferring or using as collateral elsewhere
+4. On EXPORTED + SETTLED: `unlockCollateral` then `burnSettled` execute atomically
+
+This prevents double-collateralisation without requiring token transfer to the vault.
+
+## Valuation Formula
+
+```
+BatchToken value (USDC) = weightKg × coffeePriceUsd (Chainlink feed)
+                                    × gradeMultiplier
+                                    × stageMultiplier
+
+Grade multipliers:
+  screen18:  1.15
+  screen15:  1.00
+  FAQ:       0.85
+
+Stage multipliers:
+  DELIVERED:   0.60  (LTV 60%)
+  GRADED:      0.65  (LTV 65%)
+  WAREHOUSED:  0.70  (LTV 70%)
+  COMMITTED:   0.80  (LTV 80%)
+```
+
+## Events
+
+```solidity
+event BatchMinted(
+    uint256 indexed tokenId,
+    string batchId,
+    string farmerId,
+    string cooperativeId,
+    uint256 weightKg,
+    string grade,
+    uint256 timestamp
+);
+
+event CollateralLocked(uint256 indexed tokenId, address indexed vault);
+event CollateralUnlocked(uint256 indexed tokenId);
+event BatchSettled(uint256 indexed tokenId, uint256 timestamp);
+```

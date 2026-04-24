@@ -1,0 +1,88 @@
+---
+title: ProtocolFee.sol
+order: 8
+label: ProtocolFee.sol
+---
+
+# ProtocolFee.sol
+
+Collects and distributes the 4% AsiliChain protocol margin from every loan repayment. Controlled by a 3-of-5 multisig. Transparent on-chain — every fee collection is publicly auditable.
+
+## Fee Structure
+
+```
+Every auto-repayment distributes as follows:
+
+  Gross repayment from buyer USDC payment
+        │
+        ├── Principal + MFI interest → LendingVault MFI pool (repaid)
+        ├── 4% protocol fee          → ProtocolFee.sol (this contract)
+        ├── 1–2% credit loss reserve → LendingVault reserve buffer
+        └── Net balance              → Farmer via Kotani Pay
+```
+
+## Fee Allocation (Protocol Treasury)
+
+The 4% protocol fee collected by this contract is allocated by governance vote:
+
+| Allocation | Percentage | Purpose |
+|-----------|-----------|---------|
+| Protocol operations | 40% | API infrastructure, Hedera HCS fees, Pinata costs |
+| Development reserve | 30% | Smart contract upgrades, audits, new integrations |
+| Credit loss backstop | 20% | Additional insurance beyond per-loan reserve |
+| Community / impact | 10% | Cooperative training, field agent support |
+
+## Interface
+
+```solidity
+// Collect fee (VAULT_ROLE — called by LendingVault on every SETTLED event)
+function collect(uint256 amountUsdc) external onlyRole(VAULT_ROLE);
+
+// View accumulated fees
+function totalCollected() external view returns (uint256);
+function pendingDistribution() external view returns (uint256);
+
+// Distribute to treasury (MULTISIG_ROLE — 3-of-5 required)
+function distribute(address recipient, uint256 amount)
+    external onlyRole(MULTISIG_ROLE);
+
+// View distribution history
+function getDistributions()
+    external view returns (Distribution[] memory);
+```
+
+## Multisig Governance
+
+Protocol fee withdrawals require 3-of-5 multisig approval. Signers at launch:
+
+| Signer | Role |
+|--------|------|
+| AsiliChain founding team wallet 1 | Co-founder |
+| AsiliChain founding team wallet 2 | Co-founder |
+| Independent technical advisor | External signer |
+| MFI representative wallet | Institutional accountability |
+| Reserved | Future: community / MAAIF observer |
+
+This prevents unilateral treasury withdrawal and provides institutional confidence for MFI partners.
+
+## Transparency
+
+Every `collect()` call emits:
+
+```solidity
+event FeeCollected(
+    uint256 indexed batchTokenId,
+    uint256 amountUsdc,
+    uint256 totalCollectedToDate,
+    uint256 timestamp
+);
+
+event FeeDistributed(
+    address indexed recipient,
+    uint256 amountUsdc,
+    string purpose,
+    uint256 timestamp
+);
+```
+
+These events are permanently readable on Mantle explorer and mirrored to Hedera HCS for the governance audit trail.

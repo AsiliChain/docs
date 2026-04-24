@@ -1,0 +1,112 @@
+---
+title: Prerequisites & Stack
+order: 2
+label: Prerequisites & Stack
+---
+
+# Prerequisites & Stack
+
+## Required Tools
+
+| Tool | Version | Install |
+|------|---------|---------|
+| Node.js | ≥ 20.x LTS | https://nodejs.org |
+| pnpm | ≥ 9.x | `npm i -g pnpm` |
+| Hardhat | 2.x (via package) | Installed in workspace |
+| Foundry (optional) | Latest | `curl -L https://foundry.paradigm.xyz \| bash` |
+| Git | Any recent | System package manager |
+
+## Required Accounts & API Keys
+
+All of these must be obtained before Phase 1 mainnet deployment. None are optional.
+
+| Service | Purpose | How to get access |
+|---------|---------|------------------|
+| **Mantle Network** | Contract deployment + RPC | https://www.mantle.xyz — free, standard EVM |
+| **Alchemy** | RPC provider + webhooks | https://www.alchemy.com — free tier sufficient for dev |
+| **Hedera Portal** | HCS account + topic creation | https://portal.hedera.com |
+| **Kotani Pay** | Farmer payout API | Contact: team@kotanipay.io — requires KYB |
+| **TransFi** | MFI deposit on-ramp | Contact: partnerships@transfi.com — requires KYB |
+| **Pinata** | IPFS pinning | https://www.pinata.cloud — free tier for dev |
+| **Africa's Talking** | USSD gateway | https://africastalking.com — Uganda sandbox available |
+| **MAAIF NTS** | Government farmer data | Ministry-level partnership — initiate immediately |
+| **Global Forest Watch API** | Deforestation monitoring | https://www.globalforestwatch.org/help/api |
+| **Supabase** | Off-chain database | https://supabase.com — free tier sufficient for dev |
+| **EU TRACES** | EUDR DDS filing | Exporter must register with their UCDA licence |
+
+## Tech Stack Summary
+
+```
+Layer               Technology              Notes
+─────────────────────────────────────────────────────────────────
+Smart contracts     Solidity 0.8.20         OpenZeppelin Upgradeable
+Target chain        Mantle mainnet          chainId 5000
+Test chain          Mantle Sepolia          chainId 5003
+ZK proof system     OP Succinct / SP1       Type-1 zkEVM, 1-hr finality
+Contract framework  Hardhat + TypeChain     Viem for client-side
+Audit log           Hedera HCS              Append-only, IBM/Google governed
+Farmer payouts      Kotani Pay API          USDC → MTN MoMo < 60 seconds
+MFI on-ramp         TransFi                 Bank wire → USDC → LendingVault
+Price feeds         Chainlink AggregatorV3  Coffee/USD + drought risk
+RPC + Webhooks      Alchemy                 Mantle mainnet
+IPFS pinning        Pinata                  DDS + GPS + weight slips
+Off-chain DB        Supabase (PostgreSQL)   Phone numbers, session state
+API framework       Next.js 14 (App Router) REST API layer
+Agent app           Next.js PWA             Offline-capable, mobile-first
+USSD gateway        Africa's Talking        *384# session handler
+Deforestation       Global Forest Watch     Satellite API
+Government data     MAAIF NTS API           Primary farmer registration
+```
+
+## Local Development Setup
+
+```bash
+# Clone the monorepo
+git clone https://github.com/AsiliChain/asilichain.git
+cd asilichain
+
+# Install all dependencies
+pnpm install
+
+# Copy environment template
+cp .env.example .env
+# Fill in all required values (see Project Structure)
+
+# Run contract tests (Mantle Sepolia fork)
+cd packages/contracts
+pnpm test
+
+# Run API in development mode
+cd packages/api
+pnpm dev
+
+# Run agent app in development mode
+cd packages/agent-app
+pnpm dev
+```
+
+## Mantle Network Configuration
+
+```typescript
+// Mantle mainnet
+{
+  chainId: 5000,
+  rpcUrl: 'https://rpc.mantle.xyz',
+  explorerUrl: 'https://explorer.mantle.xyz',
+  nativeCurrency: { name: 'MNT', symbol: 'MNT', decimals: 18 }
+}
+
+// Mantle Sepolia testnet
+{
+  chainId: 5003,
+  rpcUrl: 'https://rpc.sepolia.mantle.xyz',
+  explorerUrl: 'https://explorer.sepolia.mantle.xyz',
+  nativeCurrency: { name: 'MNT', symbol: 'MNT', decimals: 18 }
+}
+```
+
+## MNT for Gas
+
+All contract interactions on Mantle require MNT for gas. At $0.002 per ZK proof:
+- **Development:** Mantle Sepolia faucet at https://faucet.sepolia.mantle.xyz
+- **Production:** Cooperative deployer wallet needs ~$50 MNT/year for all contract interactions

@@ -1,0 +1,24 @@
+---
+title: Failure Modes
+order: 7
+label: Failure Modes
+---
+
+# Failure Modes and Mitigations
+
+No single component failure can strand farmer funds or permanently break a compliance record.
+
+| Failure | Mitigation | Farmer impact |
+|---------|-----------|---------------|
+| Chainlink price feed stale | LendingVault pauses new loans. 48-hr timelocked admin override. | New loans paused. Existing unaffected. |
+| Kotani Pay API timeout | Three retries (30/60/120s). Manual cash fallback against on-chain receipt. | Payment delayed ≤10 minutes. |
+| TransFi deposit conversion fails | TransFi ISO27001 SLA handles internally. AsiliChain retries deposit call. | No farmer impact. Pool temporarily smaller. |
+| MAAIF NTS API unavailable | Auto-switch to direct agent registration. Records flagged for migration. | No impact. Protocol continues. |
+| Mantle network unavailable | All contract operations pause. Hedera HCS continues. Kotani Pay queue persists. | No new submissions. Pending payments queued. |
+| USSD session drop | Stateless sessions. Supabase draft saves. Agent resumes from last checkpoint. | Resubmit final step only. |
+| Harvest failure > 50% | LendingVault 90-day forbearance. 3-of-5 multisig governance vote. | Loans paused. No penalty. |
+| Cooperative wallet compromised | Emergency pause via 3-of-5 multisig. AGENT_ROLE and COOP_ROLE are separate. | Protocol paused for that cooperative only. |
+
+:::note No bridge failure modes
+There is no cross-chain bridge in AsiliChain. All contracts are on Mantle. BatchToken and LendingVault communicate directly on the same chain. The bridge failure category has been eliminated entirely.
+:::

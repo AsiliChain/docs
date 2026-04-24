@@ -1,0 +1,58 @@
+---
+title: Smart Contracts Index
+order: 6
+label: Smart Contracts Index
+---
+
+# Smart Contract Suite
+
+All AsiliChain contracts deploy to Mantle Network (chainId 5000). Every contract is UUPS-upgradeable via OpenZeppelin's proxy pattern, gated by a 3-of-5 multisig `DEFAULT_ADMIN_ROLE`.
+
+## Deployment Order
+
+Deployment order is strict — each contract's initializer requires addresses from previously deployed contracts.
+
+| Step | Contract | Type | Depends on |
+|------|----------|------|-----------|
+| 1 | **FarmerRegistry.sol** | UUPS Proxy | Nothing — deploy first |
+| 2 | **CreditScore.sol** | UUPS Proxy | Nothing — deploy second |
+| 3 | **BatchToken.sol** | ERC-1155 + UUPS | FarmerRegistry |
+| 4 | **TraceLog.sol** | UUPS Proxy | BatchToken |
+| 5 | **PurchaseOrder.sol** | UUPS Proxy | BatchToken + TraceLog |
+| 6 | **ProtocolFee.sol** | UUPS Proxy | Nothing — deploy independently |
+| 7 | **LendingVault.sol** | ERC-4626 + UUPS | All of the above |
+
+See [Deployment Guide](./deployment) for the full deployment script with role grants.
+
+## Contract Responsibilities
+
+| Contract | Core job | Key callers |
+|----------|----------|-------------|
+| FarmerRegistry | Stores verified farmer identities and GPS references | API (registration), BatchToken (mint-time check) |
+| CreditScore | Tracks repayment history. Permanent, public, portable. | LendingVault (repayment/default), API (delivery) |
+| BatchToken | ERC-1155 semi-fungible coffee batch token. Primary collateral. | API (mint), LendingVault (lock/unlock/burn) |
+| TraceLog | Records 8-stage custody journey per batch | API (stage updates), LendingVault (EXPORTED trigger) |
+| PurchaseOrder | Records buyer commitment. Upgrades collateral tier. | Buyer portal (create), Cooperative (confirm) |
+| ProtocolFee | Collects 4% margin per settlement. 3-of-5 multisig withdrawals. | LendingVault (collect on SETTLED) |
+| LendingVault | ERC-4626 vault. MFI deposits, loan origination, auto-repayment. | API (originate), TraceLog (EXPORTED event) |
+
+## Shared Patterns
+
+All contracts implement:
+- **UUPS Upgradeability** (`@openzeppelin/contracts-upgradeable/proxy/utils/UUPSUpgradeable.sol`)
+- **AccessControl** (`@openzeppelin/contracts-upgradeable/access/AccessControlUpgradeable.sol`)
+- **Pausable** (emergency circuit breaker — 3-of-5 multisig required)
+- **ReentrancyGuard** on all state-changing external functions in LendingVault
+
+## Gas Cost Reference (Mantle mainnet)
+
+| Operation | Approx gas | Cost at $0.002/proof |
+|-----------|-----------|---------------------|
+| FarmerRegistry.registerFarmer | ~85,000 | $0.0002 |
+| BatchToken.mintBatch | ~120,000 | $0.0003 |
+| TraceLog.updateStage | ~65,000 | $0.0001 |
+| LendingVault.originate | ~180,000 | $0.0004 |
+| LendingVault.onExported (auto-repayment) | ~220,000 | $0.0004 |
+| PurchaseOrder.confirmPurchaseOrder | ~95,000 | $0.0002 |
+
+**Annual gas cost for a 500-batch cooperative: ~$7 USD.**

@@ -1,0 +1,89 @@
+---
+title: Get DDS
+order: 3
+label: Get DDS
+---
+
+# Get DDS
+
+Retrieves a previously generated DDS document by its ID or by batch/shipment reference.
+
+## Endpoint
+
+```
+GET /eudr/dds/{dds_id}
+```
+
+**Auth:** `COOPERATIVE`, `BUYER`, or `ADMIN` token.
+
+## Request
+
+```bash
+curl https://api.asilichain.africa/eudr/dds/DDS-2026-004821 \
+  -H "Authorization: Bearer {token}"
+```
+
+**Or retrieve by batch ID:**
+
+```bash
+curl "https://api.asilichain.africa/eudr/dds?batch_id=BATCH-2026-004821" \
+  -H "Authorization: Bearer {token}"
+```
+
+**Or retrieve by shipment:**
+
+```bash
+curl "https://api.asilichain.africa/eudr/dds?shipment_id=SHIP-2026-00042" \
+  -H "Authorization: Bearer {token}"
+```
+
+## Response
+
+```json
+{
+  "dds_id": "DDS-2026-004821",
+  "status": "FILED",
+  "cooperative_id": "COOP-MBALE-001",
+  "exporter_ucda_licence": "UCDA-EXP-00889",
+  "shipment_id": "SHIP-2026-00042",
+  "batch_ids": ["BATCH-2026-004821", "BATCH-2026-004822", "BATCH-2026-004823"],
+  "total_weight_kg": 18450,
+  "destination_country": "DE",
+  "buyer_organisation": "Supremo Coffee GmbH",
+  "generated_at": "2026-04-20T11:30:00Z",
+  "ipfs_url": "https://gateway.pinata.cloud/ipfs/bafybeig...",
+  "ipfs_cid": "bafybeig...",
+  "traces_reference": "DDS-EU-2026-UG-004821",
+  "traces_filed_at": "2026-04-20T11:45:00Z",
+  "cooperative_signature": "0x4d2e...",
+  "farms_count": 47,
+  "gfw_all_clear": true,
+  "mantle_tx_hash": "0xcde456..."
+}
+```
+
+## DDS Status Values
+
+| Status | Meaning |
+|--------|---------|
+| `GENERATING` | Pipeline running — typically resolves in 30 seconds |
+| `GENERATED` | PDF created and IPFS-pinned. TRACES filing pending. |
+| `FILED` | TRACES reference confirmed. DDS is complete and valid. |
+| `TRACES_RETRY` | TRACES filing failed — retrying automatically. Document is valid, reference pending. |
+| `BLOCKED` | GFW check failed on re-verification. DDS cannot be issued. |
+
+## Downloading the PDF
+
+The `ipfs_url` field links directly to the PDF document on IPFS via Pinata gateway. The document is permanently accessible — no AsiliChain server is required to retrieve it after generation.
+
+```bash
+# Download the DDS PDF
+curl -o dds-2026-004821.pdf "https://gateway.pinata.cloud/ipfs/bafybeig..."
+```
+
+## Errors
+
+| Code | Trigger |
+|------|---------|
+| `DDS_NOT_FOUND` | `dds_id` not recognised |
+| `BATCH_NOT_FOUND` | `batch_id` has no associated DDS |

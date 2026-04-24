@@ -1,0 +1,96 @@
+---
+title: Gas Sponsorship
+order: 11
+label: Gas Sponsorship
+---
+
+# Gas Sponsorship
+
+Farmers and field agents cannot be expected to hold MNT for gas. AsiliChain sponsors gas for all farmer-initiated and agent-initiated transactions. Cooperative-initiated transactions are funded by cooperative wallets.
+
+## Who Pays Gas for What
+
+| Actor | Transaction type | Gas paid by | Annual cost estimate |
+|-------|----------------|-------------|---------------------|
+| Farmer (USSD) | BatchToken mint via DELIVERED | AsiliChain API wallet | ~$0.10/batch |
+| Field agent (agent app) | FarmerRegistry.registerFarmer | AsiliChain API wallet | ~$0.05/farmer |
+| Cooperative quality officer | TraceLog.updateStage (GRADED) | Cooperative wallet | ~$0.001/batch |
+| Cooperative manager | PurchaseOrder confirmation | Cooperative wallet | ~$0.002/PO |
+| Exporter | TraceLog.updateStage (EXPORTED) | Exporter wallet | ~$0.001/export |
+| LendingVault auto-exec | SETTLED stage, CreditScore update | LendingVault (self-funded from fees) | Covered by protocol fee |
+
+**Total annual gas cost for a 500-batch cooperative: ~$7** (Mantle ZK rollup at $0.002 per proof).
+
+## Implementation: API Wallet as Gas Relayer
+
+For farmer and agent transactions, the AsiliChain API wallet acts as a relayer — it submits the transaction and pays the gas on behalf of the farmer.
+
+```typescript
+// packages/api/lib/gasRelay.ts
+import { walletClient, publicClient } from './mantle';
+import { parseAbi } from 'viem';
+
+export async function relayMintBatch(params: MintBatchParams) {
+  // API wallet signs and pays gas — farmer has no wallet, no MNT
+  const hash = await walletClient.writeContract({
+    address: BATCH_TOKEN_ADDRESS,
+    abi: batchTokenAbi,
+    functionName: 'mintBatch',
+    args: [
+      params.cooperativeWallet,
+      params.farmerId,
+      params.weightKg,
+      params.grade,
+      params.moisturePct,
+      params.collectionPointHash,
+      params.weightSlipIpfsCid,
+    ],
+    account: API_RELAYER_WALLET, // AsiliChain API wallet pays gas
+  });
+
+  const receipt = await publicClient.waitForTransactionReceipt({ hash });
+  return receipt;
+}
+```
+
+## API Wallet Funding
+
+The AsiliChain API relayer wallet needs MNT for gas. At $0.002 per transaction and a Phase 1 volume of 500 batches per season:
+
+```
+Phase 1:  500 batches × $0.002 = $1.00/season in gas
+Phase 2:  5,000 batches × $0.002 = $10.00/season in gas
+Phase 3:  25,000 batches × $0.002 = $50.00/season in gas
+```
+
+Fund the API wallet with $50 MNT at deployment — sufficient for multiple seasons of Phase 1 volume. Set an alert at $5 remaining balance.
+
+## Mantle Native Gas Sponsorship (EIP-4337)
+
+Mantle supports EIP-4337 (Account Abstraction). For Phase 2+, AsiliChain can implement a paymaster contract that:
+- Accepts farmer USSD sessions as gas-free
+- Reimburses the paymaster from the 4% protocol fee pool
+- Removes the relayer wallet architecture entirely
+
+This is a Phase 2 improvement — not required for Phase 1 pilot. Document as a planned upgrade in the protocol roadmap.
+
+## Gas Monitoring
+
+```typescript
+// Alert if API wallet balance drops below threshold
+export async function checkGasBalance() {
+  const balance = await publicClient.getBalance({
+    address: API_RELAYER_WALLET,
+  });
+
+  const balanceMNT = Number(balance) / 1e18;
+
+  if (balanceMNT < 5) {
+    // Send alert to cooperative dashboard + Slack/email
+    await sendAlert({
+      severity: 'warning',
+      message: `API relayer wallet low: ${balanceMNT.toFixed(4)} MNT. Top up required.`,
+    });
+  }
+}
+```

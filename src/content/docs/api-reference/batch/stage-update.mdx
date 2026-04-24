@@ -1,0 +1,120 @@
+---
+title: Update Batch Stage
+order: 2
+label: Update Batch Stage
+---
+
+# Update Batch Stage
+
+Advances a BatchToken to the next custody stage. Stages must advance sequentially — no skipping. Writes to both TraceLog.sol on Mantle and Hedera HCS.
+
+## Endpoint
+
+```
+PATCH /batch/{batch_id}/stage
+```
+
+**Auth:** `COOPERATIVE` or `AGENT` token (role restrictions apply per stage).
+
+## Stage Permission Matrix
+
+| Stage being set | Required role | Notes |
+|----------------|--------------|-------|
+| `GRADED` | `COOPERATIVE` (quality officer) | Must include grade data |
+| `MILLED` | `COOPERATIVE` (mill operator) | — |
+| `WAREHOUSED` | `COOPERATIVE` (warehouse manager) | Must include warehouse reference |
+| `COMMITTED` | Auto-triggered by PurchaseOrder confirmation | Do not call directly |
+| `EXPORTED` | `COOPERATIVE` (exporter) | Must include UCDA export reference |
+| `SETTLED` | Auto-triggered by LendingVault on buyer payment | Do not call directly |
+
+## Request
+
+```bash
+curl -X PATCH https://api.asilichain.africa/batch/BATCH-2026-004821/stage \
+  -H "Authorization: Bearer {cooperative_token}" \
+  -H "Content-Type: application/json" \
+  -d '{
+    "new_stage": "GRADED",
+    "evidence": {
+      "grade": "screen18",
+      "moisture_pct": 11.2,
+      "screen_size": 18,
+      "defect_count": 2,
+      "cupping_score": 84.5
+    },
+    "evidence_photo_base64": "data:image/jpeg;base64,...",
+    "cooperative_id": "COOP-MBALE-001"
+  }'
+```
+
+## Request Body
+
+| Field | Type | Required | Description |
+|-------|------|----------|-------------|
+| `new_stage` | string | Yes | One of: `GRADED`, `MILLED`, `WAREHOUSED`, `EXPORTED` |
+| `evidence` | object | Yes | Stage-specific evidence data (see below) |
+| `evidence_photo_base64` | string | No | Photo of grade certificate, weight slip, etc. Pinned to IPFS. |
+| `cooperative_id` | string | Yes | Must match token's cooperative |
+
+### Evidence Object by Stage
+
+**GRADED:**
+```json
+{
+  "grade": "screen18",
+  "moisture_pct": 11.2,
+  "screen_size": 18,
+  "defect_count": 2,
+  "cupping_score": 84.5
+}
+```
+
+**WAREHOUSED:**
+```json
+{
+  "warehouse_id": "UWRSA-WH-MBALE-001",
+  "lot_number": "LOT-2026-0089",
+  "position": "Stack A, Row 3, Bag 12-67"
+}
+```
+
+**EXPORTED:**
+```json
+{
+  "ucda_export_permit": "UCDA-EXP-2026-04821",
+  "destination_country": "DE",
+  "vessel_name": "MSC Eleonora",
+  "bill_of_lading": "MSCUG123456"
+}
+```
+
+## Response
+
+```json
+{
+  "batch_id": "BATCH-2026-004821",
+  "previous_stage": "DELIVERED",
+  "new_stage": "GRADED",
+  "mantle_tx_hash": "0xbcd123...",
+  "hedera_sequence_number": "847291",
+  "evidence_ipfs_cid": "bafybeig...",
+  "dds_eligible": true,
+  "timestamp": "2026-04-17T14:00:00Z"
+}
+```
+
+| Field | Description |
+|-------|-------------|
+| `mantle_tx_hash` | TraceLog.updateStage() transaction on Mantle |
+| `hedera_sequence_number` | HCS message sequence number for audit trail |
+| `evidence_ipfs_cid` | IPFS CID of evidence JSON + photo (if provided) |
+| `dds_eligible` | `true` if batch is now GRADED or above |
+
+## Errors
+
+| Code | Trigger |
+|------|---------|
+| `STAGE_OUT_OF_ORDER` | Attempted to skip a stage or go backward |
+| `BATCH_NOT_FOUND` | `batch_id` not recognised |
+| `INVALID_GRADE` | Grade not in accepted set |
+| `INSUFFICIENT_PERMISSIONS` | Agent token attempting cooperative-level stage |

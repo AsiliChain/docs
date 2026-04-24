@@ -1,0 +1,74 @@
+---
+title: CreditScore.sol
+order: 6
+label: CreditScore.sol
+---
+
+# CreditScore.sol
+
+UUPS-upgradeable on-chain credit scoring. Tracks farmer repayment history, delivery consistency, and cooperative standing. Portable, permanent, and public — any MFI can query it before approving a loan.
+
+## Score Mechanics
+
+| Event | Score change | Notes |
+|-------|-------------|-------|
+| Account created | +500 | Starting score for every farmer |
+| On-time repayment (EXPORTED triggers auto-repay) | +50 | Per loan cycle |
+| On-time batch delivery | +10 | Per delivery, even without a loan |
+| Default (loan not repaid after forbearance) | −100 | Farmer blocked from new loans |
+| Cooperative penalty (late cooperative-level obligations) | −25 | Applied to all farmers in that cooperative |
+| Score floor | 0 | Cannot go below zero |
+| Score ceiling | 850 | Maximum score |
+
+## Score-to-LTV Tiers
+
+As credit score improves, farmers access higher LTV and larger loan ceilings:
+
+| Score range | LTV tier | Max loan (USDC) | Notes |
+|-------------|----------|-----------------|-------|
+| 500–549 | Standard | $200 | Starting tier |
+| 550–649 | Enhanced | $500 | After 1–2 successful repayments |
+| 650–749 | Premium | $1,500 | After 3–5 successful repayments |
+| 750–850 | Institutional | $5,000 | Cooperative-level loans available |
+
+## Interface
+
+```solidity
+// Get current score (public — any MFI can call)
+function getScore(string calldata farmerId) external view returns (uint256);
+
+// Record successful repayment (VAULT_ROLE — called by LendingVault on SETTLED)
+function recordRepayment(string calldata farmerId) external onlyRole(VAULT_ROLE);
+
+// Record delivery (AGENT_ROLE — called by API on DELIVERED)
+function recordDelivery(string calldata farmerId) external onlyRole(AGENT_ROLE);
+
+// Record default (VAULT_ROLE — called by LendingVault after forbearance expires)
+function recordDefault(string calldata farmerId) external onlyRole(VAULT_ROLE);
+
+// Get loan tier for farmer (used by LendingVault.originate)
+function getLoanTier(string calldata farmerId)
+    external view returns (uint256 maxLoanUsdc, uint256 ltvBps);
+```
+
+## Why Public Scores Are Correct
+
+Keeping scores public has genuine privacy tradeoffs. The design rationale:
+
+- Scores are linked to **MAAIF farmer IDs** (government-issued) — not to phone numbers or names
+- A government ID being associated with creditworthiness is the same as a credit bureau report — standard in formal finance
+- The alternative (private scores) requires AsiliChain to act as a credit bureau with associated regulatory obligations
+- Public scores allow multiple MFIs to compete for the same farmer's loan — which drives rates down, benefiting the farmer
+- Farmers can build score history and take it to any future lender — true financial inclusion
+
+## Portability
+
+A farmer's CreditScore follows their MAAIF farmer ID — not their current cooperative membership. If a farmer moves to a different cooperative, their score persists. This is the mechanism that makes formal credit history genuinely portable for the first time.
+
+```solidity
+// Score is keyed by MAAIF farmer ID, not wallet address
+// Farmers can switch cooperatives without losing credit history
+mapping(string => uint256) public scores;          // maaifId → score
+mapping(string => uint256[]) public scoreHistory;  // maaifId → [score snapshots]
+mapping(string => uint256) public lastUpdated;     // maaifId → timestamp
+```

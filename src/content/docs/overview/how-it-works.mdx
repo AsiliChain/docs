@@ -1,0 +1,80 @@
+---
+title: How AsiliChain Works
+order: 4
+label: How AsiliChain Works
+---
+
+# How AsiliChain Works
+
+AsiliChain activates Uganda's government coffee farmer data financially — turning compliance records into credit infrastructure without building a parallel database.
+
+## The Core Loop
+
+```mermaid
+sequenceDiagram
+    participant F as 👨‍🌾 Farmer
+    participant USSD as *384# USSD
+    participant API as AsiliChain API
+    participant MAAIF as MAAIF NTS
+    participant M as Mantle (Contracts)
+    participant H as Hedera HCS
+    participant KP as Kotani Pay
+    participant MTN as MTN MoMo
+
+    F->>USSD: Dials *384#, selects "Deliver coffee"
+    USSD->>API: Session data + farmer ID
+    API->>MAAIF: Verify farmer ID + GPS
+    MAAIF-->>API: Farmer confirmed, farm GPS returned
+    API->>M: BatchToken.mint(farmerID, weight, grade, GPS)
+    M-->>H: Stage event logged (DELIVERED)
+    API->>KP: POST /kotanipay/payout (amount_usdc, phone)
+    KP-->>MTN: USDC → UGX → MoMo credit
+    MTN-->>F: Payment notification (< 60 seconds)
+```
+
+## Four Outputs for Every Farmer
+
+Every batch delivered through AsiliChain produces four outputs automatically — regardless of whether the farmer has a loan:
+
+| Output | How it works | Who benefits |
+|--------|-------------|-------------|
+| **60-second payment** | Kotani Pay converts USDC to UGX and credits MTN MoMo | Every farmer |
+| **EUDR compliance** | GPS + stage data auto-generates a DDS at export time | Cooperatives, exporters |
+| **Market price transparency** | Chainlink oracle prices are visible to the cooperative dashboard | Every farmer |
+| **On-chain credit history** | CreditScore begins building from first delivery — usable for future loans | Every farmer |
+
+## The Eight Custody Stages
+
+Every BatchToken moves through eight defined stages, each recorded on Hedera HCS:
+
+| Stage | Action | Who records |
+|-------|--------|------------|
+| 1. REGISTERED | Farm GPS mapped, farmer ID verified | MAAIF NTS / agent |
+| 2. DELIVERED | Coffee weighed and submitted at collection point | Field agent via USSD |
+| 3. GRADED | Quality assessment (moisture, screen size) | Cooperative quality officer |
+| 4. MILLED | Coffee processed (hulled, cleaned, sorted) | Mill operator |
+| 5. WAREHOUSED | Physical coffee stored under warehouse receipt | Warehouse manager |
+| 6. COMMITTED | Buyer PurchaseOrder confirmed on-chain | Cooperative / exporter |
+| 7. EXPORTED | Shipment leaves Uganda | UCDA export licence confirmed |
+| 8. SETTLED | Buyer USDC payment received → loan auto-repaid | LendingVault auto-executes |
+
+## Credit Flow (Optional)
+
+For farmers who want working capital:
+
+```mermaid
+graph LR
+    REG[\"Farm registered\\nGPS verified\"]
+    GCT[\"GrowingCropToken\\nIssued at planting\\nLTV 30–65%\"]
+    LOAN1[\"Pre-harvest loan\\n14–18% APR\"]
+    BT[\"BatchToken\\nIssued at delivery\\nLTV 60–70%\"]
+    PO[\"PurchaseOrder\\nBuyer commits\"]
+    WRT[\"WarehouseReceiptToken\\nLTV 75–80%\"]
+    EXP[\"EXPORTED event\"]
+    REPAY[\"Auto-repayment\\nCreditScore +50\"]
+
+    REG --> GCT --> LOAN1
+    LOAN1 --> BT --> PO --> WRT --> EXP --> REPAY
+```
+
+Credit is **optional**. Farmers who do not want loans still complete the same delivery and receive the same 60-second payment and compliance data.

@@ -1,0 +1,54 @@
+---
+title: POST /eudr/generate-dds
+order: 1
+label: POST /eudr/generate-dds
+---
+
+# POST /eudr/generate-dds
+
+Generates a EUDR-compliant Due Diligence Statement for an export shipment. Fetches all required data from Mantle, Hedera HCS, and Global Forest Watch. Signs with cooperative EIP-712 signature. Pins to IPFS. Files with EU TRACES.
+
+## Request
+
+```bash
+POST /v1/eudr/generate-dds
+Authorization: Bearer YOUR_API_KEY
+Content-Type: application/json
+```
+
+```json
+{
+  "shipment_id": "SHIP-2026-00921",
+  "batch_ids": ["BATCH-2026-004821", "BATCH-2026-004822"],
+  "exporter_ucda_licence": "UCDA-EXP-00441",
+  "buyer_company": "Sucafina Uganda Ltd",
+  "buyer_country": "CH",
+  "shipping_date": "2026-05-15",
+  "destination_port": "Hamburg",
+  "cooperative_id": "COOP-MBALE-001"
+}
+```
+
+## Response
+
+```json
+{
+  "success": true,
+  "data": {
+    "dds_id": "DDS-2026-00921",
+    "ipfs_cid": "QmYyy...",
+    "ipfs_url": "https://ipfs.io/ipfs/QmYyy...",
+    "eu_traces_reference": "TRACES-2026-XYZ",
+    "mantle_tx_hash": "0xdef...",
+    "hedera_message_id": "0.0.123456@1713350000.000000000",
+    "gfw_status": "DEFORESTATION_FREE",
+    "farms_verified": 47,
+    "total_weight_kg": 3240.5,
+    "generated_at": "2026-04-17T14:30:00Z"
+  }
+}
+```
+
+## DDS Generation Cost
+
+**$15–40 per export shipment** (one DDS can cover multiple batches from the same cooperative to the same buyer in the same container).

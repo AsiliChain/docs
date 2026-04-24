@@ -1,0 +1,94 @@
+---
+title: Verify GFW Status
+order: 2
+label: Verify GFW Status
+---
+
+# Verify GFW Status
+
+Runs an on-demand Global Forest Watch deforestation check against a farm polygon. Used for manual re-verification before DDS generation or when a cooperative wants to confirm a specific farm's status.
+
+## Endpoint
+
+```
+POST /eudr/verify-gfw
+```
+
+**Auth:** `COOPERATIVE` or `ADMIN` token.
+
+## Request
+
+```bash
+curl -X POST https://api.asilichain.africa/eudr/verify-gfw \
+  -H "Authorization: Bearer {cooperative_token}" \
+  -H "Content-Type: application/json" \
+  -d '{
+    "farmer_id": "UG-KAS-2024-001234",
+    "cooperative_id": "COOP-MBALE-001"
+  }'
+```
+
+**Alternatively, supply a raw polygon (for pre-registration checks):**
+
+```bash
+curl -X POST https://api.asilichain.africa/eudr/verify-gfw \
+  -H "Authorization: Bearer {cooperative_token}" \
+  -H "Content-Type: application/json" \
+  -d '{
+    "farm_polygon": {
+      "type": "Polygon",
+      "coordinates": [[[34.1772, 1.0656], [34.1789, 1.0656], [34.1789, 1.0672], [34.1772, 1.0672], [34.1772, 1.0656]]]
+    }
+  }'
+```
+
+## Response
+
+```json
+{
+  "farmer_id": "UG-KAS-2024-001234",
+  "deforestation_free": true,
+  "check_timestamp": "2026-04-24T09:15:00Z",
+  "baseline_date": "2020-12-31",
+  "alert_count": 0,
+  "alert_area_ha": 0.0,
+  "gfw_request_id": "gfw_req_01HXZ...",
+  "result_ipfs_cid": "bafybeih...",
+  "eudr_compliant": true
+}
+```
+
+**If farm fails:**
+
+```json
+{
+  "farmer_id": "UG-KAS-2025-009988",
+  "deforestation_free": false,
+  "check_timestamp": "2026-04-24T09:16:00Z",
+  "baseline_date": "2020-12-31",
+  "alert_count": 3,
+  "alert_area_ha": 1.24,
+  "gfw_request_id": "gfw_req_01HXZ2...",
+  "eudr_compliant": false,
+  "reason": "1.24ha tree cover loss detected in polygon since 2021 (threshold: 0.5ha)"
+}
+```
+
+## Response Fields
+
+| Field | Description |
+|-------|-------------|
+| `deforestation_free` | `true` if alert area below 0.5 ha threshold |
+| `alert_count` | Number of satellite-detected deforestation events in polygon |
+| `alert_area_ha` | Total area of detected tree cover loss |
+| `gfw_request_id` | GFW's own request ID — for support escalation |
+| `result_ipfs_cid` | Full GFW response pinned to IPFS — referenced in DDS |
+| `eudr_compliant` | Same as `deforestation_free` — field for DDS system clarity |
+
+## Errors
+
+| Code | Trigger |
+|------|---------|
+| `FARMER_NOT_REGISTERED` | `farmer_id` not in FarmerRegistry |
+| `GFW_API_UNAVAILABLE` | GFW API timed out after 3 retries |
+| `INVALID_POLYGON` | GeoJSON polygon is malformed or too small |

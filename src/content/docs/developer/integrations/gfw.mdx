@@ -1,0 +1,115 @@
+---
+title: Global Forest Watch
+order: 4
+label: Global Forest Watch
+---
+
+# Global Forest Watch
+
+Global Forest Watch (GFW) is the satellite-based deforestation monitoring service used by AsiliChain to verify that every registered farm has not been deforested since December 31, 2020 — the EUDR baseline date.
+
+## When GFW Is Called
+
+GFW is called at two points in the protocol:
+
+| Trigger | Purpose | Blocks operation if failed? |
+|---------|---------|--------------------------|
+| **Farmer registration** | Verify farm has not been deforested since Dec 31, 2020 | Yes — registration blocked |
+| **DDS generation** | Final re-check before EUDR document is issued | Yes — DDS blocked |
+
+The two-point check protects against registering a farm that passes at registration but was deforested between registration and export.
+
+## API Integration
+
+```typescript
+// packages/api/lib/gfw.ts
+
+interface GFWCheckResult {
+  deforestationFree: boolean;
+  checkTimestamp: string;
+  alertCount: number;       // number of deforestation alerts in polygon
+  alertAreaHa: number;      // hectares of detected deforestation
+  reason?: string;          // if deforestationFree === false
+  gfwRequestId: string;     // for audit trail
+}
+
+export async function checkDeforestation(
+  farmBoundary: GeoJSON.Polygon
+): Promise<GFWCheckResult> {
+  const response = await fetch(
+    'https://data-api.globalforestwatch.org/dataset/umd_tree_cover_loss/latest/query',
+    {
+      method: 'POST',
+      headers: {
+        'x-api-key': process.env.GFW_API_KEY!,
+        'Content-Type': 'application/json',
+      },
+      body: JSON.stringify({
+        geometry: farmBoundary,
+        sql: `
+          SELECT SUM(umd_tree_cover_loss__ha) AS loss_ha,
+                 COUNT(*) AS alert_count
+          FROM results
+          WHERE umd_tree_cover_loss__year >= 2021
+            AND umd_tree_cover_density_2000__threshold = 30
+        `,
+      }),
+    }
+  );
+
+  const data = await response.json();
+  const lossHa = data.data?.[0]?.loss_ha ?? 0;
+  const alertCount = data.data?.[0]?.alert_count ?? 0;
+
+  return {
+    deforestationFree: lossHa < 0.5, // 0.5ha tolerance for measurement error
+    checkTimestamp: new Date().toISOString(),
+    alertCount,
+    alertAreaHa: lossHa,
+    reason: lossHa >= 0.5 ? `${lossHa.toFixed(2)}ha tree cover loss detected since 2021` : undefined,
+    gfwRequestId: data.requestId,
+  };
+}
+```
+
+## Error Handling and Retry
+
+```typescript
+export async function checkDeforestationWithRetry(
+  farmBoundary: GeoJSON.Polygon,
+  retries = 3
+): Promise<GFWCheckResult> {
+  for (let i = 0; i < retries; i++) {
+    try {
+      return await checkDeforestation(farmBoundary);
+    } catch (err) {
+      if (i === retries - 1) {
+        // After 3 failures, block operation and alert
+        throw new Error(`GFW_API_UNAVAILABLE: Registration/DDS blocked. Manual review required.`);
+      }
+      await new Promise(r => setTimeout(r, 2000 * (i + 1))); // exponential backoff
+    }
+  }
+  throw new Error('Unreachable');
+}
+```
+
+## GFW Result Storage
+
+GFW results are stored in two places:
+
+1. **On-chain (FarmerRegistry):** `gfwDeforestationFree: bool` field — binary pass/fail only
+2. **IPFS (pinned with farm GeoJSON):** Full GFW response including `alertAreaHa`, `checkTimestamp`, and `gfwRequestId` — referenced in DDS document
+
+The IPFS reference gives EU auditors the complete verification record without storing sensitive raw data on-chain.
+
+## The 0.5 Ha Tolerance
+
+EUDR Article 4 does not specify an exact deforestation area threshold. The 0.5 hectare tolerance is chosen because:
+
+- Satellite imagery has a resolution of ~10m × 10m (Sentinel-2)
+- Small measurement errors at farm boundary edges can produce false positives
+- 0.5 ha is approximately the size of a football pitch — large enough that any genuine deforestation would exceed it
+- This threshold is consistent with emerging DDS practitioner guidance pending official EU clarification
+
+This threshold should be reviewed against EU implementing regulations when published. It is a configuration parameter in the GFW library and can be adjusted without a contract upgrade.

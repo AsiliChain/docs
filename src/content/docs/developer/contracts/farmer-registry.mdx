@@ -1,0 +1,97 @@
+---
+title: FarmerRegistry.sol
+order: 1
+label: FarmerRegistry.sol
+---
+
+# FarmerRegistry.sol
+
+The first contract deployed. Stores verified farmer identities, MAAIF national IDs, GPS farm data references, and cooperative memberships. All other contracts depend on it.
+
+## Responsibilities
+
+- Stores the canonical list of verified farmers
+- Links MAAIF national farmer IDs to cooperative wallet addresses
+- References GPS polygon IPFS CIDs (not raw coordinates on-chain)
+- Controls which cooperative agents can register farmers (`AGENT_ROLE`)
+- GFW deforestation check is recorded at registration
+
+## Key Data Structure
+
+```solidity
+struct Farmer {
+    string  maaifFarmerId;        // e.g. "UG-KAS-2024-001234"
+    address cooperativeWallet;    // The cooperative this farmer belongs to
+    bytes32 farmBoundaryIpfsCid;  // IPFS CID hash of GeoJSON polygon
+    uint256 farmAreaHectares;     // Scaled by 100 (e.g. 240 = 2.40 ha)
+    uint256 registrationTimestamp;
+    bool    gfwDeforestationFree; // Confirmed at registration
+    bool    active;
+}
+
+mapping(address => Farmer) public farmers;       // wallet → Farmer
+mapping(string => address) public maaifToWallet; // maaifId → wallet
+```
+
+## Interface
+
+```solidity
+// Register a new farmer (AGENT_ROLE required)
+function registerFarmer(
+    address farmerWallet,
+    string calldata maaifFarmerId,
+    bytes32 farmBoundaryIpfsCid,
+    uint256 farmAreaHectares,
+    bool gfwDeforestationFree
+) external onlyRole(AGENT_ROLE);
+
+// Verify a farmer is registered and active
+function isRegistered(address farmerWallet) external view returns (bool);
+
+// Get farmer data (used by BatchToken.sol at mint time)
+function getFarmer(address farmerWallet) external view returns (Farmer memory);
+
+// Deactivate a farmer (COOP_ROLE — for deceased, relocated, or fraudulent records)
+function deactivateFarmer(address farmerWallet) external onlyRole(COOP_ROLE);
+```
+
+## Access Control Roles
+
+| Role | Granted to | Permission |
+|------|-----------|-----------|
+| `DEFAULT_ADMIN_ROLE` | AsiliChain deployer multisig | Grant/revoke all roles |
+| `COOP_ROLE` | Cooperative wallet | Deactivate farmers, update cooperative metadata |
+| `AGENT_ROLE` | Field agent wallets | Register new farmers |
+
+## Registration Flow
+
+```
+Field agent opens agent app (or MAAIF NTS API called)
+        ↓
+MAAIF NTS: returns farmerID + GPS polygon GeoJSON
+        ↓
+API: GFW check on farm polygon centroid
+        ↓
+API: pinGeoJSON(polygon) → Pinata → IPFS CID returned
+        ↓
+API: FarmerRegistry.registerFarmer(wallet, maaifId, ipfsCid, area, gfwStatus)
+        ↓
+HCS: REGISTERED event written
+```
+
+## Events
+
+```solidity
+event FarmerRegistered(
+    address indexed farmerWallet,
+    string maaifFarmerId,
+    address indexed cooperative,
+    uint256 timestamp
+);
+
+event FarmerDeactivated(
+    address indexed farmerWallet,
+    address indexed deactivatedBy,
+    uint256 timestamp
+);
+```

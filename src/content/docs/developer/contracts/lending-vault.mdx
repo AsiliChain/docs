@@ -1,0 +1,57 @@
+---
+title: LendingVault.sol
+order: 5
+label: LendingVault.sol
+---
+
+# LendingVault.sol
+
+UUPS upgradeable lending vault. Reads BatchToken collateral directly on Mantle. Integrates Chainlink price feeds with staleness guard and timelocked admin override.
+
+## Key Design Decisions
+
+| Decision | Rationale |
+|----------|-----------|
+| UUPS upgradeable | Allows bug fixes without data migration. Upgrade requires DEFAULT_ADMIN_ROLE + 48-hour timelock. |
+| Chainlink 24-hr staleness guard | Reverts on stale price rather than using outdated price. Prevents mispriced loans. |
+| 48-hr timelock on price override | Prevents hasty admin decisions. Emergency-only mechanism. |
+| BatchToken same chain | Direct `BatchToken.balanceOf()` call — no bridge message needed. |
+
+## Chainlink Integration
+
+```solidity
+pragma solidity ^0.8.20;
+
+import {AggregatorV3Interface} from
+    "@chainlink/contracts/src/v0.8/shared/interfaces/AggregatorV3Interface.sol";
+import "@openzeppelin/contracts-upgradeable/proxy/utils/UUPSUpgradeable.sol";
+import "@openzeppelin/contracts-upgradeable/access/AccessControlUpgradeable.sol";
+
+contract LendingVault is UUPSUpgradeable, AccessControlUpgradeable {
+
+    AggregatorV3Interface internal coffeeUsdFeed;
+    AggregatorV3Interface internal weatherFeed;
+
+    uint256 public constant STALENESS_THRESHOLD = 86400;   // 24 hours
+    uint256 public constant OVERRIDE_TIMELOCK   = 172800;  // 48 hours
+
+    function getCoffeePrice() public view returns (uint256) {
+        (,int256 price,,uint256 updatedAt,) = coffeeUsdFeed.latestRoundData();
+        if (block.timestamp - updatedAt > STALENESS_THRESHOLD) {
+            require(
+                manualPriceOverride > 0 &&
+                block.timestamp >= manualPriceTimestamp + OVERRIDE_TIMELOCK,
+                "LendingVault: price stale, no valid override"
+            );
+            return manualPriceOverride;
+        }
+        require(price > 0, "LendingVault: invalid price");
+        return uint256(price);
+    }
+
+    function droughtRiskElevated() public view returns (bool) {
+        (,int256 riskScore,,,) = weatherFeed.latestRoundData();
+        return riskScore > 7000; // >70% drought probability freezes new loans
+    }
+}
+```

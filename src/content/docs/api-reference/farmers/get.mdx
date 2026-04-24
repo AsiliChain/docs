@@ -1,0 +1,110 @@
+---
+title: Get Farmer
+order: 2
+label: Get Farmer
+---
+
+# Get Farmer
+
+Retrieves the complete profile of a registered farmer including farm data, delivery history, credit score, and active loans.
+
+## Endpoint
+
+```
+GET /farmers/{farmer_id}
+```
+
+**Auth:** `AGENT`, `COOPERATIVE`, `MFI`, or `ADMIN` token. Phone numbers are only returned to `COOPERATIVE` and `ADMIN` tokens.
+
+## Request
+
+```bash
+curl https://api.asilichain.africa/farmers/UG-KAS-2024-001234 \
+  -H "Authorization: Bearer {token}"
+```
+
+## Response
+
+```json
+{
+  "farmer_id": "UG-KAS-2024-001234",
+  "cooperative_id": "COOP-MBALE-001",
+  "registration_source": "MAAIF_NTS",
+  "registered_at": "2026-01-15T08:30:00Z",
+  "active": true,
+  "farm": {
+    "area_hectares": 2.4,
+    "cultivar": "Robusta",
+    "gfw_deforestation_free": true,
+    "gfw_last_checked": "2026-04-24T09:15:00Z",
+    "boundary_ipfs_url": "https://gateway.pinata.cloud/ipfs/bafybeig...",
+    "mantle_registry_address": "0xFARMER_REGISTRY_ADDRESS"
+  },
+  "credit": {
+    "score": 600,
+    "tier": "ENHANCED",
+    "max_loan_usdc": 500,
+    "ltv_pct": 65,
+    "total_repayments": 2,
+    "total_defaults": 0,
+    "total_deliveries": 8
+  },
+  "active_loan": {
+    "loan_id": "LOAN-2026-004821",
+    "batch_id": "BATCH-2026-004821",
+    "principal_usdc": 450.00,
+    "originated_at": "2026-04-15T09:00:00Z",
+    "current_stage": "GRADED",
+    "collateral_value_usdc": 692.31,
+    "ltv_pct": 65
+  },
+  "batch_history": [
+    {
+      "batch_id": "BATCH-2025-001234",
+      "weight_kg": 55.0,
+      "grade": "screen15",
+      "delivered_at": "2025-10-10T09:00:00Z",
+      "final_stage": "SETTLED",
+      "had_loan": true,
+      "loan_repaid": true
+    },
+    {
+      "batch_id": "BATCH-2025-000891",
+      "weight_kg": 48.5,
+      "grade": "screen18",
+      "delivered_at": "2025-04-03T08:00:00Z",
+      "final_stage": "SETTLED",
+      "had_loan": true,
+      "loan_repaid": true
+    }
+  ],
+  "traceability_profile_url": "https://trace.asilichain.africa/farmer/UG-KAS-2024-001234"
+}
+```
+
+## Response Fields
+
+| Field | Description |
+|-------|-------------|
+| `credit.score` | Current on-chain CreditScore (500 start, +50 per repayment) |
+| `credit.tier` | `STANDARD` (500–549) / `ENHANCED` (550–649) / `PREMIUM` (650–749) / `INSTITUTIONAL` (750+) |
+| `credit.max_loan_usdc` | Maximum loan available at current tier |
+| `credit.ltv_pct` | Current LTV percentage based on score tier |
+| `active_loan` | `null` if no current loan |
+| `batch_history` | Most recent 10 batches, descending |
+| `traceability_profile_url` | Public URL — accessible without authentication |
+
+## Lookup by Phone Number
+
+```bash
+GET /farmers?phone=+256701234567
+```
+
+Returns the same structure. Phone lookup requires `COOPERATIVE` or `ADMIN` token (phone is sensitive data).
+
+## Errors
+
+| Code | HTTP | Trigger |
+|------|------|---------|
+| `FARMER_NOT_FOUND` | 404 | `farmer_id` not in FarmerRegistry |
+| `FARMER_INACTIVE` | 410 | Farmer has been deactivated |

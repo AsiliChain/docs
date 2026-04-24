@@ -1,0 +1,75 @@
+---
+title: Errors
+order: 2
+label: Errors
+---
+
+# Errors
+
+All AsiliChain API errors return a consistent JSON structure with a machine-readable `code` and a human-readable `message`.
+
+## Error Response Format
+
+```json
+{
+  "error": {
+    "code": "BATCH_NOT_ELIGIBLE",
+    "message": "Batch BATCH-2026-004821 must be at GRADED stage or above to generate a DDS. Current stage: DELIVERED.",
+    "docs": "https://docs.asilichain.africa/api-reference/errors#BATCH_NOT_ELIGIBLE",
+    "request_id": "req_01HXYZ..."
+  }
+}
+```
+
+## HTTP Status Codes
+
+| Status | Meaning |
+|--------|---------|
+| `200 OK` | Request succeeded |
+| `201 Created` | Resource created (farmer registered, batch submitted) |
+| `202 Accepted` | Request received, processing async (MAAIF fallback pending GPS) |
+| `400 Bad Request` | Invalid request body or parameters |
+| `401 Unauthorized` | Missing or invalid Bearer token |
+| `403 Forbidden` | Valid token but insufficient permissions (e.g. AGENT token on COOPERATIVE endpoint) |
+| `404 Not Found` | Resource not found (farmer ID, batch ID, loan ID) |
+| `409 Conflict` | Duplicate resource (farmer already registered, batch already active loan) |
+| `422 Unprocessable` | Valid format but business logic rejection (GFW check failed, stage out of order) |
+| `429 Too Many Requests` | Rate limit exceeded |
+| `500 Internal Server Error` | Unexpected server error — contact support with `request_id` |
+| `503 Service Unavailable` | Mantle RPC or Hedera HCS temporarily unavailable |
+
+## Error Code Reference
+
+| Code | HTTP Status | Trigger | Resolution |
+|------|-------------|---------|-----------|
+| `FARMER_NOT_REGISTERED` | 404 | MAAIF farmer ID not in FarmerRegistry | Register farmer first via `POST /farmers/register` |
+| `FARMER_ALREADY_REGISTERED` | 409 | MAAIF farmer ID already exists | Use `GET /farmers/{id}` to retrieve |
+| `GFW_CHECK_FAILED` | 422 | Farm polygon failed deforestation check | Farm ineligible — log for manual review |
+| `GFW_API_UNAVAILABLE` | 503 | GFW API timeout after 3 retries | Retry after 5 minutes; if persistent, contact support |
+| `MAAIF_API_UNAVAILABLE` | 202 | MAAIF NTS not responding | Fallback to agent GPS walk |
+| `BATCH_NOT_ELIGIBLE` | 422 | Batch stage too low for operation | Check current stage via `GET /batch/{id}` |
+| `BATCH_HAS_ACTIVE_LOAN` | 409 | BatchToken already locked as collateral | Resolve existing loan before originating new |
+| `STAGE_OUT_OF_ORDER` | 422 | Attempted to skip a stage | Stages must advance sequentially |
+| `INVALID_GRADE` | 400 | Grade not in accepted set | Accepted: `screen18`, `screen15`, `FAQ`, `PB` |
+| `PO_NOT_CONFIRMED` | 422 | PurchaseOrder exists but not confirmed | Cooperative must confirm PO before COMMITTED stage |
+| `LOAN_NOT_FOUND` | 404 | No active loan for this batch | Batch has no current loan |
+| `STALE_PRICE_FEED` | 503 | Chainlink feed >1 hour old | Loan origination paused — retry when feed updates |
+| `INVALID_SIGNATURE` | 401 | Alchemy webhook signature mismatch | Check `ALCHEMY_WEBHOOK_SECRET` configuration |
+| `PAYOUT_FAILED` | 500 | Kotani Pay API returned error | Farmer payout queued for retry; batch still settled |
+| `DDS_TRACES_PENDING` | 202 | DDS generated but TRACES filing in retry queue | DDS available at `ipfs_url`; TRACES reference pending |
+| `COOPERATIVE_NOT_FOUND` | 404 | Cooperative ID not recognised | Verify cooperative is onboarded |
+| `INSUFFICIENT_COLLATERAL` | 422 | BatchToken value below minimum loan threshold | Minimum loan: $50 USDC |
+
+## Handling Async Operations
+
+Some operations are async — they return `202 Accepted` immediately and complete in the background. Poll the resource to check status:
+
+```bash
+# Submit batch (returns 202 if Mantle tx is pending)
+POST /batch/submit → { "job_id": "job_01HXYZ...", "status": "PENDING" }
+
+# Poll for completion
+GET /jobs/job_01HXYZ... → { "status": "COMPLETE", "batch_id": "BATCH-2026-004821", "tx_hash": "0x..." }
+```
+
+Webhook-based integrations receive a push notification instead of needing to poll.

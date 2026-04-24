@@ -1,0 +1,138 @@
+---
+title: MAAIF NTS
+order: 3
+label: MAAIF NTS
+---
+
+# MAAIF NTS Integration
+
+The Ministry of Agriculture, Animal Industry and Fisheries National Traceability System (MAAIF NTS) is AsiliChain's primary data source for farmer registration. This page covers the API integration pattern and fallback behaviour.
+
+:::danger First action — before any code
+The MAAIF NTS API access request must be initiated at the ministry level before Phase 1 development begins. This is a government partnership conversation, not a technical task. Without NTS API access, the primary registration path falls back to manual agent registration — more expensive and slower.
+:::
+
+## API Wrapper
+
+```typescript
+// packages/api/lib/maaif.ts
+
+interface MAAIFFarmerRecord {
+  farmer_id: string;           // "UG-KAS-2024-001234"
+  cooperative_id: string;      // "COOP-MBALE-001"
+  ucda_licence: string;        // Cooperative UCDA licence number
+  farm_boundary: {
+    type: 'Polygon';
+    coordinates: number[][][];
+  };
+  area_hectares: number;       // e.g. 2.4
+  cultivar: string;            // "Robusta" | "Arabica"
+  registration_date: string;   // ISO 8601
+}
+
+export async function fetchFarmerRecord(
+  nationalFarmerId: string
+): Promise<MAAIFFarmerRecord | null> {
+  try {
+    const response = await fetch(
+      `${process.env.MAAIF_NTS_BASE_URL}/api/v1/farmers/${nationalFarmerId}`,
+      {
+        headers: {
+          Authorization: `Bearer ${process.env.MAAIF_NTS_API_KEY}`,
+          'Content-Type': 'application/json',
+        },
+        // 5-second timeout — fallback to manual if slow
+        signal: AbortSignal.timeout(5000),
+      }
+    );
+
+    if (!response.ok) return null;
+    return response.json();
+  } catch {
+    // Network error or timeout — trigger fallback
+    return null;
+  }
+}
+```
+
+## Registration Flow (Primary Path)
+
+```typescript
+// packages/api/app/api/farmers/register/route.ts
+
+export async function POST(req: NextRequest) {
+  const { national_farmer_id, cooperative_id, phone } = await req.json();
+
+  // 1. Fetch from MAAIF NTS
+  const maaifRecord = await fetchFarmerRecord(national_farmer_id);
+
+  let registrationData;
+  let usedFallback = false;
+
+  if (maaifRecord) {
+    // Primary path: government data
+    registrationData = {
+      maaifFarmerId: maaifRecord.farmer_id,
+      farmBoundary: maaifRecord.farm_boundary,
+      areaHectares: maaifRecord.area_hectares,
+      cooperativeId: maaifRecord.cooperative_id,
+    };
+  } else {
+    // Fallback: manual GPS from agent app
+    // Returns 202 Accepted — agent must complete GPS walk
+    usedFallback = true;
+    return NextResponse.json(
+      { status: 'PENDING_GPS', message: 'MAAIF NTS unavailable. Agent GPS walk required.' },
+      { status: 202 }
+    );
+  }
+
+  // 2. GFW deforestation check
+  const gfwResult = await checkDeforestation(registrationData.farmBoundary);
+  if (!gfwResult.deforestationFree) {
+    return NextResponse.json(
+      { error: 'GFW_CHECK_FAILED', detail: gfwResult.reason },
+      { status: 422 }
+    );
+  }
+
+  // 3. Pin GPS GeoJSON to IPFS
+  const ipfsCid = await pinGeoJSON(registrationData.farmBoundary);
+
+  // 4. Register on Mantle (FarmerRegistry.sol)
+  const txHash = await registerFarmerOnChain({
+    ...registrationData,
+    farmBoundaryIpfsCid: ipfsCid,
+    gfwDeforestationFree: true,
+  });
+
+  // 5. Write HCS REGISTERED event
+  await writeHCSEvent({ event: 'REGISTERED', farmer_id: national_farmer_id, ...});
+
+  // 6. Store phone number in Supabase (off-chain — privacy)
+  await supabase.from('farmer_phones').insert({ farmer_id: national_farmer_id, phone });
+
+  return NextResponse.json({ status: 'REGISTERED', tx_hash: txHash });
+}
+```
+
+## Fallback: Manual Agent GPS Walk
+
+When MAAIF NTS is unavailable, the agent app guides the field agent through a GPS boundary walk:
+
+1. Agent opens agent app → "Register Farmer (Manual)"
+2. Agent walks farm perimeter — app records GPS points at each corner
+3. App auto-closes polygon when agent returns within 10m of start
+4. Polygon submitted to API as if it were MAAIF data, flagged as `source: "agent_manual"`
+5. Record queued for NTS reconciliation at next MAAIF sync
+
+Manual registrations are valid for all AsiliChain operations but flagged in DDS documents as "direct verification" pending MAAIF reconciliation.
+
+## Data Privacy
+
+Phone numbers are **never stored on-chain**. They are stored in Supabase with row-level security:
+- Only the API service role can read them
+- Encrypted at rest (Supabase AES-256)
+- Accessible only via authenticated API calls
+
+MAAIF data (farmer ID, GPS) is stored on-chain (hashed) and on IPFS (raw GeoJSON with access controls). This is consistent with Uganda's Data Protection and Privacy Act 2019 — the data originates from and is owned by MAAIF.

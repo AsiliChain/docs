@@ -1,0 +1,121 @@
+---
+title: Payment Architecture
+order: 5
+label: Payment Architecture
+---
+
+# Payment Architecture
+
+AsiliChain handles two distinct payment flows: outbound farmer payouts and inbound MFI deposits. Each uses a dedicated integration designed for its specific institutional and regulatory context.
+
+## Payment Flow Overview
+
+```mermaid
+graph TD
+    subgraph INBOUND ["Inbound — MFI Capital"]
+        MFI["UGAFODE / ENCOT / aBi Finance\nBank wire (UGX or USD)"]
+        TF["TransFi\nBank → USDC conversion\nISO27001 + SOC2 Type 2"]
+        LV["LendingVault.sol\nMantle mainnet\nUSDC pool"]
+    end
+
+    subgraph OUTBOUND ["Outbound — Farmer Payouts"]
+        LV2["LendingVault.sol\nLoan disbursement approved"]
+        API["AsiliChain API\nPOST /kotanipay/payout"]
+        KP["Kotani Pay\nUSDC → UGX conversion"]
+        MTN["MTN Mobile Money\nUganda"]
+        F["👨‍🌾 Farmer\nphone notification < 60s"]
+    end
+
+    MFI -->|"Wire transfer"| TF
+    TF -->|"USDC on Mantle"| LV
+    LV -->|"Loan approved"| LV2
+    LV2 --> API --> KP --> MTN --> F
+```
+
+## Inbound: MFI Deposits via TransFi
+
+MFIs wire in UGX or USD. TransFi converts to USDC and delivers to the LendingVault address on Mantle.
+
+```
+UGAFODE wires UGX 364,000,000 (~$100,000)
+        ↓
+TransFi FX: UGX → USD at live rate (fee: ~1.5–2.5%)
+        ↓
+TransFi: USD → USDC (1:1, no slippage)
+        ↓
+USDC delivered to LendingVault address on Mantle
+        ↓
+API calls LendingVault.deposit(amount, mfiAddress)
+        ↓
+MFI receives vault shares (ERC-4626 pattern)
+MFI portal shows: "$97,500 deposited · Earning 8-10% APY"
+Total elapsed: 1–24 hours (bank wire dependent)
+```
+
+**MFI entry cost:** ~1.5–2.5% (FX spread + TransFi fee). Payback at 8% yield: < 3 months.
+
+## Outbound: Farmer Payouts via Kotani Pay
+
+BatchToken confirmed → Kotani Pay called → MTN MoMo credited.
+
+```typescript
+// packages/api/lib/kotanipay.ts
+export async function triggerFarmerPayout(params: {
+  phone: string;        // +256XXXXXXXXX
+  amount_usdc: number;  // from BatchToken value × LTV
+  farmer_id: string;
+  batch_id: string;
+}) {
+  const response = await fetch(`${process.env.KOTANIPAY_BASE_URL}/payout`, {
+    method: 'POST',
+    headers: {
+      'Authorization': `Bearer ${process.env.KOTANIPAY_API_KEY}`,
+      'Content-Type': 'application/json',
+    },
+    body: JSON.stringify({
+      phone: params.phone,
+      amount_usdc: params.amount_usdc,
+      chain: 'mantle',
+      currency: 'UGX',
+      network: 'MTN_UG',
+      reference: params.batch_id,
+    }),
+  });
+  return response.json();
+}
+```
+
+**Retry logic:** Three retries at 30s / 60s / 120s intervals. On third failure, payment queued for manual review with full on-chain receipt preserved. Farmer can collect at cooperative office against batch receipt.
+
+## Gas Sponsorship for Cooperative Wallets
+
+Cooperative wallets pay Mantle gas (MNT) for contract interactions. At $0.002 per ZK proof:
+- BatchToken mint: ~$0.002
+- TraceLog stage update: ~$0.001
+- LendingVault loan approval: ~$0.003
+- **Annual cooperative cost: ~$7/year** for typical 500-batch-per-season cooperative
+
+Gas is sponsored by the AsiliChain protocol wallet for farmer-initiated USSD sessions. Cooperative dashboards use cooperative-funded wallets.
+
+## Auto-Repayment Settlement
+
+On EXPORTED event, LendingVault executes the settlement atomically:
+
+```solidity
+function onExported(uint256 batchId, uint256 buyerPaymentUsdc) external {
+    Loan storage loan = activeLoan[batchId];
+    uint256 repayment = loan.principal + loan.accruedInterest;
+    uint256 protocolFee = (repayment * PROTOCOL_FEE_BPS) / 10000; // 4%
+    uint256 reserve = (repayment * RESERVE_BPS) / 10000;          // 1-2%
+    uint256 netToFarmer = buyerPaymentUsdc - repayment - protocolFee - reserve;
+
+    // Repay MFI pool
+    _repayPool(loan.mfiAddress, repayment);
+    // Collect protocol fee
+    ProtocolFee(protocolFeeContract).collect(protocolFee);
+    // Update credit score
+    CreditScore(creditScoreContract).recordRepayment(loan.farmerId, +50);
+    // Disburse net to farmer via Kotani Pay (async, triggered by event)
+    emit NetDisbursementReady(loan.farmerId, netToFarmer);
+}
+```

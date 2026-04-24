@@ -1,0 +1,122 @@
+---
+title: Hedera HCS Audit Layer
+order: 4
+label: Hedera HCS Audit Layer
+---
+
+# Hedera HCS Audit Layer
+
+Hedera Consensus Service (HCS) is AsiliChain's independent, append-only audit log. It records every stage event from the protocol — a permanent, tamper-proof chain of custody that neither AsiliChain nor any cooperative can alter.
+
+## Why HCS, Not Mantle Alone
+
+Mantle is where the economic logic lives — contracts, tokens, loans. HCS is where the audit trail lives — readable by any regulator or EU buyer without understanding Solidity or querying a smart contract.
+
+| Requirement | Mantle | Hedera HCS |
+|-------------|--------|-----------|
+| Smart contract execution | ✅ | ❌ |
+| Token minting and ownership | ✅ | ❌ |
+| Lending vault operations | ✅ | ❌ |
+| Append-only immutable audit log | Partial (events) | ✅ Purpose-built |
+| Governance credibility (IBM/Google/FedEx/Boeing) | Ethereum ecosystem | ✅ HCS governing council |
+| Human-readable JSON messages | Requires decoder | ✅ Native |
+| Queryable without Solidity knowledge | Requires ABI | ✅ REST API |
+| Regulatory acceptance (EU auditors) | Growing | ✅ Established |
+
+## HCS Topic Structure
+
+AsiliChain uses one primary HCS topic per cooperative deployment:
+
+```
+Topic: 0.0.XXXXXXX   (created once per cooperative)
+  │
+  ├── Message: REGISTERED    (farm GPS verified)
+  ├── Message: DELIVERED     (batch submitted, BatchToken minted)
+  ├── Message: GRADED        (quality assessment passed)
+  ├── Message: MILLED        (processing complete)
+  ├── Message: WAREHOUSED    (storage confirmed)
+  ├── Message: COMMITTED     (PurchaseOrder confirmed)
+  ├── Message: EXPORTED      (shipment confirmed)
+  ├── Message: SETTLED       (loan repaid, net disbursed)
+  └── Message: DDS_GENERATED (DDS IPFS CID recorded)
+```
+
+## Message Format
+
+Every HCS message follows a consistent schema:
+
+```json
+{
+  "protocol": "asilichain",
+  "version": "1.0",
+  "event": "DELIVERED",
+  "batch_id": "BATCH-2026-004821",
+  "farmer_id": "UG-KAS-2024-001234",
+  "cooperative_id": "COOP-MBALE-001",
+  "timestamp": "2026-04-17T10:23:00Z",
+  "mantle_tx_hash": "0xabc123...",
+  "mantle_block": 14782341,
+  "data": {
+    "weight_kg": 67.5,
+    "collection_point_gps": { "lat": 1.0656, "lng": 34.1772 },
+    "collector_agent_id": "AGENT-001"
+  },
+  "recorded_by": "0xCOOP_WALLET_ADDRESS"
+}
+```
+
+## Integration Code
+
+```typescript
+// packages/api/lib/hedera.ts
+import { Client, TopicMessageSubmitTransaction } from '@hashgraph/sdk';
+
+const client = Client.forMainnet();
+client.setOperator(
+  process.env.HEDERA_ACCOUNT_ID!,
+  process.env.HEDERA_PRIVATE_KEY!
+);
+
+export async function writeHCSEvent(event: AsiliChainEvent) {
+  const message = JSON.stringify({
+    protocol: 'asilichain',
+    version: '1.0',
+    ...event,
+    timestamp: new Date().toISOString(),
+  });
+
+  const tx = await new TopicMessageSubmitTransaction()
+    .setTopicId(process.env.HEDERA_TOPIC_ID!)
+    .setMessage(message)
+    .execute(client);
+
+  const receipt = await tx.getReceipt(client);
+  return receipt.topicSequenceNumber?.toString();
+}
+```
+
+## Querying HCS for DDS Generation
+
+The DDS pipeline fetches the complete stage history for a batch by querying HCS:
+
+```typescript
+// Fetch all messages for a batch from HCS mirror node
+const response = await fetch(
+  `https://mainnet-public.mirrornode.hedera.com/api/v1/topics/${topicId}/messages?limit=100`
+);
+const messages = await response.json();
+const batchHistory = messages.messages
+  .map(m => JSON.parse(atob(m.message)))
+  .filter(m => m.batch_id === batchId)
+  .sort((a, b) => new Date(a.timestamp).getTime() - new Date(b.timestamp).getTime());
+```
+
+## Immutability Guarantee
+
+HCS messages are submitted to Hedera's Hashgraph consensus — finality in 3–5 seconds. Once confirmed:
+- The message cannot be deleted
+- The message cannot be modified
+- The sequence number is permanent
+- The timestamp is consensus-verified (not self-reported)
+
+This is why EUDR auditors can trust the stage timestamps — they are not from AsiliChain's database. They are from a consensus network governed by IBM, Google, FedEx, and Boeing.

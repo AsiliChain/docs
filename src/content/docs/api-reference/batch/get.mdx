@@ -1,0 +1,103 @@
+---
+title: Get Batch
+order: 3
+label: Get Batch
+---
+
+# Get Batch
+
+Retrieves complete data for a single BatchToken including stage history, loan status, and DDS eligibility.
+
+## Endpoint
+
+```
+GET /batch/{batch_id}
+```
+
+**Auth:** Any valid token. Public batch data (stage, grade, weight) is returned to all authenticated callers. Loan data is only returned to the cooperative that owns the batch and MFI tokens.
+
+## Request
+
+```bash
+curl https://api.asilichain.africa/batch/BATCH-2026-004821 \
+  -H "Authorization: Bearer {token}"
+```
+
+## Response
+
+```json
+{
+  "batch_id": "BATCH-2026-004821",
+  "token_id": 4821,
+  "farmer_id": "UG-KAS-2024-001234",
+  "cooperative_id": "COOP-MBALE-001",
+  "weight_kg": 67.5,
+  "grade": "screen18",
+  "moisture_pct": 11.2,
+  "current_stage": "GRADED",
+  "dds_eligible": true,
+  "collection_point": {
+    "lat": 1.0656,
+    "lng": 34.1772
+  },
+  "farm": {
+    "maaif_farmer_id": "UG-KAS-2024-001234",
+    "area_hectares": 2.4,
+    "gfw_deforestation_free": true,
+    "farm_boundary_ipfs": "ipfs://bafybeig..."
+  },
+  "stage_history": [
+    {
+      "stage": "DELIVERED",
+      "timestamp": "2026-04-15T08:30:00Z",
+      "recorded_by": "0xAGENT_WALLET",
+      "mantle_tx": "0xabc...",
+      "hedera_sequence": "847201",
+      "evidence_ipfs": "ipfs://bafybeid..."
+    },
+    {
+      "stage": "GRADED",
+      "timestamp": "2026-04-17T14:00:00Z",
+      "recorded_by": "0xCOOP_WALLET",
+      "mantle_tx": "0xbcd...",
+      "hedera_sequence": "847291",
+      "evidence_ipfs": "ipfs://bafybeig...",
+      "evidence": {
+        "grade": "screen18",
+        "moisture_pct": 11.2,
+        "cupping_score": 84.5
+      }
+    }
+  ],
+  "loan": {
+    "active": true,
+    "principal_usdc": 450.00,
+    "originated_at": "2026-04-15T09:00:00Z",
+    "due_at_export": true,
+    "current_ltv_pct": 65,
+    "collateral_value_usdc": 692.31
+  },
+  "purchase_order": null,
+  "dds": null,
+  "traceability_url": "https://trace.asilichain.africa/batch/BATCH-2026-004821",
+  "mantle_token_id": 4821,
+  "mantle_explorer_url": "https://explorer.mantle.xyz/token/0xBATCH_TOKEN.../instance/4821"
+}
+```
+
+## Public Traceability URL
+
+The `traceability_url` is a public page readable by anyone — EU buyers, auditors, cooperatives — without authentication. It displays:
+- Farm GPS location (polygon on map)
+- Stage history with timestamps
+- Grade and weight
+- GFW deforestation status
+- DDS reference (if generated)
+
+This URL is embedded in QR codes on physical coffee bags.
+
+## Errors
+
+| Code | Trigger |
+|------|---------|
+| `BATCH_NOT_FOUND` | `batch_id` not recognised in FarmerRegistry or Supabase |

@@ -1,0 +1,72 @@
+---
+title: Development Roadmap
+order: 18
+label: Development Roadmap
+---
+
+# Development Roadmap
+
+AsiliChain follows a 44-week pilot-to-scale roadmap structured around verifiable milestones. Each phase gate requires confirmed performance data before proceeding.
+
+## Phase Overview
+
+| Phase | Timeline | Farmers | Capital | Key milestone |
+|-------|----------|---------|---------|---------------|
+| Phase 1 — Pilot | Weeks 1–20 | 200 | $50–100k grant | First auto-repayment on Mantle mainnet |
+| Phase 2 — MFI Entry | Weeks 21–36 | 2,000 | $500k–1M MFI | UGAFODE live on LendingVault |
+| Phase 3 — Scale | Weeks 37–52 | 10,000 | $3M+ | 5 cooperatives, 3 commodity traders on buyer portal |
+| Phase 4 — Regional | Year 2+ | 50,000+ | $10M+ | Ethiopia or Kenya cooperative pilot |
+
+## Phase 1: Pilot (Weeks 1–20)
+
+**Goal:** Prove the core loop works end-to-end with real farmers in Uganda.
+
+| Week | Milestone |
+|------|-----------|
+| 1–2 | MAAIF NTS API access conversation initiated. Kotani Pay Mantle integration confirmed. |
+| 3–6 | Smart contracts deployed to Mantle Sepolia testnet. Hardhat test suite complete. |
+| 7–10 | Agent app (Next.js PWA) built. USSD flow live on Africa's Talking sandbox. |
+| 11–14 | Hedera HCS integration tested. Alchemy webhooks firing correctly. |
+| 15–17 | Cooperative partner onboarded (target: Mbale, Eastern Uganda). 200 farmers registered. |
+| 18–20 | First mainnet season: batches delivered, graded, exported. **First auto-repayment recorded.** |
+
+**Phase 1 gate:** At least 50 loans auto-repaid on Mantle mainnet with verified Hedera HCS audit trail before proceeding to Phase 2.
+
+**Blocking pre-launch items:**
+- Kotani Pay USDC on Mantle → Uganda MTN MoMo: live $1 test required
+- Alchemy webhook fires for EXPORTED event within 30 seconds
+- MAAIF NTS API returns farmer record for test farmer IDs
+
+## Phase 2: MFI Entry (Weeks 21–36)
+
+**Goal:** Replace grant capital with licensed MFI capital. First institutional lending relationship.
+
+| Week | Milestone |
+|------|-----------|
+| 21–23 | Phase 1 repayment report prepared. UGAFODE meeting with data. |
+| 24–26 | UGAFODE legal review of UMRA technology provider classification. |
+| 27–30 | TransFi MFI deposit integration live. UGAFODE wire test ($10,000). |
+| 31–33 | UGAFODE live on LendingVault. Second cooperative onboarded. |
+| 34–36 | 2,000 farmers active. DDS pipeline filing to EU TRACES confirmed. |
+
+## Phase 3: Scale (Weeks 37–52)
+
+**Goal:** Five cooperatives, regional commodity trader buyer portal, $3M loan book.
+
+| Milestone | Target |
+|-----------|--------|
+| Five cooperatives active | Different regions of Uganda |
+| aBi Finance / ENCOT on LendingVault | Diversified MFI capital base |
+| Sucafina or Olam on buyer portal | First commodity trader API integration |
+| 10,000 farmers registered | MAAIF NTS as primary registration path |
+| DDS auto-generation processing 50+ shipments/season | EUDR pipeline at commercial scale |
+
+## Phase 4: Regional Expansion (Year 2+)
+
+Uganda is the proof of concept. The architecture is designed from the start to be replicated with:
+- Country-specific USSD flow (language + format)
+- Country regulator mapping (Ethiopia: NBE; Kenya: CBK + SASRA)
+- Government data API (Ethiopia: MoA; Kenya: Agriculture CS)
+- Local cooperative partner agreements
+
+Target markets: Ethiopia (first — largest African producer), Kenya, Rwanda, Tanzania.

@@ -1,0 +1,46 @@
+---
+title: Developer Overview
+order: 0
+label: Developer Overview
+---
+
+# Developer Documentation
+
+This section covers the technical architecture, smart contract specifications, integration guides, and deployment instructions for the AsiliChain Protocol.
+
+## What You Will Find Here
+
+| Section | Contents |
+|---------|----------|
+| [Architecture](./architecture) | Single-chain Mantle design, Ethereum relationship, Hedera HCS |
+| [Smart Contracts](./contracts) | All 7 contracts — specifications, interfaces, deployment order |
+| [RWA Architecture](./rwa/index) | BatchToken as RWA, UWRSA legal anchor, Mantle TaaS |
+| [Payment Integration](./integrations/kotani-pay) | Kotani Pay + TransFi integration guides |
+| [Security](./security) | Access control, audit requirements, upgrade safety |
+| [Failure Modes](./failure-modes) | How the protocol behaves under adverse conditions |
+
+## Stack at a Glance
+
+```
+Smart contracts:    Solidity 0.8.20 · OpenZeppelin Upgradeable
+Chain:              Mantle Network (chainId 5000) — ZK Rollup via OP Succinct/SP1
+Audit log:          Hedera HCS
+Farmer payouts:     Kotani Pay API (USDC → MTN MoMo)
+MFI deposits:       TransFi (bank wire → USDC → LendingVault)
+Price feeds:        Chainlink AggregatorV3Interface
+RPC + webhooks:     Alchemy
+Off-chain storage:  Pinata (IPFS) · Supabase
+USSD gateway:       Africa's Talking (*384#)
+Government data:    MAAIF NTS API (primary) · direct agent (fallback)
+Legal anchor:       Uganda Warehouse Receipt System Act (2006)
+```
+
+## Pre-Launch Verification Checklist
+
+These three items are **blocking** — do not deploy to mainnet without them:
+
+| Verification | Test | Blocking? |
+|-------------|------|-----------|
+| Kotani Pay USDC on Mantle → Uganda MTN MoMo | Send $1 test payout from Mantle Sepolia to Uganda MTN test number | YES |
+| TransFi Uganda bank wire → USDC → Mantle | Sandbox deposit simulation | YES (Phase 2) |
+| Alchemy Mantle webhook fires for EXPORTED event | Emit test event, confirm webhook in < 30s | YES |

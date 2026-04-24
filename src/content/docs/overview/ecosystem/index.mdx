@@ -1,0 +1,77 @@
+---
+title: Ecosystem Overview
+order: 13
+label: Ecosystem Overview
+---
+
+# Ecosystem & Partners
+
+AsiliChain is built within the Mantle Network ecosystem — the world's largest Ethereum ZK rollup by TVL — with strategic relationships across institutional finance, payment infrastructure, and regulatory frameworks.
+
+## Why Mantle
+
+AsiliChain is on Mantle because Mantle is the only chain where all four of the following are simultaneously true:
+
+| Requirement | Why Mantle | Alternatives |
+|------------|-----------|-------------|
+| **1-hour finality** | OP Succinct/SP1 ZK rollup — completed September 2025 | Ethereum: 7-day optimistic; Polygon: similar |
+| **Institutional infrastructure** | TaaS, QCDT, $200M EcoFund, Bybit integration | No comparable agricultural RWA programme elsewhere |
+| **EU regulatory alignment** | QCDT is the world's first DFSA-approved tokenised money market fund on any chain | Critical for MFI and EU buyer trust |
+| **Near-zero gas fees** | $0.002 proving cost per transaction | BatchToken operations would be economically unviable on Ethereum mainnet |
+
+## Ecosystem Map
+
+```mermaid
+graph TD
+    AC[\"⚡ AsiliChain\"]
+
+    subgraph MANTLE [\"Mantle Ecosystem\"]
+        MN[\"Mantle Network\"]
+        TAAS[\"Tokenization-as-a-Service\"]
+        QCDT[\"QCDT (DFSA-approved MMF)\"]
+        ECOFUND[\"$200M EcoFund\"]
+        BYBIT[\"Bybit 80M users\"]
+        AAVE[\"Aave V3 on Mantle\"]
+    end
+
+    subgraph PAYMENT [\"Payment Rails\"]
+        KP[\"Kotani Pay → MTN MoMo\"]
+        TF[\"TransFi → Bank Wire\"]
+        AT[\"Africa's Talking USSD\"]
+    end
+
+    subgraph DATA [\"Data Infrastructure\"]
+        MAAIF[\"MAAIF NTS\"]
+        GFW[\"Global Forest Watch\"]
+        CHAINLINK[\"Chainlink Price Feeds\"]
+        ALCHEMY[\"Alchemy Webhooks\"]
+    end
+
+    subgraph AUDIT [\"Audit & Compliance\"]
+        HEDERA[\"Hedera HCS\"]
+        IPFS[\"Pinata / IPFS\"]
+        TRACES[\"EU TRACES\"]
+    end
+
+    AC --> MANTLE
+    AC --> PAYMENT
+    AC --> DATA
+    AC --> AUDIT
+```
+
+## Strategic Relationships
+
+### Mantle EcoFund ($200M)
+The primary Phase 1 and Phase 2 funding target. See [Mantle EcoFund](./mantle-ecofund) for full strategy.
+
+### Bybit Institutional
+80 million users. Bybit's commodity desk has existing relationships with the institutional coffee traders (Sucafina, Olam, Louis Dreyfus) who are AsiliChain's primary buyer portal targets. See [Bybit Strategy](./bybit-strategy).
+
+### Kotani Pay (Tether-acquired, October 2025)
+The exclusive farmer payout rail. USDC → UGX → MTN MoMo in under 60 seconds. Tether's acquisition strengthens Kotani Pay's capital position and longevity.
+
+### TransFi
+The institutional on-ramp for MFI capital. Bank wire → USDC → LendingVault. ISO27001 + SOC2 Type 2 certification makes it acceptable to regulated financial institutions.
+
+### Hedera HCS
+IBM, Google, FedEx, Boeing governance council. The consortium backing makes Hedera HCS records acceptable to EU regulators and institutional buyers without further validation.

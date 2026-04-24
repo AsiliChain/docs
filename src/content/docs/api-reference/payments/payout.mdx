@@ -1,0 +1,104 @@
+---
+title: Farmer Payout
+order: 1
+label: Farmer Payout
+---
+
+# Farmer Payout
+
+Triggers a USDC → UGX → MTN Mobile Money payout to a farmer via Kotani Pay. Called automatically by the Alchemy webhook on EXPORTED event. Can also be called manually by a COOPERATIVE token for exceptional cases (e.g. net-only payment without a loan).
+
+## Endpoint
+
+```
+POST /payments/farmer-payout
+```
+
+**Auth:** `COOPERATIVE` or `ADMIN` token.
+
+:::info Usually auto-triggered
+This endpoint is normally called automatically by the Alchemy webhook handler when a `StageUpdated(EXPORTED)` event fires. Manual calls are for exceptional cases only.
+:::
+
+## Request
+
+```bash
+curl -X POST https://api.asilichain.africa/payments/farmer-payout \
+  -H "Authorization: Bearer {cooperative_token}" \
+  -H "Content-Type: application/json" \
+  -d '{
+    "farmer_id": "UG-KAS-2024-001234",
+    "batch_id": "BATCH-2026-004821",
+    "amount_usdc": 518.50,
+    "reason": "NET_COFFEE_PAYMENT",
+    "cooperative_id": "COOP-MBALE-001"
+  }'
+```
+
+## Request Body
+
+| Field | Type | Required | Description |
+|-------|------|----------|-------------|
+| `farmer_id` | string | Yes | MAAIF farmer ID |
+| `batch_id` | string | Yes | Associated batch reference for audit |
+| `amount_usdc` | number | Yes | USDC amount to disburse |
+| `reason` | string | Yes | `NET_COFFEE_PAYMENT`, `LOAN_DISBURSEMENT`, `TOP_UP`, `MANUAL` |
+| `cooperative_id` | string | Yes | Must match token's cooperative |
+
+## Response
+
+```json
+{
+  "payout_id": "PAY-2026-004821-001",
+  "status": "PROCESSING",
+  "farmer_id": "UG-KAS-2024-001234",
+  "amount_usdc": 518.50,
+  "estimated_ugx": 1910882,
+  "phone": "+256XXXXXXXX",
+  "kotanipay_reference": "KP-2026-XYZ",
+  "estimated_completion_seconds": 60,
+  "created_at": "2026-04-20T12:00:00Z"
+}
+```
+
+## Checking Payout Status
+
+```bash
+GET /payments/farmer-payout/{payout_id}
+```
+
+```json
+{
+  "payout_id": "PAY-2026-004821-001",
+  "status": "COMPLETED",
+  "amount_usdc": 518.50,
+  "amount_ugx": 1910882,
+  "kotanipay_reference": "KP-2026-XYZ",
+  "mtn_transaction_id": "MTN20260420123456",
+  "completed_at": "2026-04-20T12:00:47Z",
+  "elapsed_seconds": 47
+}
+```
+
+## Payout Status Values
+
+| Status | Meaning |
+|--------|---------|
+| `PROCESSING` | Kotani Pay accepted, MTN MoMo pending |
+| `COMPLETED` | Farmer received MTN MoMo notification |
+| `FAILED` | Kotani Pay returned error — retry queued |
+| `RETRY_1` / `RETRY_2` / `RETRY_3` | Automatic retry in progress |
+| `MANUAL_REVIEW` | Three retries exhausted — requires human intervention |
+
+## Retry Behaviour
+
+On `FAILED`, the system automatically retries at 30s / 60s / 120s intervals. On `MANUAL_REVIEW`, cooperative manager is notified and farmer can collect at cooperative office against batch receipt. The batch is still marked SETTLED on-chain — the USDC is held in a Supabase-recorded holding balance.
+
+## Errors
+
+| Code | Trigger |
+|------|---------|
+| `FARMER_NOT_REGISTERED` | `farmer_id` not in FarmerRegistry |
+| `PHONE_NOT_FOUND` | No phone number on record for farmer |
+| `DUPLICATE_PAYOUT` | Payout already processed for this batch + reason |
+| `KOTANIPAY_UNAVAILABLE` | Kotani Pay API unreachable after 3 attempts |

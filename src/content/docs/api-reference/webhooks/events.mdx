@@ -1,0 +1,295 @@
+---
+title: Webhook Event Reference
+order: 2
+label: Webhook Event Reference
+---
+
+# Webhook Event Reference
+
+Complete payload reference for every event AsiliChain emits. All payloads share the same envelope — only the `data` object differs per event type.
+
+## Envelope (All Events)
+
+```json
+{
+  "webhook_id": "wh_01HXYZ...",
+  "event": "batch.exported",
+  "api_version": "2026-04-01",
+  "created_at": "2026-04-20T11:55:00Z",
+  "data": { ... }
+}
+```
+
+---
+
+## farmer.registered
+
+```json
+{
+  "event": "farmer.registered",
+  "data": {
+    "farmer_id": "UG-KAS-2024-001234",
+    "cooperative_id": "COOP-MBALE-001",
+    "registration_source": "MAAIF_NTS",
+    "farm_area_hectares": 2.4,
+    "gfw_deforestation_free": true,
+    "boundary_ipfs_cid": "bafybeig...",
+    "credit_score_initial": 500,
+    "mantle_tx_hash": "0xabc123...",
+    "registered_at": "2026-04-24T09:16:00Z"
+  }
+}
+```
+
+## batch.delivered
+
+BatchToken minted. Primary event for MFI dashboards tracking new collateral.
+
+```json
+{
+  "event": "batch.delivered",
+  "data": {
+    "batch_id": "BATCH-2026-004821",
+    "token_id": 4821,
+    "farmer_id": "UG-KAS-2024-001234",
+    "cooperative_id": "COOP-MBALE-001",
+    "weight_kg": 67.5,
+    "grade": "screen18",
+    "moisture_pct": 11.2,
+    "collateral_value_usdc": 656.25,
+    "max_loan_usdc": 393.75,
+    "dds_eligible": false,
+    "mantle_tx_hash": "0xdef456...",
+    "hedera_sequence_number": "847245",
+    "delivered_at": "2026-04-17T08:30:00Z"
+  }
+}
+```
+
+## batch.graded
+
+DDS eligibility becomes true after this event.
+
+```json
+{
+  "event": "batch.graded",
+  "data": {
+    "batch_id": "BATCH-2026-004821",
+    "token_id": 4821,
+    "grade": "screen18",
+    "moisture_pct": 11.2,
+    "cupping_score": 84.5,
+    "dds_eligible": true,
+    "collateral_value_usdc": 692.31,
+    "max_loan_usdc": 450.00,
+    "evidence_ipfs_cid": "bafybeid...",
+    "mantle_tx_hash": "0xbcd789...",
+    "graded_at": "2026-04-17T14:00:00Z"
+  }
+}
+```
+
+## batch.warehoused
+
+```json
+{
+  "event": "batch.warehoused",
+  "data": {
+    "batch_id": "BATCH-2026-004821",
+    "token_id": 4821,
+    "warehouse_id": "UWRSA-WH-MBALE-001",
+    "lot_number": "LOT-2026-0089",
+    "uwrsa_receipt_reference": "UWRSA-REC-2026-0089",
+    "collateral_value_usdc": 730.00,
+    "ltv_pct": 70,
+    "warehoused_at": "2026-04-19T09:00:00Z"
+  }
+}
+```
+
+## batch.committed
+
+LTV increases to 80% on PurchaseOrder confirmation.
+
+```json
+{
+  "event": "batch.committed",
+  "data": {
+    "batch_id": "BATCH-2026-004821",
+    "token_id": 4821,
+    "purchase_order_id": "PO-2026-000123",
+    "buyer_organisation": "Supremo Coffee GmbH",
+    "agreed_price_usdc": 750.00,
+    "collateral_value_usdc": 750.00,
+    "ltv_pct": 80,
+    "committed_at": "2026-04-19T15:00:00Z"
+  }
+}
+```
+
+## batch.exported
+
+Most critical event. Triggers auto-repayment on-chain.
+
+```json
+{
+  "event": "batch.exported",
+  "data": {
+    "batch_id": "BATCH-2026-004821",
+    "token_id": 4821,
+    "farmer_id": "UG-KAS-2024-001234",
+    "cooperative_id": "COOP-MBALE-001",
+    "ucda_export_permit": "UCDA-EXP-2026-04821",
+    "destination_country": "DE",
+    "vessel_name": "MSC Eleonora",
+    "bill_of_lading": "MSCUG123456",
+    "has_active_loan": true,
+    "auto_repayment_triggered": true,
+    "dds_id": "DDS-2026-004821",
+    "mantle_tx_hash": "0xfgh901...",
+    "exported_at": "2026-04-20T11:54:30Z"
+  }
+}
+```
+
+## batch.settled
+
+Auto-repayment complete. BatchToken burned. Net proceeds disbursed.
+
+```json
+{
+  "event": "batch.settled",
+  "data": {
+    "batch_id": "BATCH-2026-004821",
+    "token_id": 4821,
+    "farmer_id": "UG-KAS-2024-001234",
+    "buyer_payment_usdc": 750.00,
+    "principal_repaid_usdc": 450.00,
+    "interest_repaid_usdc": 18.00,
+    "protocol_fee_usdc": 9.00,
+    "net_to_farmer_usdc": 268.50,
+    "farmer_credit_score_new": 650,
+    "batch_token_burned": true,
+    "payout_id": "PAY-2026-004821-001",
+    "settled_at": "2026-04-20T12:00:47Z"
+  }
+}
+```
+
+## loan.originated
+
+```json
+{
+  "event": "loan.originated",
+  "data": {
+    "loan_id": "LOAN-2026-004821",
+    "farmer_id": "UG-KAS-2024-001234",
+    "batch_id": "BATCH-2026-004821",
+    "mfi_id": "MFI-UGAFODE-001",
+    "principal_usdc": 450.00,
+    "apr_pct": 16.0,
+    "ltv_pct": 65,
+    "collateral_value_usdc": 692.31,
+    "originated_at": "2026-04-15T09:00:00Z"
+  }
+}
+```
+
+## loan.defaulted
+
+Emitted after forbearance expires. CreditScore −100 applied.
+
+```json
+{
+  "event": "loan.defaulted",
+  "data": {
+    "loan_id": "LOAN-2026-004821",
+    "farmer_id": "UG-KAS-2024-001234",
+    "principal_usdc": 450.00,
+    "loss_absorbed_by_reserve_usdc": 468.00,
+    "farmer_credit_score_new": 400,
+    "farmer_blocked_from_new_loans": true,
+    "defaulted_at": "2026-07-15T00:00:00Z"
+  }
+}
+```
+
+## dds.generated
+
+```json
+{
+  "event": "dds.generated",
+  "data": {
+    "dds_id": "DDS-2026-004821",
+    "shipment_id": "SHIP-2026-00042",
+    "cooperative_id": "COOP-MBALE-001",
+    "batch_count": 3,
+    "farms_count": 47,
+    "total_weight_kg": 18450,
+    "destination_country": "DE",
+    "ipfs_cid": "bafybeig...",
+    "ipfs_url": "https://gateway.pinata.cloud/ipfs/bafybeig...",
+    "traces_reference": "DDS-EU-2026-UG-004821",
+    "generated_at": "2026-04-20T11:30:00Z"
+  }
+}
+```
+
+## payout.completed
+
+```json
+{
+  "event": "payout.completed",
+  "data": {
+    "payout_id": "PAY-2026-004821-001",
+    "farmer_id": "UG-KAS-2024-001234",
+    "batch_id": "BATCH-2026-004821",
+    "amount_usdc": 518.50,
+    "amount_ugx": 1910882,
+    "mtn_transaction_id": "MTN20260420123456",
+    "elapsed_seconds": 47,
+    "completed_at": "2026-04-20T12:00:47Z"
+  }
+}
+```
+
+## payout.failed
+
+All 3 retries exhausted. Cooperative must resolve manually.
+
+```json
+{
+  "event": "payout.failed",
+  "data": {
+    "payout_id": "PAY-2026-004821-001",
+    "farmer_id": "UG-KAS-2024-001234",
+    "batch_id": "BATCH-2026-004821",
+    "amount_usdc": 518.50,
+    "retry_count": 3,
+    "failure_reason": "MTN_ACCOUNT_INVALID",
+    "kotanipay_error_code": "RECIPIENT_NOT_FOUND",
+    "resolution": "Farmer can collect at cooperative office against batch receipt BATCH-2026-004821",
+    "failed_at": "2026-04-20T12:06:00Z"
+  }
+}
+```
+
+## credit.updated
+
+```json
+{
+  "event": "credit.updated",
+  "data": {
+    "farmer_id": "UG-KAS-2024-001234",
+    "event_type": "REPAYMENT",
+    "score_before": 550,
+    "score_after": 600,
+    "change": 50,
+    "tier_before": "ENHANCED",
+    "tier_after": "ENHANCED",
+    "batch_id": "BATCH-2026-004821",
+    "mantle_tx_hash": "0xghi234...",
+    "updated_at": "2026-04-20T12:00:47Z"
+  }
+}
+```

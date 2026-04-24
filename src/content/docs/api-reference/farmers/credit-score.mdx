@@ -1,0 +1,126 @@
+---
+title: Get Credit Score
+order: 3
+label: Get Credit Score
+---
+
+# Get Credit Score
+
+Retrieves a farmer's current on-chain credit score, tier, loan eligibility, and full score history. This endpoint reads directly from CreditScore.sol on Mantle — the data is authoritative and cannot be altered by AsiliChain.
+
+## Endpoint
+
+```
+GET /farmers/{farmer_id}/credit-score
+```
+
+**Auth:** Any valid token. Credit scores are public on-chain — this endpoint simply presents them in a readable format.
+
+## Request
+
+```bash
+curl https://api.asilichain.africa/farmers/UG-KAS-2024-001234/credit-score \
+  -H "Authorization: Bearer {token}"
+```
+
+## Response
+
+```json
+{
+  "farmer_id": "UG-KAS-2024-001234",
+  "score": 600,
+  "tier": "ENHANCED",
+  "score_floor": 0,
+  "score_ceiling": 850,
+  "loan_eligibility": {
+    "eligible": true,
+    "max_loan_usdc": 500,
+    "ltv_pct": 65,
+    "reason": null
+  },
+  "score_history": [
+    {
+      "event": "ACCOUNT_CREATED",
+      "score_before": 0,
+      "score_after": 500,
+      "change": +500,
+      "timestamp": "2026-01-15T08:30:00Z",
+      "batch_id": null
+    },
+    {
+      "event": "REPAYMENT",
+      "score_before": 500,
+      "score_after": 550,
+      "change": +50,
+      "timestamp": "2025-10-25T14:00:00Z",
+      "batch_id": "BATCH-2025-001234",
+      "mantle_tx": "0xaaa111..."
+    },
+    {
+      "event": "REPAYMENT",
+      "score_before": 550,
+      "score_after": 600,
+      "change": +50,
+      "timestamp": "2026-04-20T12:00:00Z",
+      "batch_id": "BATCH-2025-000891",
+      "mantle_tx": "0xbbb222..."
+    }
+  ],
+  "delivery_count": 8,
+  "repayment_count": 2,
+  "default_count": 0,
+  "next_tier": {
+    "tier": "PREMIUM",
+    "score_needed": 650,
+    "points_away": 50,
+    "benefit": "Max loan increases to $1,500. LTV increases to 70%."
+  },
+  "mantle_contract": "0xCREDIT_SCORE_ADDRESS",
+  "on_chain_verification_url": "https://explorer.mantle.xyz/address/0xCREDIT_SCORE_ADDRESS"
+}
+```
+
+## Score Events
+
+| Event | Change | Trigger |
+|-------|--------|---------|
+| `ACCOUNT_CREATED` | +500 | First registration |
+| `REPAYMENT` | +50 | Auto-repayment executed on EXPORTED event |
+| `DELIVERY` | +10 | BatchToken minted (even without a loan) |
+| `DEFAULT` | −100 | Loan not repaid after forbearance period |
+| `COOPERATIVE_PENALTY` | −25 | Applied when cooperative-level breach recorded |
+
+## Tier Reference
+
+| Tier | Score Range | Max Loan | LTV |
+|------|------------|---------|-----|
+| `STANDARD` | 500–549 | $200 | 60% |
+| `ENHANCED` | 550–649 | $500 | 65% |
+| `PREMIUM` | 650–749 | $1,500 | 70% |
+| `INSTITUTIONAL` | 750–850 | $5,000 | 80% |
+
+## Why Scores Are Public
+
+Credit scores are keyed to MAAIF government IDs — the same standard as a national credit bureau. Keeping scores public:
+
+- Allows any MFI to query before approving a loan — no AsiliChain intermediary required
+- Allows farmers to prove their creditworthiness to any future lender
+- Makes collusion between AsiliChain and cooperatives to manipulate scores detectable
+
+The `on_chain_verification_url` allows anyone to verify the score directly on Mantle Explorer without trusting this API.
+
+## MFI Use Case
+
+Before approving a loan, UGAFODE's credit officer calls:
+
+```bash
+GET /farmers/UG-KAS-2024-001234/credit-score
+```
+
+Receives `score: 600`, `tier: ENHANCED`, `max_loan_usdc: 500`, `default_count: 0`. Approves loan directly in the MFI portal — no paper credit application, no field visit, no waiting period.
+
+## Errors
+
+| Code | HTTP | Trigger |
+|------|------|---------|
+| `FARMER_NOT_FOUND` | 404 | `farmer_id` not in CreditScore contract |

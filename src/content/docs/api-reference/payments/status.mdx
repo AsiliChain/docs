@@ -1,0 +1,135 @@
+---
+title: Payment Status
+order: 3
+label: Payment Status
+---
+
+# Payment Status
+
+Retrieves the current status of any payment — farmer payout, MFI deposit, or loan disbursement — by its payment ID.
+
+## Endpoint
+
+```
+GET /payments/{payment_id}
+```
+
+**Auth:** `COOPERATIVE`, `MFI`, or `ADMIN` token. Cooperatives can only see payments related to their cooperative. MFIs can only see their own deposits.
+
+## Request
+
+```bash
+curl https://api.asilichain.africa/payments/PAY-2026-004821-001 \
+  -H "Authorization: Bearer {token}"
+```
+
+## Response (Farmer Payout)
+
+```json
+{
+  "payment_id": "PAY-2026-004821-001",
+  "payment_type": "FARMER_PAYOUT",
+  "status": "COMPLETED",
+  "farmer_id": "UG-KAS-2024-001234",
+  "batch_id": "BATCH-2026-004821",
+  "cooperative_id": "COOP-MBALE-001",
+  "amount_usdc": 518.50,
+  "amount_ugx": 1910882,
+  "exchange_rate": 3684.5,
+  "kotanipay_reference": "KP-2026-XYZ",
+  "mtn_transaction_id": "MTN20260420123456",
+  "reason": "NET_COFFEE_PAYMENT",
+  "created_at": "2026-04-20T12:00:00Z",
+  "completed_at": "2026-04-20T12:00:47Z",
+  "elapsed_seconds": 47,
+  "retry_count": 0
+}
+```
+
+## Response (MFI Deposit)
+
+```json
+{
+  "payment_id": "DEP-2026-MFI-0001",
+  "payment_type": "MFI_DEPOSIT",
+  "status": "COMPLETED",
+  "mfi_id": "MFI-UGAFODE-001",
+  "amount_usdc": 97500.00,
+  "source_currency": "UGX",
+  "source_amount": 364000000,
+  "transfi_payment_id": "TF-2026-PAY-0001",
+  "mantle_tx_hash": "0xfde789...",
+  "vault_shares_issued": 97500000,
+  "created_at": "2026-04-20T13:45:00Z",
+  "completed_at": "2026-04-20T14:00:00Z"
+}
+```
+
+## Response (Loan Disbursement)
+
+```json
+{
+  "payment_id": "DISB-2026-004821-001",
+  "payment_type": "LOAN_DISBURSEMENT",
+  "status": "COMPLETED",
+  "farmer_id": "UG-KAS-2024-001234",
+  "batch_id": "BATCH-2026-004821",
+  "loan_id": "LOAN-2026-004821",
+  "amount_usdc": 450.00,
+  "amount_ugx": 1657200,
+  "kotanipay_reference": "KP-2026-ABC",
+  "mtn_transaction_id": "MTN20260415093022",
+  "created_at": "2026-04-15T09:00:00Z",
+  "completed_at": "2026-04-15T09:00:52Z",
+  "elapsed_seconds": 52
+}
+```
+
+## Payment Status Values
+
+| Status | Applies to | Meaning |
+|--------|-----------|---------|
+| `PENDING` | All | Created, not yet sent to payment rail |
+| `PROCESSING` | Payouts | Sent to Kotani Pay, awaiting MTN confirmation |
+| `COMPLETED` | All | Successfully delivered |
+| `FAILED` | All | Rejected by payment rail |
+| `RETRY_1` | Payouts | First retry in progress (30s delay) |
+| `RETRY_2` | Payouts | Second retry in progress (60s delay) |
+| `RETRY_3` | Payouts | Third retry in progress (120s delay) |
+| `MANUAL_REVIEW` | Payouts | All retries exhausted — human intervention needed |
+| `REFUNDED` | Deposits | Deposit reversed (exceptional — contact support) |
+
+## List Payments for a Batch
+
+```bash
+GET /payments?batch_id=BATCH-2026-004821
+```
+
+```json
+{
+  "payments": [
+    {
+      "payment_id": "DISB-2026-004821-001",
+      "payment_type": "LOAN_DISBURSEMENT",
+      "status": "COMPLETED",
+      "amount_usdc": 450.00,
+      "completed_at": "2026-04-15T09:00:52Z"
+    },
+    {
+      "payment_id": "PAY-2026-004821-001",
+      "payment_type": "FARMER_PAYOUT",
+      "status": "COMPLETED",
+      "amount_usdc": 518.50,
+      "completed_at": "2026-04-20T12:00:47Z"
+    }
+  ],
+  "total": 2
+}
+```
+
+## Errors
+
+| Code | Trigger |
+|------|---------|
+| `PAYMENT_NOT_FOUND` | `payment_id` not recognised |
+| `INSUFFICIENT_PERMISSIONS` | Token does not have access to this payment |

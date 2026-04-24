@@ -1,0 +1,299 @@
+openapi: 3.0.3
+info:
+  title: AsiliChain REST API
+  description: |
+    AsiliChain Protocol REST API — batch submission, EUDR DDS generation, farmer payments, and webhook events.
+    **Base URL:** `https://api.asilichain.xyz/v1`
+  version: 1.0.0
+  contact:
+    name: AsiliChain Protocol
+    email: hello@asilichain.xyz
+    url: https://asilichain.xyz
+servers:
+  - url: https://api.asilichain.xyz/v1
+    description: Production
+  - url: https://api-staging.asilichain.xyz/v1
+    description: Staging
+tags:
+  - name: batch
+    description: Coffee batch submission and stage updates
+  - name: eudr
+    description: EUDR Due Diligence Statement generation
+  - name: payments
+    description: Farmer payouts and MFI deposits
+  - name: farmers
+    description: Farmer registration and credit scores
+  - name: webhooks
+    description: Alchemy-triggered on-chain event webhooks
+paths:
+  /batch/submit:
+    post:
+      tags: [batch]
+      summary: Submit a coffee batch
+      operationId: submitBatch
+      security:
+        - BearerAuth: []
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/BatchSubmitRequest'
+      responses:
+        '200':
+          description: Batch submitted successfully
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/BatchSubmitResponse'
+        '400':
+          $ref: '#/components/responses/BadRequest'
+        '401':
+          $ref: '#/components/responses/Unauthorized'
+  /batch/{id}:
+    get:
+      tags: [batch]
+      summary: Get batch details
+      operationId: getBatch
+      security:
+        - BearerAuth: []
+      parameters:
+        - in: path
+          name: id
+          required: true
+          schema:
+            type: string
+      responses:
+        '200':
+          description: Batch details
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/BatchSubmitResponse'
+  /eudr/generate-dds:
+    post:
+      tags: [eudr]
+      summary: Generate a EUDR Due Diligence Statement
+      operationId: generateDDS
+      security:
+        - BearerAuth: []
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/DDSRequest'
+      responses:
+        '200':
+          description: DDS generated
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/DDSResponse'
+  /payments/farmer-payout:
+    post:
+      tags: [payments]
+      summary: Trigger a farmer MTN Mobile Money payout
+      operationId: farmerPayout
+      security:
+        - BearerAuth: []
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/PayoutRequest'
+      responses:
+        '200':
+          description: Payout initiated
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/PayoutResponse'
+  /farmers/{id}/credit-score:
+    get:
+      tags: [farmers]
+      summary: Get a farmer's on-chain credit score
+      operationId: getFarmerCreditScore
+      security:
+        - BearerAuth: []
+      parameters:
+        - in: path
+          name: id
+          required: true
+          schema:
+            type: string
+      responses:
+        '200':
+          description: Credit score returned
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/CreditScoreResponse'
+components:
+  securitySchemes:
+    BearerAuth:
+      type: http
+      scheme: bearer
+      bearerFormat: JWT
+  schemas:
+    BatchSubmitRequest:
+      type: object
+      required: [farmer_id, cooperative_id, weight_kg, grade]
+      properties:
+        farmer_id:
+          type: string
+        cooperative_id:
+          type: string
+        weight_kg:
+          type: number
+          minimum: 1
+          maximum: 5000
+        grade:
+          type: string
+          enum: [screen18, screen15, screen12, bp1]
+        moisture_pct:
+          type: number
+          minimum: 8
+          maximum: 16
+        collection_point_gps:
+          type: object
+          properties:
+            lat:
+              type: number
+            lng:
+              type: number
+        collector_agent_id:
+          type: string
+    BatchSubmitResponse:
+      type: object
+      properties:
+        success:
+          type: boolean
+        batch_id:
+          type: string
+        token_id:
+          type: string
+        mantle_tx_hash:
+          type: string
+        hedera_message_id:
+          type: string
+        payment_status:
+          type: string
+        payment_amount_ugx:
+          type: integer
+        estimated_payment_seconds:
+          type: integer
+    DDSRequest:
+      type: object
+      required: [shipment_id, batch_ids, exporter_ucda_licence]
+      properties:
+        shipment_id:
+          type: string
+        batch_ids:
+          type: array
+          items:
+            type: string
+        exporter_ucda_licence:
+          type: string
+        buyer_company:
+          type: string
+        buyer_country:
+          type: string
+        shipping_date:
+          type: string
+          format: date
+        destination_port:
+          type: string
+    DDSResponse:
+      type: object
+      properties:
+        success:
+          type: boolean
+        dds_id:
+          type: string
+        ipfs_cid:
+          type: string
+        ipfs_url:
+          type: string
+        eu_traces_reference:
+          type: string
+        gfw_status:
+          type: string
+        farms_verified:
+          type: integer
+        total_weight_kg:
+          type: number
+    PayoutRequest:
+      type: object
+      required: [farmer_phone, amount_usdc, batch_id]
+      properties:
+        farmer_phone:
+          type: string
+        amount_usdc:
+          type: number
+        batch_id:
+          type: string
+        chain:
+          type: string
+          default: mantle
+        currency:
+          type: string
+          default: UGX
+        network:
+          type: string
+          default: MTN_UG
+    PayoutResponse:
+      type: object
+      properties:
+        success:
+          type: boolean
+        payment_id:
+          type: string
+        status:
+          type: string
+        amount_ugx:
+          type: integer
+        estimated_seconds:
+          type: integer
+    CreditScoreResponse:
+      type: object
+      properties:
+        farmer_id:
+          type: string
+        credit_score:
+          type: integer
+          minimum: 0
+          maximum: 1000
+        on_time_repayments:
+          type: integer
+        defaults:
+          type: integer
+        last_updated:
+          type: string
+          format: date-time
+        wallet_address:
+          type: string
+  responses:
+    BadRequest:
+      description: Bad request
+      content:
+        application/json:
+          schema:
+            type: object
+            properties:
+              error:
+                type: string
+              code:
+                type: string
+    Unauthorized:
+      description: Unauthorized
+      content:
+        application/json:
+          schema:
+            type: object
+            properties:
+              error:
+                type: string
+              code:
+                type: string

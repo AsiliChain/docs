@@ -1,0 +1,69 @@
+---
+title: Africa Expansion
+order: 20
+label: Africa Expansion
+---
+
+# Africa Expansion
+
+Uganda is the proof of concept. The AsiliChain architecture is designed from the start to replicate across East African coffee-producing countries with country-specific configuration rather than country-specific re-engineering.
+
+## The Replication Thesis
+
+Every target country shares the same structural conditions:
+
+| Condition | Uganda | Ethiopia | Kenya | Rwanda | Tanzania |
+|-----------|--------|---------|-------|--------|---------|
+| Smallholder-dominated production | ✅ | ✅ | ✅ | ✅ | ✅ |
+| EUDR exposure (EU export reliance) | Very high | Very high | High | High | High |
+| Government traceability programme | MAAIF NTS | MoA NTS | AFA | NAEB | TCB |
+| Mobile money penetration | MTN / Airtel | Telebirr | M-Pesa | MTN | M-Pesa / Airtel |
+| Cooperative structure | UCDA-registered | Union-based | FCS-registered | NAEB-certified | TBC-registered |
+
+## What Changes Per Country
+
+Only four components require country-specific configuration:
+
+| Component | Uganda config | Ethiopia config | Kenya config |
+|-----------|--------------|----------------|-------------|
+| USSD flow | *384# · Uganda Telecom | *127# · Telebirr | *334# · M-Pesa |
+| Government API | MAAIF NTS | MoA National Coffee Traceability | AFA Coffee Directorate |
+| Mobile money rail | Kotani Pay → MTN Uganda | Kotani Pay → Telebirr (confirm Kotani Pay Ethiopia coverage) | Kotani Pay → M-Pesa Kenya |
+| Language layer | English · Luganda | Amharic · Oromifa | English · Swahili |
+| Regulator mapping | BoU · FIA · UMRA · MAAIF | NBE · NBE crypto framework | CBK · SASRA · CMA |
+
+## What Does Not Change
+
+- All smart contracts on Mantle (chainId 5000) — one deployment, all countries
+- Hedera HCS audit layer — same topics, country-tagged messages
+- LendingVault — same contract, separate MFI pools per country
+- EUDR DDS pipeline — same Article 4 requirements for all producing countries
+- TransFi MFI deposit rail — 70+ countries supported
+
+## Target Market Sequence
+
+| Market | Priority | Rationale | Timeline |
+|--------|---------|-----------|---------|
+| **Uganda** | Phase 1–3 | Founding market. MAAIF NTS. $2.4B exports. | Weeks 1–52 |
+| **Ethiopia** | Phase 4 first | Africa's largest producer. 400,000+ metric tons/year. Very high EUDR exposure. | Year 2 |
+| **Kenya** | Phase 4 concurrent | Mature cooperative infrastructure. M-Pesa ecosystem. Rafiki MFI contact. | Year 2 |
+| **Rwanda** | Phase 5 | NAEB government partnership. Small but high-value specialty. | Year 3 |
+| **Tanzania** | Phase 5 | Mount Kilimanjaro and Southern Highlands cooperatives. | Year 3 |
+| **Côte d'Ivoire / Ghana** | Phase 6 | Cocoa expansion — same architecture, different commodity. | Year 4+ |
+
+## Ethiopia Deep Dive
+
+Ethiopia is the highest-priority expansion after Uganda:
+
+- **Scale:** 400,000+ metric tons/year (3× Uganda's volume)
+- **Origin story:** Coffee's genetic origin is Ethiopia — Kaffa region. Brand narrative is powerful.
+- **EUDR exposure:** Ethiopia exports heavily to EU. ECX (Ethiopia Commodity Exchange) is the export gateway.
+- **Government data:** Ethiopia MoA has a national coffee traceability programme — same integration pattern as MAAIF NTS.
+- **Mobile money:** Telebirr launched 2021, 30M+ users. Kotani Pay Ethiopia coverage must be confirmed.
+- **Risk:** NBE's crypto regulatory framework requires legal opinion before Phase 4 launch.
+
+## Commodity Expansion: Beyond Coffee
+
+The BatchToken architecture is commodity-agnostic. The EUDR covers cocoa (Côte d'Ivoire, Ghana) under the same regulation. Phase 6 targets cocoa as the second commodity — same contracts, same DDS pipeline, different GPS polygon datasets and price feeds.
+
+Other candidates: sesame (Ethiopia), tea (Kenya/Rwanda), cashew (Tanzania/Mozambique).

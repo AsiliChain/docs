@@ -1,0 +1,48 @@
+---
+title: Ethereum & Mantle (ZK L2)
+order: 2
+label: Ethereum & Mantle (ZK L2)
+---
+
+# AsiliChain's Relationship with Ethereum
+
+AsiliChain is an **Ethereum L2 application** — built on Mantle Network, using Ethereum's security model, standard Solidity, and the full Ethereum developer toolchain.
+
+## Mantle Is Now a ZK Rollup
+
+:::info ZK upgrade completed September 16, 2025
+Mantle completed its transition from optimistic rollup to **ZK rollup** using OP Succinct (powered by Succinct's SP1 zkVM). OP Succinct is a type-1 zkEVM — full EVM equivalence. All AsiliChain contracts work without modification.
+
+| Metric | Before (optimistic) | After (ZK) |
+|--------|---------------------|-----------|
+| Finality | 7 days | **1 hour** |
+| Withdrawal time | 7 days | 6 hours |
+| Proving cost | N/A | $0.002/tx |
+| TVL | ~$2B | **>$2B (world's largest ZK rollup)** |
+:::
+
+## Why This Matters for AsiliChain
+
+**1-hour finality is the difference between MFI participation and rejection.**  
+A 7-day challenge period is unacceptable for regulated capital. MFI treasury managers and compliance teams require institutional-grade settlement speed. 1-hour finality meets that requirement.
+
+## What EVM Compatibility Means in Practice
+
+| Tool / Library | Works on Mantle? |
+|----------------|-----------------|
+| Solidity 0.8.x | ✅ Identical |
+| OpenZeppelin Upgradeable | ✅ Identical |
+| Hardhat + TypeChain | ✅ Identical |
+| Foundry (forge test) | ✅ Identical |
+| Viem / Ethers.js | ✅ Identical |
+| Trail of Bits / Certik audits | ✅ Deep Mantle expertise |
+
+## Mantle's Institutional Infrastructure
+
+| Feature | Relevance to AsiliChain |
+|---------|------------------------|
+| Tokenization-as-a-Service (TaaS) | Pre-built KYC tooling and legal structuring for RWA tokenisation |
+| QCDT (DFSA-approved) | Mantle hosts the world's first DFSA-approved tokenised money market fund — proves the compliance framework works for regulated products |
+| $200M EcoFund | Primary Phase 1 funding target for AsiliChain |
+| Bybit deep integration | 80M-user distribution channel. Institutional desk with commodity trader relationships. |
+| Aave V3 on Mantle | DeFi composability for future LendingVault integrations |

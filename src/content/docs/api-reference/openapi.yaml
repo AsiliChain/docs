@@ -1,0 +1,751 @@
+openapi: 3.1.0
+info:
+  title: AsiliChain API
+  version: 1.0.0
+  description: |
+    The AsiliChain API connects field agents, cooperatives, MFIs, and buyers
+    to the AsiliChain protocol on Mantle Network. All write operations produce
+    on-chain transactions on Mantle mainnet and audit events on Hedera HCS.
+  contact:
+    name: AsiliChain Support
+    email: team@asilichain.africa
+    url: https://asilichain.africa
+
+servers:
+  - url: https://api.asilichain.africa
+    description: Production (Mantle mainnet)
+  - url: https://staging-api.asilichain.africa
+    description: Staging (Mantle Sepolia)
+
+security:
+  - BearerAuth: []
+
+tags:
+  - name: Farmers
+    description: Farmer registration and profile management
+  - name: Batches
+    description: BatchToken lifecycle — submit, stage, retrieve
+  - name: EUDR
+    description: Due Diligence Statement generation and GFW verification
+  - name: Payments
+    description: Farmer payouts, MFI deposits, payment status
+  - name: Webhooks
+    description: Event notifications to registered endpoints
+
+paths:
+
+  # ──────────────────────────────────────────────
+  # FARMERS
+  # ──────────────────────────────────────────────
+  /farmers/register:
+    post:
+      tags: [Farmers]
+      summary: Register a farmer
+      description: Verifies via MAAIF NTS, runs GFW check, pins GPS to IPFS, writes to FarmerRegistry.sol.
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/FarmerRegisterRequest'
+      responses:
+        '201':
+          description: Farmer registered successfully
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/FarmerRegisterResponse'
+        '202':
+          description: MAAIF NTS unavailable — manual GPS walk required
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/PendingGPSResponse'
+        '409':
+          description: Farmer already registered
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+        '422':
+          description: GFW deforestation check failed
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+
+  /farmers/{farmer_id}:
+    get:
+      tags: [Farmers]
+      summary: Get farmer profile
+      parameters:
+        - name: farmer_id
+          in: path
+          required: true
+          schema:
+            type: string
+            example: UG-KAS-2024-001234
+      responses:
+        '200':
+          description: Farmer profile
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/FarmerProfile'
+        '404':
+          $ref: '#/components/responses/NotFound'
+
+  /farmers/{farmer_id}/credit-score:
+    get:
+      tags: [Farmers]
+      summary: Get farmer credit score
+      description: Reads directly from CreditScore.sol on Mantle. Public — no cooperative restriction.
+      parameters:
+        - name: farmer_id
+          in: path
+          required: true
+          schema:
+            type: string
+      responses:
+        '200':
+          description: Credit score and tier
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/CreditScoreResponse'
+        '404':
+          $ref: '#/components/responses/NotFound'
+
+  # ──────────────────────────────────────────────
+  # BATCHES
+  # ──────────────────────────────────────────────
+  /batch/submit:
+    post:
+      tags: [Batches]
+      summary: Submit a coffee batch
+      description: Mints a BatchToken on Mantle. Writes DELIVERED event to Hedera HCS. Triggers Kotani Pay payment.
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/BatchSubmitRequest'
+      responses:
+        '201':
+          description: Batch submitted and BatchToken minted
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/BatchSubmitResponse'
+        '404':
+          description: Farmer not registered
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+
+  /batch/{batch_id}:
+    get:
+      tags: [Batches]
+      summary: Get batch details
+      parameters:
+        - name: batch_id
+          in: path
+          required: true
+          schema:
+            type: string
+            example: BATCH-2026-004821
+      responses:
+        '200':
+          description: Batch data including stage history
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/BatchDetail'
+        '404':
+          $ref: '#/components/responses/NotFound'
+
+  /batch/{batch_id}/stage:
+    patch:
+      tags: [Batches]
+      summary: Update batch stage
+      description: Advances batch to next custody stage. Writes to TraceLog.sol and Hedera HCS.
+      parameters:
+        - name: batch_id
+          in: path
+          required: true
+          schema:
+            type: string
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/StageUpdateRequest'
+      responses:
+        '200':
+          description: Stage updated
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/StageUpdateResponse'
+        '422':
+          description: Stage out of order or batch not eligible
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+
+  # ──────────────────────────────────────────────
+  # EUDR
+  # ──────────────────────────────────────────────
+  /eudr/generate-dds:
+    post:
+      tags: [EUDR]
+      summary: Generate a Due Diligence Statement
+      description: Fetches data from Mantle + Hedera + GFW, assembles PDF, pins to IPFS, files with EU TRACES.
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/GenerateDDSRequest'
+      responses:
+        '201':
+          description: DDS generated
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/GenerateDDSResponse'
+        '422':
+          description: Batch not eligible (below GRADED) or GFW failed
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+
+  /eudr/verify-gfw:
+    post:
+      tags: [EUDR]
+      summary: Run GFW deforestation check
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/GFWVerifyRequest'
+      responses:
+        '200':
+          description: GFW check result
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/GFWVerifyResponse'
+
+  /eudr/dds/{dds_id}:
+    get:
+      tags: [EUDR]
+      summary: Get DDS by ID
+      parameters:
+        - name: dds_id
+          in: path
+          required: true
+          schema:
+            type: string
+      responses:
+        '200':
+          description: DDS document metadata
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/DDSDetail'
+        '404':
+          $ref: '#/components/responses/NotFound'
+
+  # ──────────────────────────────────────────────
+  # PAYMENTS
+  # ──────────────────────────────────────────────
+  /payments/farmer-payout:
+    post:
+      tags: [Payments]
+      summary: Trigger farmer payout
+      description: Calls Kotani Pay to convert USDC to UGX and credit farmer MTN MoMo.
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/FarmerPayoutRequest'
+      responses:
+        '202':
+          description: Payout initiated
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/FarmerPayoutResponse'
+
+  /payments/mfi-deposit:
+    post:
+      tags: [Payments]
+      summary: Confirm MFI deposit
+      description: Confirms TransFi settlement and calls LendingVault.deposit() on Mantle.
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/MFIDepositRequest'
+      responses:
+        '201':
+          description: Deposit confirmed
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/MFIDepositResponse'
+
+  /payments/{payment_id}:
+    get:
+      tags: [Payments]
+      summary: Get payment status
+      parameters:
+        - name: payment_id
+          in: path
+          required: true
+          schema:
+            type: string
+      responses:
+        '200':
+          description: Payment details and status
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/PaymentStatus'
+        '404':
+          $ref: '#/components/responses/NotFound'
+
+# ──────────────────────────────────────────────
+# COMPONENTS
+# ──────────────────────────────────────────────
+components:
+  securitySchemes:
+    BearerAuth:
+      type: http
+      scheme: bearer
+      bearerFormat: JWT
+
+  responses:
+    NotFound:
+      description: Resource not found
+      content:
+        application/json:
+          schema:
+            $ref: '#/components/schemas/ErrorResponse'
+
+  schemas:
+    ErrorResponse:
+      type: object
+      properties:
+        error:
+          type: object
+          properties:
+            code:
+              type: string
+              example: FARMER_NOT_FOUND
+            message:
+              type: string
+            docs:
+              type: string
+            request_id:
+              type: string
+
+    FarmerRegisterRequest:
+      type: object
+      required: [national_farmer_id, cooperative_id, phone]
+      properties:
+        national_farmer_id:
+          type: string
+          example: UG-KAS-2024-001234
+        cooperative_id:
+          type: string
+          example: COOP-MBALE-001
+        phone:
+          type: string
+          example: "+256701234567"
+        registration_source:
+          type: string
+          enum: [MAAIF_NTS, AGENT_MANUAL]
+          default: MAAIF_NTS
+        manual_farm_polygon:
+          type: object
+          description: Required if registration_source is AGENT_MANUAL
+
+    FarmerRegisterResponse:
+      type: object
+      properties:
+        farmer_id:
+          type: string
+        status:
+          type: string
+          example: REGISTERED
+        cooperative_id:
+          type: string
+        farm:
+          type: object
+          properties:
+            area_hectares:
+              type: number
+            gfw_deforestation_free:
+              type: boolean
+            boundary_ipfs_cid:
+              type: string
+        credit_score:
+          type: integer
+          example: 500
+        mantle_tx_hash:
+          type: string
+        registered_at:
+          type: string
+          format: date-time
+
+    PendingGPSResponse:
+      type: object
+      properties:
+        status:
+          type: string
+          example: PENDING_GPS
+        farmer_id:
+          type: string
+        message:
+          type: string
+        agent_app_deep_link:
+          type: string
+
+    FarmerProfile:
+      type: object
+      properties:
+        farmer_id:
+          type: string
+        cooperative_id:
+          type: string
+        active:
+          type: boolean
+        farm:
+          type: object
+        credit:
+          type: object
+          properties:
+            score:
+              type: integer
+            tier:
+              type: string
+            max_loan_usdc:
+              type: number
+        active_loan:
+          type: object
+          nullable: true
+        batch_history:
+          type: array
+          items:
+            type: object
+
+    CreditScoreResponse:
+      type: object
+      properties:
+        farmer_id:
+          type: string
+        score:
+          type: integer
+        tier:
+          type: string
+        loan_eligibility:
+          type: object
+          properties:
+            eligible:
+              type: boolean
+            max_loan_usdc:
+              type: number
+            ltv_pct:
+              type: integer
+        score_history:
+          type: array
+          items:
+            type: object
+
+    BatchSubmitRequest:
+      type: object
+      required: [farmer_id, cooperative_id, weight_kg, grade, moisture_pct, collection_point]
+      properties:
+        farmer_id:
+          type: string
+        cooperative_id:
+          type: string
+        weight_kg:
+          type: number
+          example: 67.5
+        grade:
+          type: string
+          enum: [screen18, screen15, FAQ, PB]
+        moisture_pct:
+          type: number
+          example: 11.2
+        collection_point:
+          type: object
+          properties:
+            lat:
+              type: number
+            lng:
+              type: number
+        weight_slip_photo_base64:
+          type: string
+
+    BatchSubmitResponse:
+      type: object
+      properties:
+        batch_id:
+          type: string
+        token_id:
+          type: integer
+        status:
+          type: string
+          example: DELIVERED
+        mantle_tx_hash:
+          type: string
+        hedera_sequence_number:
+          type: string
+        payout_initiated:
+          type: boolean
+        payout_id:
+          type: string
+
+    BatchDetail:
+      type: object
+      properties:
+        batch_id:
+          type: string
+        token_id:
+          type: integer
+        farmer_id:
+          type: string
+        cooperative_id:
+          type: string
+        weight_kg:
+          type: number
+        grade:
+          type: string
+        current_stage:
+          type: string
+        dds_eligible:
+          type: boolean
+        stage_history:
+          type: array
+          items:
+            type: object
+        loan:
+          type: object
+          nullable: true
+        traceability_url:
+          type: string
+
+    StageUpdateRequest:
+      type: object
+      required: [new_stage, evidence, cooperative_id]
+      properties:
+        new_stage:
+          type: string
+          enum: [GRADED, MILLED, WAREHOUSED, EXPORTED]
+        evidence:
+          type: object
+        evidence_photo_base64:
+          type: string
+        cooperative_id:
+          type: string
+
+    StageUpdateResponse:
+      type: object
+      properties:
+        batch_id:
+          type: string
+        previous_stage:
+          type: string
+        new_stage:
+          type: string
+        mantle_tx_hash:
+          type: string
+        hedera_sequence_number:
+          type: string
+        dds_eligible:
+          type: boolean
+        timestamp:
+          type: string
+          format: date-time
+
+    GenerateDDSRequest:
+      type: object
+      required: [batch_ids, shipment_id, cooperative_id, buyer_organisation, destination_country]
+      properties:
+        batch_ids:
+          type: array
+          items:
+            type: string
+        shipment_id:
+          type: string
+        cooperative_id:
+          type: string
+        exporter_ucda_licence:
+          type: string
+        buyer_organisation:
+          type: string
+        destination_country:
+          type: string
+          example: DE
+
+    GenerateDDSResponse:
+      type: object
+      properties:
+        dds_id:
+          type: string
+        status:
+          type: string
+          example: FILED
+        ipfs_url:
+          type: string
+        ipfs_cid:
+          type: string
+        traces_reference:
+          type: string
+        generated_at:
+          type: string
+          format: date-time
+
+    GFWVerifyRequest:
+      type: object
+      properties:
+        farmer_id:
+          type: string
+        cooperative_id:
+          type: string
+        farm_polygon:
+          type: object
+          description: GeoJSON Polygon — alternative to farmer_id
+
+    GFWVerifyResponse:
+      type: object
+      properties:
+        farmer_id:
+          type: string
+        deforestation_free:
+          type: boolean
+        check_timestamp:
+          type: string
+          format: date-time
+        alert_area_ha:
+          type: number
+        eudr_compliant:
+          type: boolean
+
+    DDSDetail:
+      type: object
+      properties:
+        dds_id:
+          type: string
+        status:
+          type: string
+        ipfs_url:
+          type: string
+        traces_reference:
+          type: string
+        generated_at:
+          type: string
+          format: date-time
+        farms_count:
+          type: integer
+        total_weight_kg:
+          type: number
+
+    FarmerPayoutRequest:
+      type: object
+      required: [farmer_id, batch_id, amount_usdc, reason, cooperative_id]
+      properties:
+        farmer_id:
+          type: string
+        batch_id:
+          type: string
+        amount_usdc:
+          type: number
+        reason:
+          type: string
+          enum: [NET_COFFEE_PAYMENT, LOAN_DISBURSEMENT, TOP_UP, MANUAL]
+        cooperative_id:
+          type: string
+
+    FarmerPayoutResponse:
+      type: object
+      properties:
+        payout_id:
+          type: string
+        status:
+          type: string
+          example: PROCESSING
+        amount_usdc:
+          type: number
+        estimated_ugx:
+          type: integer
+        kotanipay_reference:
+          type: string
+        estimated_completion_seconds:
+          type: integer
+          example: 60
+
+    MFIDepositRequest:
+      type: object
+      required: [mfi_id, transfi_payment_id, amount_usdc]
+      properties:
+        mfi_id:
+          type: string
+        transfi_payment_id:
+          type: string
+        amount_usdc:
+          type: number
+        source_currency:
+          type: string
+          example: UGX
+        source_amount:
+          type: number
+
+    MFIDepositResponse:
+      type: object
+      properties:
+        deposit_id:
+          type: string
+        mfi_id:
+          type: string
+        amount_usdc:
+          type: number
+        vault_shares_received:
+          type: integer
+        mantle_tx_hash:
+          type: string
+        confirmed_at:
+          type: string
+          format: date-time
+
+    PaymentStatus:
+      type: object
+      properties:
+        payment_id:
+          type: string
+        payment_type:
+          type: string
+          enum: [FARMER_PAYOUT, LOAN_DISBURSEMENT, MFI_DEPOSIT]
+        status:
+          type: string
+          enum: [PENDING, PROCESSING, COMPLETED, FAILED, RETRY_1, RETRY_2, RETRY_3, MANUAL_REVIEW]
+        amount_usdc:
+          type: number
+        created_at:
+          type: string
+          format: date-time
+        completed_at:
+          type: string
+          format: date-time
+          nullable: true

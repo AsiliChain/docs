@@ -1,0 +1,120 @@
+---
+title: TraceLog.sol
+order: 4
+label: TraceLog.sol
+---
+
+# TraceLog.sol
+
+Records the eight-stage custody journey of every BatchToken from DELIVERED to SETTLED. Each stage update emits an event read by the Alchemy webhook, which writes to Hedera HCS. TraceLog is the on-chain stage machine; HCS is the human-readable audit trail.
+
+## Stage Enum
+
+```solidity
+enum TraceStage {
+    DELIVERED,    // 0 — BatchToken minted, coffee weighed at collection
+    GRADED,       // 1 — Quality assessment passed
+    MILLED,       // 2 — Processing complete
+    WAREHOUSED,   // 3 — Physical storage confirmed
+    COMMITTED,    // 4 — PurchaseOrder confirmed by buyer
+    EXPORTED,     // 5 — UCDA export licence confirmed — triggers auto-repayment
+    SETTLED       // 6 — Buyer USDC paid, loan repaid, net disbursed
+}
+```
+
+## Stage Transition Rules
+
+Stages must advance in order. No skipping. No reversal.
+
+| From | To | Who can trigger | Auto-trigger |
+|------|----|----------------|-------------|
+| DELIVERED | GRADED | COOP_ROLE (quality officer) | — |
+| GRADED | MILLED | COOP_ROLE (mill operator) | — |
+| MILLED | WAREHOUSED | COOP_ROLE (warehouse manager) | — |
+| WAREHOUSED | COMMITTED | PurchaseOrder.sol | On PO confirmation |
+| COMMITTED | EXPORTED | COOP_ROLE (exporter) | — |
+| EXPORTED | SETTLED | LendingVault.sol | On buyer USDC receipt |
+
+## Interface
+
+```solidity
+// Update stage (role-gated, enforces sequential order)
+function updateStage(
+    uint256 tokenId,
+    TraceStage newStage,
+    bytes32 evidenceIpfsCid   // Weight slip, grade certificate, warehouse receipt, etc.
+) external;
+
+// Get current stage
+function getCurrentStage(uint256 tokenId) external view returns (TraceStage);
+
+// Get full stage history with timestamps
+function getStageHistory(uint256 tokenId)
+    external view
+    returns (TraceStage[] memory stages, uint256[] memory timestamps);
+```
+
+## Contract Code
+
+```solidity
+pragma solidity ^0.8.20;
+
+import "@openzeppelin/contracts/access/AccessControl.sol";
+import "./BatchToken.sol";
+
+contract TraceLog is AccessControl {
+
+    BatchToken public immutable batchToken;
+
+    struct StageRecord {
+        TraceStage stage;
+        uint256 timestamp;
+        address recordedBy;
+        bytes32 evidenceCid;
+    }
+
+    mapping(uint256 => StageRecord[]) public stageHistory;
+    mapping(uint256 => TraceStage) public currentStage;
+
+    event StageUpdated(
+        uint256 indexed tokenId,
+        TraceStage indexed newStage,
+        address indexed recordedBy,
+        uint256 timestamp,
+        bytes32 evidenceCid
+    );
+
+    function updateStage(
+        uint256 tokenId,
+        TraceStage newStage,
+        bytes32 evidenceCid
+    ) external {
+        TraceStage current = currentStage[tokenId];
+        require(uint8(newStage) == uint8(current) + 1, "TraceLog: must advance one stage");
+        _checkRoleForStage(newStage);
+
+        stageHistory[tokenId].push(StageRecord({
+            stage: newStage,
+            timestamp: block.timestamp,
+            recordedBy: msg.sender,
+            evidenceCid: evidenceCid
+        }));
+
+        currentStage[tokenId] = newStage;
+
+        emit StageUpdated(tokenId, newStage, msg.sender, block.timestamp, evidenceCid);
+
+        // EXPORTED triggers LendingVault auto-repayment
+        if (newStage == TraceStage.EXPORTED) {
+            lendingVault.onExported(tokenId);
+        }
+    }
+}
+```
+
+## DDS Eligibility
+
+The DDS pipeline checks TraceLog before generating:
+- Batch must be at `GRADED` or beyond
+- Full stage history is fetched and included in the DDS document
+- Hedera HCS sequence numbers are cross-referenced for each stage timestamp
