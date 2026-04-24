@@ -4,8 +4,8 @@ import starlight from '@astrojs/starlight';
 import starlightOpenAPI, { openAPISidebarGroups } from 'starlight-openapi';
 
 export default defineConfig({
-  site: 'https://asilichain.github.io/docs',
-  base: '.',
+  site: 'https://asilichain.github.io',
+  base: '/docs',
   trailingSlash: 'never',
   integrations: [
     starlight({
@@ -39,31 +39,26 @@ export default defineConfig({
         ]),
       ],
       sidebar: [
-        // ── OVERVIEW ──────────────────────────────────────
         {
           label: 'Overview',
           collapsed: false,
           autogenerate: { directory: 'overview' },
         },
-        // ── DEVELOPER DOCS ────────────────────────────────
         {
           label: 'Developer Docs',
           collapsed: false,
           autogenerate: { directory: 'developer' },
         },
-        // ── API REFERENCE ─────────────────────────────────
         {
           label: 'API Reference',
           collapsed: false,
           autogenerate: { directory: 'api-reference' },
         },
-        // ── LEGAL ───────────────────────────────────────
         {
           label: 'Legal',
           collapsed: false,
           autogenerate: { directory: 'legal' },
         },
-        // ── BRAND ───────────────────────────────────────
         {
           label: 'Brand',
           collapsed: false,
