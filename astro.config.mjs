@@ -4,7 +4,8 @@ import starlight from '@astrojs/starlight';
 import starlightOpenAPI, { openAPISidebarGroups } from 'starlight-openapi';
 
 export default defineConfig({
-  site: 'https://docs.asilichain.xyz',
+  site: 'https://asilichain.github.io/docs',
+  base: '.',
   trailingSlash: 'never',
   integrations: [
     starlight({
