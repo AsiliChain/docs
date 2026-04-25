@@ -2,12 +2,17 @@
 import { defineConfig } from 'astro/config';
 import starlight from '@astrojs/starlight';
 import starlightOpenAPI, { openAPISidebarGroups } from 'starlight-openapi';
+import mermaid from 'astro-mermaid';
 
 export default defineConfig({
   site: 'https://asilichain.github.io',
   base: '/docs',
   trailingSlash: 'never',
   integrations: [
+    mermaid({
+      theme: 'default',
+      autoTheme: true,
+    }),
     starlight({
       title: 'AsiliChain',
       description: 'Traceability, collateral finance, and EUDR compliance for Africa\'s coffee farmers.',
@@ -24,6 +29,12 @@ export default defineConfig({
       head: [
         { tag: 'meta', attrs: { name: 'theme-color', content: '#4B2E0A' } },
       ],
+      expressiveCode: {
+        shikiConfig: {
+          langs: [],
+        },
+        themes: ['starlight-dark', 'starlight-light'],
+      },
       plugins: [
         starlightOpenAPI([
           {
