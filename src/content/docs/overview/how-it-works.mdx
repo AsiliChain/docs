@@ -12,7 +12,7 @@ next:
 
 # How AsiliChain Works
 
-AsiliChain activates Uganda's government coffee farmer data financially — turning compliance records into credit infrastructure without building a parallel database.
+AsiliChain activates Uganda's government coffee farmer data financially, turning compliance records into credit infrastructure without building a parallel database.
 
 ## The Core Loop
 
@@ -40,14 +40,14 @@ sequenceDiagram
 
 ## Four Outputs for Every Farmer
 
-Every batch delivered through AsiliChain produces four outputs automatically — regardless of whether the farmer has a loan:
+Every batch delivered through AsiliChain produces four outputs automatically, regardless of whether the farmer has a loan:
 
 | Output | How it works | Who benefits |
 |--------|-------------|-------------|
 | **60-second payment** | Kotani Pay converts USDC to UGX and credits MTN MoMo | Every farmer |
 | **EUDR compliance** | GPS + stage data auto-generates a DDS at export time | Cooperatives, exporters |
 | **Market price transparency** | Chainlink oracle prices are visible to the cooperative dashboard | Every farmer |
-| **On-chain credit history** | CreditScore begins building from first delivery — usable for future loans | Every farmer |
+| **On-chain credit history** | CreditScore begins building from first delivery, usable for future loans | Every farmer |
 
 ## The Eight Custody Stages
 
@@ -70,14 +70,14 @@ For farmers who want working capital:
 
 ```mermaid
 graph LR
-    REG[\"Farm registered\\nGPS verified\"]
-    GCT[\"GrowingCropToken\\nIssued at planting\\nLTV 30–65%\"]
-    LOAN1[\"Pre-harvest loan\\n14–18% APR\"]
-    BT[\"BatchToken\\nIssued at delivery\\nLTV 60–70%\"]
-    PO[\"PurchaseOrder\\nBuyer commits\"]
-    WRT[\"WarehouseReceiptToken\\nLTV 75–80%\"]
-    EXP[\"EXPORTED event\"]
-    REPAY[\"Auto-repayment\\nCreditScore +50\"]
+    REG["Farm registered\nGPS verified"]
+    GCT["GrowingCropToken\nIssued at planting\nLTV 30–65%"]
+    LOAN1["Pre-harvest loan\n14–18% APR"]
+    BT["BatchToken\nIssued at delivery\nLTV 60–70%"]
+    PO["PurchaseOrder\nBuyer commits"]
+    WRT["WarehouseReceiptToken\nLTV 75–80%"]
+    EXP["EXPORTED event"]
+    REPAY["Auto-repayment\nCreditScore +50"]
 
     REG --> GCT --> LOAN1
     LOAN1 --> BT --> PO --> WRT --> EXP --> REPAY

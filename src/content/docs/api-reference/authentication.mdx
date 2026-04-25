@@ -20,11 +20,11 @@ All AsiliChain API endpoints require authentication via a Bearer token issued to
 
 ## Getting a Token
 
-Tokens are issued after KYB (Know Your Business) verification of the cooperative or organisation. Contact team@asilichain.africa.
+Tokens are issued after KYB (Know Your Business) verification of the cooperative or organisation. Contact team@asilichain.xyz.
 
 ```bash
 # Exchange API key for Bearer token
-curl -X POST https://api.asilichain.africa/auth/token \
+curl -X POST https://api.asilichain.xyz/auth/token \
   -H "Content-Type: application/json" \
   -d '{
     "api_key": "ask_live_xxxxxxxxxxxxxxxxxxxx",
@@ -46,7 +46,7 @@ Response:
 
 ```bash
 # Include in all API requests
-curl https://api.asilichain.africa/batch/BATCH-2026-004821 \
+curl https://api.asilichain.xyz/batch/BATCH-2026-004821 \
   -H "Authorization: Bearer eyJhbGciOiJIUzI1NiIsInR..."
 ```
 
@@ -55,7 +55,7 @@ curl https://api.asilichain.africa/batch/BATCH-2026-004821 \
 Tokens expire after 24 hours. Refresh before expiry:
 
 ```bash
-curl -X POST https://api.asilichain.africa/auth/refresh \
+curl -X POST https://api.asilichain.xyz/auth/refresh \
   -H "Authorization: Bearer {current_token}"
 ```
 
@@ -76,8 +76,8 @@ function verifyAlchemySignature(body: string, signature: string, secret: string)
 
 | Environment | Base URL |
 |------------|---------|
-| Production | `https://api.asilichain.africa` |
-| Staging (Sepolia) | `https://staging-api.asilichain.africa` |
+| Production | `https://api.asilichain.xyz` |
+| Staging (Sepolia) | `https://staging-api.asilichain.xyz` |
 | Local development | `http://localhost:3000` |
 
 ## Rate Limits

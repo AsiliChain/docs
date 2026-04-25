@@ -1,37 +1,29 @@
 ---
-import type { Props } from '@astrojs/starlight/props';
 import Default from '@astrojs/starlight/components/Header.astro';
+import type { Props } from '@astrojs/starlight/props';
 ---
 <Default {...Astro.props}>
-  <nav class="header-nav" slot="before-title" aria-label="Main">
+  <nav slot="before-title" class="ac-nav" aria-label="Main sections">
     <a href="/docs/overview/">Overview</a>
     <a href="/docs/developer/">Developer Docs</a>
     <a href="/docs/api-reference/">API Reference</a>
   </nav>
 </Default>
-
 <style>
-  .header-nav {
+  .ac-nav {
     display: flex;
-    gap: 1.75rem;
+    gap: 1.5rem;
     align-items: center;
-    margin-left: 2rem;
+    padding-left: 1.5rem;
   }
-
-  .header-nav a {
+  .ac-nav a {
     font-size: 0.875rem;
     font-weight: 500;
     color: var(--sl-color-text);
     text-decoration: none;
-    opacity: 0.8;
+    opacity: 0.75;
     transition: opacity 0.15s;
   }
-
-  .header-nav a:hover {
-    opacity: 1;
-  }
-
-  @media (max-width: 72rem) {
-    .header-nav { display: none; }
-  }
+  .ac-nav a:hover { opacity: 1; }
+  @media (max-width: 72rem) { .ac-nav { display: none; } }
 </style>

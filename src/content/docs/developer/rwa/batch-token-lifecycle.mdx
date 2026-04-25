@@ -13,19 +13,12 @@ Every BatchToken follows a defined lifecycle from mint to burn. Understanding th
 ```mermaid
 stateDiagram-v2
     [*] --> DELIVERED : BatchToken.mintBatch()\nField agent submits delivery
-
     DELIVERED --> GRADED : TraceLog.updateStage(GRADED)\nQuality officer signs off
-
     GRADED --> MILLED : TraceLog.updateStage(MILLED)\nMill operator confirms
-
     MILLED --> WAREHOUSED : TraceLog.updateStage(WAREHOUSED)\nWarehouse manager confirms\nUWRSA receipt issued
-
     WAREHOUSED --> COMMITTED : PurchaseOrder.confirmPurchaseOrder()\nBuyer PO confirmed\nAuto-advances TraceLog
-
     COMMITTED --> EXPORTED : TraceLog.updateStage(EXPORTED)\nUCDA export confirmed\n⚡ Triggers LendingVault.onExported()
-
     EXPORTED --> SETTLED : LendingVault.onExported()\nAuto-executes:\n- Repay MFI pool\n- Collect protocol fee\n- Update CreditScore\n- Emit NetDisbursementReady
-
     SETTLED --> [*] : BatchToken.burnSettled()\nToken destroyed
 ```
 

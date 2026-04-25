@@ -1,0 +1,157 @@
+---
+import type { Props } from '@astrojs/starlight/props';
+---
+
+<div class="ai-cta-buttons">
+  <button class="ai-cta-btn" id="copy-markdown-btn" title="Copy as Markdown for AI tools">
+    <svg xmlns="http://www.w3.org/2000/svg" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="9" y="9" width="13" height="13" rx="2" ry="2"></rect><path d="M5 15H4a2 2 0 0 1-2-2V4a2 2 0 0 1 2-2h9a2 2 0 0 1 2 2v1"></path></svg>
+    <span>Copy for LLM</span>
+  </button>
+  <button class="ai-cta-btn" id="chatgpt-btn" title="Get insights from ChatGPT">
+    <svg xmlns="http://www.w3.org/2000/svg" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="10"></circle><path d="M9.09 9a3 3 0 0 1 5.83 1c0 2-3 3-3 3"></path><line x1="12" y1="17" x2="12.01" y2="17"></line></svg>
+    <span>ChatGPT</span>
+  </button>
+  <button class="ai-cta-btn" id="cursor-btn" title="Connect to Cursor IDE">
+    <svg xmlns="http://www.w3.org/2000/svg" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M12 2L2 7l10 5 10-5-10-5z"></path><path d="M2 17l10 5 10-5"></path><path d="M2 12l10 5 10-5"></path></svg>
+    <span>Cursor</span>
+  </button>
+</div>
+<div class="ai-toast" id="ai-toast"></div>
+
+<script>
+import TurndownService from 'turndown';
+
+const turndownService = new TurndownService({
+  headingStyle: 'atx',
+  codeBlockStyle: 'fenced'
+});
+
+turndownService.addRule('starlightCallouts', {
+  filter: ['aside'],
+  replacement: function(content) {
+    return '> ' + content + '\n\n';
+  }
+});
+
+function getPageContent() {
+  const content = document.querySelector('.sl-markdown-content');
+  if (!content) return '';
+  return turndownService.turndown(content);
+}
+
+function showToast(message: string) {
+  const toast = document.getElementById('ai-toast');
+  if (!toast) return;
+  toast.textContent = message;
+  toast.classList.add('show');
+  setTimeout(() => toast.classList.remove('show'), 2000);
+}
+
+async function copyMarkdown() {
+  const markdown = getPageContent();
+  if (!markdown) {
+    showToast('No content found');
+    return;
+  }
+  try {
+    await navigator.clipboard.writeText(markdown);
+    showToast('Copied as Markdown');
+  } catch (err) {
+    showToast('Failed to copy');
+  }
+}
+
+function openChatGPT() {
+  const markdown = getPageContent();
+  if (!markdown) return;
+  
+  const maxLen = 1500;
+  let truncated = markdown;
+  if (truncated.length > maxLen) {
+    truncated = markdown.substring(0, maxLen) + '\n\n... (truncated)';
+  }
+  
+  const prompt = `Please analyze the following documentation:\n\n${truncated}`;
+  const url = `https://chat.openai.com/?q=${encodeURIComponent(prompt)}`;
+  window.open(url, '_blank');
+}
+
+function copyForCursor() {
+  const markdown = getPageContent();
+  if (!markdown) return;
+  
+  const maxLen = 3000;
+  let truncated = markdown;
+  if (truncated.length > maxLen) {
+    truncated = markdown.substring(0, maxLen) + '\n\n... (truncated)';
+  }
+  
+  const prompt = `Read this documentation page and help me implement it:\n\n${truncated}`;
+  navigator.clipboard.writeText(prompt).then(() => {
+    showToast('Prompt copied – paste in Cursor');
+  }).catch(() => {
+    showToast('Failed to copy');
+  });
+}
+
+document.getElementById('copy-markdown-btn')?.addEventListener('click', copyMarkdown);
+document.getElementById('chatgpt-btn')?.addEventListener('click', openChatGPT);
+document.getElementById('cursor-btn')?.addEventListener('click', copyForCursor);
+</script>
+
+<style>
+.ai-cta-buttons {
+  display: flex;
+  gap: 0.5rem;
+  margin: 1rem 0;
+  padding: 0.75rem;
+  background: var(--ac-brown-50);
+  border-radius: 8px;
+  border: 1px solid var(--sl-color-hairline);
+}
+
+.ai-cta-btn {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.35rem;
+  padding: 0.4rem 0.65rem;
+  font-size: 0.75rem;
+  font-weight: 500;
+  color: var(--sl-color-text);
+  background: var(--sl-color-bg);
+  border: 1px solid var(--sl-color-hairline);
+  border-radius: 6px;
+  cursor: pointer;
+  transition: all 0.15s ease;
+}
+
+.ai-cta-btn:hover {
+  background: var(--ac-brown-100);
+  border-color: var(--ac-brown-500);
+}
+
+.ai-cta-btn svg {
+  flex-shrink: 0;
+}
+
+.ai-toast {
+  position: fixed;
+  bottom: 2rem;
+  left: 50%;
+  transform: translateX(-50%) translateY(100px);
+  padding: 0.6rem 1.2rem;
+  background: var(--ac-brown-700);
+  color: #fff;
+  font-size: 0.85rem;
+  font-weight: 500;
+  border-radius: 6px;
+  opacity: 0;
+  transition: all 0.25s ease;
+  z-index: 9999;
+}
+
+.ai-toast.show {
+  transform: translateX(-50%) translateY(0);
+  opacity: 1;
+}
+</style>

@@ -19,7 +19,7 @@ POST /farmers/register
 ## Request
 
 ```bash
-curl -X POST https://api.asilichain.africa/farmers/register \
+curl -X POST https://api.asilichain.xyz/farmers/register \
   -H "Authorization: Bearer {agent_token}" \
   -H "Content-Type: application/json" \
   -d '{
@@ -43,7 +43,7 @@ curl -X POST https://api.asilichain.africa/farmers/register \
 ### Manual Registration (MAAIF NTS unavailable)
 
 ```bash
-curl -X POST https://api.asilichain.africa/farmers/register \
+curl -X POST https://api.asilichain.xyz/farmers/register \
   -H "Authorization: Bearer {agent_token}" \
   -H "Content-Type: application/json" \
   -d '{
@@ -100,7 +100,7 @@ curl -X POST https://api.asilichain.africa/farmers/register \
   "status": "PENDING_GPS",
   "farmer_id": "UG-KAS-2024-001234",
   "message": "MAAIF NTS is currently unavailable. Agent must complete GPS boundary walk using the agent app before registration can complete.",
-  "agent_app_deep_link": "https://agent.asilichain.africa/register/manual?farmer_id=UG-KAS-2024-001234&cooperative_id=COOP-MBALE-001",
+  "agent_app_deep_link": "https://agent.asilichain.xyz/register/manual?farmer_id=UG-KAS-2024-001234&cooperative_id=COOP-MBALE-001",
   "expires_at": "2026-04-25T09:15:00Z"
 }
 ```

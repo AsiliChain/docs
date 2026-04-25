@@ -8,13 +8,13 @@ info:
     on-chain transactions on Mantle mainnet and audit events on Hedera HCS.
   contact:
     name: AsiliChain Support
-    email: team@asilichain.africa
-    url: https://asilichain.africa
+    email: team@asilichain.xyz
+    url: https://asilichain.xyz
 
 servers:
-  - url: https://api.asilichain.africa
+  - url: https://api.asilichain.xyz
     description: Production (Mantle mainnet)
-  - url: https://staging-api.asilichain.africa
+  - url: https://staging-api.asilichain.xyz
     description: Staging (Mantle Sepolia)
 
 security:

@@ -1,260 +1,211 @@
-/* ─────────────────────────────────────────────────────────
-   AsiliChain Docs — Custom Design System
-   Inspired by xstocks.fi/docs clean minimal aesthetic
-───────────────────────────────────────────────────────── */
+/* ─── AsiliChain Docs — Coffee Brown Design System ─── */
 
-/* FORCE SYSTEM THEME — remove light/dark toggle entirely */
-:root[data-theme='light'],
+/* 1. HIDE THEME PICKER */
+starlight-theme-select { display: none !important; }
+
+/* 2. COLOR TOKENS — Coffee brown palette */
 :root {
-  color-scheme: light dark;
-}
+  --ac-brown-50:  #fdf6f0;
+  --ac-brown-100: #f5e6d8;
+  --ac-brown-200: #e8c9aa;
+  --ac-brown-500: #8b4513;
+  --ac-brown-600: #6f3610;
+  --ac-brown-700: #562a0d;
+  --ac-brown-900: #2c150a;
 
-/* Hide the theme selector button completely */
-starlight-theme-select,
-[data-sl-theme-toggle] {
-  display: none !important;
-}
+  /* Override Starlight accent with coffee brown */
+  --sl-color-accent-low:    var(--ac-brown-100);
+  --sl-color-accent:        var(--ac-brown-500);
+  --sl-color-accent-high:   var(--ac-brown-700);
+  --sl-color-text-accent:   var(--ac-brown-600);
 
-/* ── TYPOGRAPHY ── */
-:root {
-  --sl-font: 'Inter', -apple-system, BlinkMacSystemFont, 'Segoe UI',
-             sans-serif;
-  --sl-text-body-sm: 0.875rem;
+  /* Sidebar */
+  --sl-color-bg-sidebar:    var(--ac-brown-50);
+  --sl-sidebar-width:       17rem;
+
+  /* Content */
+  --sl-color-bg:            #ffffff;
+  --sl-color-bg-nav:        #ffffff;
+  --sl-color-hairline-light: #ede9e4;
+  --sl-color-hairline:       #e0d8cf;
+
+  /* Typography */
+  --sl-font: 'Inter', -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif;
   --sl-line-height: 1.75;
-}
-
-/* ── SIDEBAR ── */
-:root {
-  --sl-sidebar-width: 17rem;
-  --sl-color-bg-sidebar: #f8f9fa;
-  --sl-color-bg: #ffffff;
-  --sl-color-bg-nav: #ffffff;
-  --sl-color-hairline-light: #e8eaed;
-  --sl-color-hairline: #e8eaed;
 }
 
 @media (prefers-color-scheme: dark) {
   :root {
-    --sl-color-bg-sidebar: #0f1117;
-    --sl-color-bg: #13151a;
-    --sl-color-bg-nav: #0f1117;
-    --sl-color-hairline-light: #1e2028;
-    --sl-color-hairline: #1e2028;
+    --ac-brown-50:  #1c0f08;
+    --ac-brown-100: #2e1a0f;
+    --ac-brown-200: #4a2a15;
+    --sl-color-accent-low:   #3a1a08;
+    --sl-color-accent:       #c4793a;
+    --sl-color-accent-high:  #e8a060;
+    --sl-color-text-accent:  #d08040;
+    --sl-color-bg-sidebar:   #130a04;
+    --sl-color-bg:           #1a0f07;
+    --sl-color-bg-nav:       #130a04;
+    --sl-color-hairline-light: #2a1a0f;
+    --sl-color-hairline:       #3a2010;
   }
 }
 
-/* Sidebar border */
+/* 3. SIDEBAR */
 .sidebar-pane {
   border-right: 1px solid var(--sl-color-hairline);
+  background: var(--sl-color-bg-sidebar) !important;
 }
 
-/* Sidebar section labels */
-.top-level > li > details > summary,
-.top-level > li > a {
-  font-size: 0.78rem;
-  font-weight: 600;
-  letter-spacing: 0.06em;
+/* Section group headings */
+details > summary .group-label span,
+.top-level > li > details > summary {
+  font-size: 0.72rem;
+  font-weight: 700;
+  letter-spacing: 0.07em;
   text-transform: uppercase;
-  color: var(--sl-color-text-accent) !important;
-  padding: 0.6rem 1rem;
-  margin-top: 0.25rem;
+  color: var(--ac-brown-500) !important;
+  padding: 0.6rem 0.75rem 0.3rem;
 }
 
 /* Sidebar links */
 .sidebar-content a {
   font-size: 0.875rem;
-  font-weight: 400;
   border-radius: 6px;
-  padding: 0.3rem 0.85rem;
-  transition: background 0.15s ease, color 0.15s ease;
+  padding: 0.3rem 0.75rem;
+  transition: background 0.12s;
+  color: var(--sl-color-text);
 }
-
 .sidebar-content a:hover {
-  background: var(--sl-color-hairline-light);
+  background: var(--ac-brown-100);
   text-decoration: none;
 }
-
 .sidebar-content a[aria-current='page'] {
-  background: var(--sl-color-text-accent);
-  color: white !important;
+  background: var(--ac-brown-500) !important;
+  color: #fff !important;
   font-weight: 500;
 }
 
-/* ── CONTENT AREA ── */
-.content-panel {
-  background: var(--sl-color-bg);
-}
-
-.sl-markdown-content {
-  max-width: 720px;
-}
-
-/* ── HEADER / TOPNAV ── */
+/* 4. HEADER */
 header.header {
   border-bottom: 1px solid var(--sl-color-hairline);
-  background: var(--sl-color-bg-nav);
-  backdrop-filter: blur(8px);
+  background: var(--sl-color-bg-nav) !important;
 }
 
-/* ── HEADINGS ── */
+/* 5. CONTENT */
+.sl-markdown-content {
+  max-width: 740px;
+}
+
+/* Headings */
 .sl-markdown-content h1 {
-  font-size: 1.875rem;
+  font-size: clamp(1.5rem, 3vw, 2rem);
   font-weight: 700;
   letter-spacing: -0.02em;
-  line-height: 1.2;
+  line-height: 1.15;
   white-space: nowrap;
 }
-
 .sl-markdown-content h2 {
-  font-size: 1.25rem;
+  font-size: 1.2rem;
   font-weight: 600;
   margin-top: 2.5rem;
   padding-bottom: 0.5rem;
   border-bottom: 1px solid var(--sl-color-hairline-light);
 }
-
 .sl-markdown-content h3 {
-  font-size: 1.05rem;
+  font-size: 1rem;
   font-weight: 600;
 }
 
-/* ── TABLES ── */
+/* Tables */
 .sl-markdown-content table {
   font-size: 0.875rem;
-  border-collapse: collapse;
-  width: 100%;
   border: 1px solid var(--sl-color-hairline);
   border-radius: 8px;
   overflow: hidden;
+  width: 100%;
+  border-collapse: collapse;
 }
-
 .sl-markdown-content th {
-  background: var(--sl-color-bg-sidebar);
+  background: var(--ac-brown-50);
+  font-size: 0.75rem;
   font-weight: 600;
-  font-size: 0.78rem;
   text-transform: uppercase;
   letter-spacing: 0.04em;
-  padding: 0.65rem 1rem;
-  text-align: left;
-  border-bottom: 1px solid var(--sl-color-hairline);
-}
-
-.sl-markdown-content td {
   padding: 0.6rem 1rem;
+  border-bottom: 1px solid var(--sl-color-hairline);
+  text-align: left;
+}
+.sl-markdown-content td {
+  padding: 0.55rem 1rem;
   border-bottom: 1px solid var(--sl-color-hairline-light);
 }
+.sl-markdown-content tr:last-child td { border-bottom: none; }
 
-.sl-markdown-content tr:last-child td {
-  border-bottom: none;
-}
-
-/* ── CODE BLOCKS ── */
+/* Inline code */
 .sl-markdown-content code:not(pre code) {
-  background: var(--sl-color-bg-sidebar);
+  background: var(--ac-brown-50);
   border: 1px solid var(--sl-color-hairline);
   border-radius: 4px;
   padding: 0.1em 0.4em;
   font-size: 0.85em;
 }
 
-/* ── ASIDES / CALLOUTS ── */
-.sl-markdown-content aside {
+/* Asides / callouts */
+.starlight-aside {
   border-radius: 8px;
-  border: 1px solid var(--sl-color-hairline);
-  border-left-width: 3px;
-  padding: 1rem 1.25rem;
+  border-left-width: 3px !important;
+  padding: 0.875rem 1.125rem;
   font-size: 0.9rem;
 }
 
-/* ── NEXT/PREV PAGINATION ── clean minimal style */
-.pagination-links {
-  margin-top: 3rem;
-  padding-top: 1.5rem;
-  border-top: 1px solid var(--sl-color-hairline);
-  display: flex;
-  justify-content: space-between;
-  gap: 1rem;
-}
-
-.pagination-links a {
-  display: flex;
-  align-items: center;
-  gap: 0.4rem;
-  font-size: 0.875rem;
-  font-weight: 500;
-  color: var(--sl-color-text-accent);
-  text-decoration: none;
-  padding: 0.5rem 0;
-  transition: opacity 0.15s ease;
-}
-
-.pagination-links a:hover {
-  opacity: 0.75;
-  text-decoration: none;
-}
-
-/* Hide the verbose "Previous" / "Next" labels — keep just page name + arrow */
-.pagination-links .link-title {
-  display: none;
-}
-
-/* ── CTA CARDS on homepage ── */
-.cta-cards {
+/* 6. CTA CARDS (homepage) */
+.cta-grid {
   display: grid;
-  grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+  grid-template-columns: repeat(auto-fit, minmax(190px, 1fr));
   gap: 1rem;
-  margin: 2rem 0;
+  margin: 2rem 0 1.5rem;
 }
-
 .cta-card {
+  display: block;
   border: 1px solid var(--sl-color-hairline);
   border-radius: 10px;
-  padding: 1.25rem 1.5rem;
-  text-decoration: none;
+  padding: 1.25rem 1.4rem;
+  text-decoration: none !important;
   color: inherit;
-  transition: border-color 0.15s ease, box-shadow 0.15s ease;
-  display: block;
+  transition: border-color 0.15s, box-shadow 0.15s;
+  background: var(--sl-color-bg);
 }
-
 .cta-card:hover {
-  border-color: var(--sl-color-text-accent);
-  box-shadow: 0 2px 12px rgba(0,0,0,0.06);
-  text-decoration: none;
+  border-color: var(--ac-brown-500);
+  box-shadow: 0 2px 10px rgba(139,69,19,0.1);
 }
-
-.cta-card-icon {
-  font-size: 1.5rem;
-  margin-bottom: 0.5rem;
-}
-
-.cta-card-title {
+.cta-icon { font-size: 1.4rem; margin-bottom: 0.5rem; }
+.cta-title {
   font-size: 0.95rem;
   font-weight: 600;
-  margin-bottom: 0.25rem;
+  margin-bottom: 0.3rem;
+  color: var(--sl-color-text);
 }
-
-.cta-card-desc {
+.cta-desc {
   font-size: 0.8rem;
-  color: var(--sl-color-text-secondary);
+  color: var(--sl-color-text-secondary, #6b7280);
   line-height: 1.5;
 }
 
-/* ── EXPLORE BUTTON ── */
+/* Explore button */
 .explore-btn {
   display: inline-flex;
   align-items: center;
   gap: 0.5rem;
-  background: var(--sl-color-text-accent);
-  color: white !important;
+  background: var(--ac-brown-500);
+  color: #fff !important;
   font-weight: 600;
   font-size: 0.9rem;
   padding: 0.7rem 1.5rem;
   border-radius: 8px;
   text-decoration: none !important;
-  margin-top: 1.5rem;
-  transition: opacity 0.15s ease;
+  margin-top: 0.5rem;
+  transition: background 0.15s;
 }
-
-.explore-btn:hover {
-  opacity: 0.85;
-}
+.explore-btn:hover { background: var(--ac-brown-600); }
