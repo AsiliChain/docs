@@ -1,107 +1,260 @@
+/* ─────────────────────────────────────────────────────────
+   AsiliChain Docs — Custom Design System
+   Inspired by xstocks.fi/docs clean minimal aesthetic
+───────────────────────────────────────────────────────── */
+
+/* FORCE SYSTEM THEME — remove light/dark toggle entirely */
+:root[data-theme='light'],
 :root {
-  --sl-color-accent: #4DB87A;
-  --sl-color-accent-high: #2A8A57;
-  --sl-color-accent-low: rgba(77, 184, 122, 0.15);
+  color-scheme: light dark;
+}
+
+/* Hide the theme selector button completely */
+starlight-theme-select,
+[data-sl-theme-toggle] {
+  display: none !important;
+}
+
+/* ── TYPOGRAPHY ── */
+:root {
+  --sl-font: 'Inter', -apple-system, BlinkMacSystemFont, 'Segoe UI',
+             sans-serif;
+  --sl-text-body-sm: 0.875rem;
+  --sl-line-height: 1.75;
+}
+
+/* ── SIDEBAR ── */
+:root {
+  --sl-sidebar-width: 17rem;
+  --sl-color-bg-sidebar: #f8f9fa;
   --sl-color-bg: #ffffff;
-  --sl-color-bg-nav: #FDFAF5;
-  --sl-color-bg-sidebar: #FDFAF5;
-  --sl-color-bg-inline-code: #f4f0e8;
-  --sl-color-text: #1a1a1a;
-  --sl-color-text-secondary: #555555;
-  --sl-color-text-accent: #1A5C3A;
-  --sl-color-border: rgba(26, 92, 58, 0.2);
-  --sl-color-hairline: rgba(26, 92, 58, 0.1);
-  --sl-color-header-bg: #0F3D27;
-  --sl-color-header-text: #ffffff;
-  --sl-font-family: 'Helvetica Neue', Arial, sans-serif;
-  --sl-font-mono: 'JetBrains Mono', 'Fira Code', monospace;
+  --sl-color-bg-nav: #ffffff;
+  --sl-color-hairline-light: #e8eaed;
+  --sl-color-hairline: #e8eaed;
 }
 
-[data-theme='dark'] {
-  --sl-color-bg: #0a0f0a;
-  --sl-color-bg-nav: #0d120d;
-  --sl-color-bg-sidebar: #0d120d;
-  --sl-color-bg-inline-code: #1a2e1a;
-  --sl-color-text: #f0e8d6;
-  --sl-color-text-secondary: rgba(240, 232, 214, 0.65);
-  --sl-color-border: rgba(77, 184, 122, 0.15);
-  --sl-color-hairline: rgba(77, 184, 122, 0.08);
-  --sl-color-header-bg: #050805;
+@media (prefers-color-scheme: dark) {
+  :root {
+    --sl-color-bg-sidebar: #0f1117;
+    --sl-color-bg: #13151a;
+    --sl-color-bg-nav: #0f1117;
+    --sl-color-hairline-light: #1e2028;
+    --sl-color-hairline: #1e2028;
+  }
 }
 
-.brand-hero {
-  display: grid;
-  grid-template-columns: minmax(240px, 1fr) minmax(0, 1.4fr);
-  gap: 2rem;
-  align-items: center;
-  padding: 2rem;
-  margin: 1.5rem 0 2rem;
-  border: 1px solid var(--sl-color-border);
-  border-radius: 24px;
-  background: linear-gradient(180deg, var(--sl-color-bg), #ffffff);
-  box-shadow: 0 18px 40px rgba(0, 0, 0, 0.08);
+/* Sidebar border */
+.sidebar-pane {
+  border-right: 1px solid var(--sl-color-hairline);
 }
 
-[data-theme='dark'] .brand-hero {
-  background: linear-gradient(180deg, var(--sl-color-bg), #0d120d);
-  box-shadow: 0 18px 40px rgba(0, 0, 0, 0.3);
-}
-
-.brand-hero__content h1 {
-  margin: 0;
-  font-size: clamp(2.2rem, 4vw, 3.6rem);
-  line-height: 1.05;
-  color: var(--sl-color-text);
-}
-
-.brand-lede {
-  margin: 1rem 0 0;
-  font-size: 1.1rem;
-  line-height: 1.75;
-  color: var(--sl-color-text-secondary);
-  max-width: 58ch;
-}
-
-.brand-chip-row {
-  display: flex;
-  flex-wrap: wrap;
-  gap: 0.75rem;
-  margin-top: 1.25rem;
-}
-
-.brand-chip {
-  display: inline-block;
-  padding: 0.4rem 0.85rem;
-  font-size: 0.8rem;
+/* Sidebar section labels */
+.top-level > li > details > summary,
+.top-level > li > a {
+  font-size: 0.78rem;
   font-weight: 600;
-  letter-spacing: 0.04em;
+  letter-spacing: 0.06em;
   text-transform: uppercase;
-  color: var(--sl-color-bg);
-  background: var(--sl-color-accent);
-  border-radius: 999px;
+  color: var(--sl-color-text-accent) !important;
+  padding: 0.6rem 1rem;
+  margin-top: 0.25rem;
 }
 
-[data-theme='dark'] .brand-chip {
-  color: #ffffff;
-  background: var(--sl-color-accent-high);
+/* Sidebar links */
+.sidebar-content a {
+  font-size: 0.875rem;
+  font-weight: 400;
+  border-radius: 6px;
+  padding: 0.3rem 0.85rem;
+  transition: background 0.15s ease, color 0.15s ease;
 }
 
-.hero-html {
-  margin-bottom: 2rem;
+.sidebar-content a:hover {
+  background: var(--sl-color-hairline-light);
+  text-decoration: none;
 }
 
-.hero-html h1 {
-  margin-bottom: 1rem;
-  font-size: clamp(2.5rem, 5vw, 4rem);
+.sidebar-content a[aria-current='page'] {
+  background: var(--sl-color-text-accent);
+  color: white !important;
+  font-weight: 500;
+}
+
+/* ── CONTENT AREA ── */
+.content-panel {
+  background: var(--sl-color-bg);
+}
+
+.sl-markdown-content {
+  max-width: 720px;
+}
+
+/* ── HEADER / TOPNAV ── */
+header.header {
+  border-bottom: 1px solid var(--sl-color-hairline);
+  background: var(--sl-color-bg-nav);
+  backdrop-filter: blur(8px);
+}
+
+/* ── HEADINGS ── */
+.sl-markdown-content h1 {
+  font-size: 1.875rem;
   font-weight: 700;
-  line-height: 1.1;
-  color: var(--sl-color-text);
+  letter-spacing: -0.02em;
+  line-height: 1.2;
+  white-space: nowrap;
 }
 
-.hero-html p {
-  margin-bottom: 1.5rem;
-  font-size: 1.15rem;
-  line-height: 1.7;
+.sl-markdown-content h2 {
+  font-size: 1.25rem;
+  font-weight: 600;
+  margin-top: 2.5rem;
+  padding-bottom: 0.5rem;
+  border-bottom: 1px solid var(--sl-color-hairline-light);
+}
+
+.sl-markdown-content h3 {
+  font-size: 1.05rem;
+  font-weight: 600;
+}
+
+/* ── TABLES ── */
+.sl-markdown-content table {
+  font-size: 0.875rem;
+  border-collapse: collapse;
+  width: 100%;
+  border: 1px solid var(--sl-color-hairline);
+  border-radius: 8px;
+  overflow: hidden;
+}
+
+.sl-markdown-content th {
+  background: var(--sl-color-bg-sidebar);
+  font-weight: 600;
+  font-size: 0.78rem;
+  text-transform: uppercase;
+  letter-spacing: 0.04em;
+  padding: 0.65rem 1rem;
+  text-align: left;
+  border-bottom: 1px solid var(--sl-color-hairline);
+}
+
+.sl-markdown-content td {
+  padding: 0.6rem 1rem;
+  border-bottom: 1px solid var(--sl-color-hairline-light);
+}
+
+.sl-markdown-content tr:last-child td {
+  border-bottom: none;
+}
+
+/* ── CODE BLOCKS ── */
+.sl-markdown-content code:not(pre code) {
+  background: var(--sl-color-bg-sidebar);
+  border: 1px solid var(--sl-color-hairline);
+  border-radius: 4px;
+  padding: 0.1em 0.4em;
+  font-size: 0.85em;
+}
+
+/* ── ASIDES / CALLOUTS ── */
+.sl-markdown-content aside {
+  border-radius: 8px;
+  border: 1px solid var(--sl-color-hairline);
+  border-left-width: 3px;
+  padding: 1rem 1.25rem;
+  font-size: 0.9rem;
+}
+
+/* ── NEXT/PREV PAGINATION ── clean minimal style */
+.pagination-links {
+  margin-top: 3rem;
+  padding-top: 1.5rem;
+  border-top: 1px solid var(--sl-color-hairline);
+  display: flex;
+  justify-content: space-between;
+  gap: 1rem;
+}
+
+.pagination-links a {
+  display: flex;
+  align-items: center;
+  gap: 0.4rem;
+  font-size: 0.875rem;
+  font-weight: 500;
+  color: var(--sl-color-text-accent);
+  text-decoration: none;
+  padding: 0.5rem 0;
+  transition: opacity 0.15s ease;
+}
+
+.pagination-links a:hover {
+  opacity: 0.75;
+  text-decoration: none;
+}
+
+/* Hide the verbose "Previous" / "Next" labels — keep just page name + arrow */
+.pagination-links .link-title {
+  display: none;
+}
+
+/* ── CTA CARDS on homepage ── */
+.cta-cards {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+  gap: 1rem;
+  margin: 2rem 0;
+}
+
+.cta-card {
+  border: 1px solid var(--sl-color-hairline);
+  border-radius: 10px;
+  padding: 1.25rem 1.5rem;
+  text-decoration: none;
+  color: inherit;
+  transition: border-color 0.15s ease, box-shadow 0.15s ease;
+  display: block;
+}
+
+.cta-card:hover {
+  border-color: var(--sl-color-text-accent);
+  box-shadow: 0 2px 12px rgba(0,0,0,0.06);
+  text-decoration: none;
+}
+
+.cta-card-icon {
+  font-size: 1.5rem;
+  margin-bottom: 0.5rem;
+}
+
+.cta-card-title {
+  font-size: 0.95rem;
+  font-weight: 600;
+  margin-bottom: 0.25rem;
+}
+
+.cta-card-desc {
+  font-size: 0.8rem;
   color: var(--sl-color-text-secondary);
-  max-width: 60ch;
+  line-height: 1.5;
+}
+
+/* ── EXPLORE BUTTON ── */
+.explore-btn {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.5rem;
+  background: var(--sl-color-text-accent);
+  color: white !important;
+  font-weight: 600;
+  font-size: 0.9rem;
+  padding: 0.7rem 1.5rem;
+  border-radius: 8px;
+  text-decoration: none !important;
+  margin-top: 1.5rem;
+  transition: opacity 0.15s ease;
+}
+
+.explore-btn:hover {
+  opacity: 0.85;
 }

@@ -16,6 +16,10 @@ export default defineConfig({
     starlight({
       title: 'AsiliChain',
       description: 'Traceability, collateral finance, and EUDR compliance for Africa\'s coffee farmers.',
+      components: {
+        Header: './src/components/Header.astro',
+        Pagination: './src/components/Pagination.astro',
+      },
       social: [
         { icon: 'github', label: 'GitHub', href: 'https://github.com/AsiliChain' },
         { icon: 'email', label: 'Contact', href: 'mailto:hello@asilichain.xyz' },

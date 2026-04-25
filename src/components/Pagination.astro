@@ -1,0 +1,46 @@
+---
+import type { Props } from '@astrojs/starlight/props';
+const { pagination } = Astro.props;
+const { prev, next } = pagination ?? {};
+---
+
+{(prev || next) && (
+  <nav class="pagination-links" aria-label="Page navigation">
+    <div>
+      {prev && (
+        <a href={prev.href} rel="prev">
+          <span aria-hidden="true">←</span>
+          <span>{prev.label}</span>
+        </a>
+      )}
+    </div>
+    <div>
+      {next && (
+        <a href={next.href} rel="next">
+          <span>Next page</span>
+          <span aria-hidden="true">→</span>
+        </a>
+      )}
+    </div>
+  </nav>
+)}
+
+<style>
+  .pagination-links {
+    display: flex;
+    justify-content: space-between;
+    padding-top: 2rem;
+    margin-top: 2rem;
+    border-top: 1px solid var(--sl-color-hairline);
+  }
+  .pagination-links a {
+    display: inline-flex;
+    align-items: center;
+    gap: 0.4rem;
+    font-size: 0.875rem;
+    font-weight: 500;
+    color: var(--sl-color-text-accent);
+    text-decoration: none;
+  }
+  .pagination-links a:hover { opacity: 0.75; }
+</style>
