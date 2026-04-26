@@ -1,0 +1,41 @@
+---
+import AiCtaButtons from './AiCtaButtons.astro';
+const PAGE_TITLE_ID = '_top';
+---
+
+<div class="ac-page-header">
+  <h1 id={PAGE_TITLE_ID}>{Astro.locals.starlightRoute.entry.data.title}</h1>
+  <div class="ac-cta-wrapper">
+    <AiCtaButtons />
+  </div>
+</div>
+
+<style>
+  @layer starlight.core {
+    .ac-page-header {
+      display: flex;
+      align-items: flex-start;
+      justify-content: space-between;
+      gap: 1rem;
+      margin-top: 1rem;
+      margin-bottom: 1.5rem;
+      flex-wrap: wrap;
+    }
+    h1 {
+      font-size: var(--sl-text-h1);
+      line-height: var(--sl-line-height-headings);
+      font-weight: 600;
+      color: var(--sl-color-white);
+      margin: 0;
+    }
+    .ac-cta-wrapper {
+      flex-shrink: 0;
+      align-self: center;
+    }
+    @media (max-width: 60rem) {
+      .ac-cta-wrapper {
+        display: none;
+      }
+    }
+  }
+</style>
