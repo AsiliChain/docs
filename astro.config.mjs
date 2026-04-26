@@ -67,7 +67,7 @@ export default defineConfig({
         {
           label: 'Overview',
           items: [
-            { label: 'What is AsiliChain?', link: '/overview/' },
+            { label: 'AsiliChain Protocol', link: '/overview/' },
             { label: 'Executive Summary', link: '/overview/executive-summary' },
             { label: 'Glossary', link: '/overview/glossary' },
             { label: 'The Problem', link: '/overview/the-problem' },

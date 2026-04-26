@@ -265,6 +265,58 @@ header.header {
   border: none !important;
 }
 
+/* ── Homepage hero brand block ── */
+.ac-hero {
+  display: flex;
+  align-items: center;
+  gap: 1rem;
+  padding: 1.5rem 0 1rem;
+  border-bottom: 1px solid var(--sl-color-hairline-light);
+  margin-bottom: 1.5rem;
+}
+
+.ac-hero-logo {
+  width: 48px;
+  height: 48px;
+  object-fit: contain;
+  border-radius: 10px;
+  flex-shrink: 0;
+}
+
+.ac-hero-text {
+  display: flex;
+  flex-direction: column;
+  gap: 0.1rem;
+}
+
+.ac-hero-label {
+  font-size: 0.7rem;
+  font-weight: 600;
+  text-transform: uppercase;
+  letter-spacing: 0.08em;
+  color: var(--sl-color-text-accent);
+  margin: 0;
+  line-height: 1;
+}
+
+.ac-hero-question {
+  font-size: 1.4rem;
+  font-weight: 700;
+  color: var(--sl-color-text);
+  margin: 0;
+  line-height: 1.2;
+  border: none;
+  padding: 0;
+}
+
+.ac-hero-question::after {
+  display: none;
+}
+
+.content-panel main > h1:first-of-type {
+  display: none;
+}
+
 /* 5. HEADER — Desktop: nudge search toward right-group */
 @media (min-width: 50rem) {
   .header .sl-flex:not(.right-group) > site-search {
