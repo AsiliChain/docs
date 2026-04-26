@@ -4,8 +4,6 @@ order: 1
 label: Project Structure
 ---
 
-# Project Structure
-
 AsiliChain is a monorepo. All packages share the same Mantle target network and Hedera HCS topic configuration.
 
 ## Repository Layout
@@ -73,7 +71,6 @@ graph LR
     API["api/lib/mantle.ts"]
     AGENT["agent-app"]
     USSD["ussd/handler.ts"]
-
     ENV --> CONTRACTS & API & AGENT & USSD
     CONTRACTS -->|"ABIs after build"| API
     API -->|"REST endpoints"| AGENT

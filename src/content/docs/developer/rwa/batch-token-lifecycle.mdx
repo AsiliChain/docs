@@ -4,22 +4,35 @@ order: 3
 label: BatchToken Lifecycle
 ---
 
-# BatchToken Lifecycle
-
 Every BatchToken follows a defined lifecycle from mint to burn. Understanding this lifecycle is essential for building integrations, writing tests, and reasoning about collateral state at any point in time.
 
 ## Full Lifecycle Diagram
 
 ```mermaid
 stateDiagram-v2
-    [*] --> DELIVERED : BatchToken.mintBatch()\nField agent submits delivery
-    DELIVERED --> GRADED : TraceLog.updateStage(GRADED)\nQuality officer signs off
-    GRADED --> MILLED : TraceLog.updateStage(MILLED)\nMill operator confirms
-    MILLED --> WAREHOUSED : TraceLog.updateStage(WAREHOUSED)\nWarehouse manager confirms\nUWRSA receipt issued
-    WAREHOUSED --> COMMITTED : PurchaseOrder.confirmPurchaseOrder()\nBuyer PO confirmed\nAuto-advances TraceLog
-    COMMITTED --> EXPORTED : TraceLog.updateStage(EXPORTED)\nUCDA export confirmed\n⚡ Triggers LendingVault.onExported()
-    EXPORTED --> SETTLED : LendingVault.onExported()\nAuto-executes:\n- Repay MFI pool\n- Collect protocol fee\n- Update CreditScore\n- Emit NetDisbursementReady
-    SETTLED --> [*] : BatchToken.burnSettled()\nToken destroyed
+    [*] --> DELIVERED : BatchToken.mintBatch()
+Field agent submits delivery
+    DELIVERED --> GRADED : TraceLog.updateStage(GRADED)
+Quality officer signs off
+    GRADED --> MILLED : TraceLog.updateStage(MILLED)
+Mill operator confirms
+    MILLED --> WAREHOUSED : TraceLog.updateStage(WAREHOUSED)
+Warehouse manager confirms
+UWRSA receipt issued
+    WAREHOUSED --> COMMITTED : PurchaseOrder.confirmPurchaseOrder()
+Buyer PO confirmed
+Auto-advances TraceLog
+    COMMITTED --> EXPORTED : TraceLog.updateStage(EXPORTED)
+UCDA export confirmed
+⚡ Triggers LendingVault.onExported()
+    EXPORTED --> SETTLED : LendingVault.onExported()
+Auto-executes:
+- Repay MFI pool
+- Collect protocol fee
+- Update CreditScore
+- Emit NetDisbursementReady
+    SETTLED --> [*] : BatchToken.burnSettled()
+Token destroyed
 ```
 
 ## Collateral State at Each Stage

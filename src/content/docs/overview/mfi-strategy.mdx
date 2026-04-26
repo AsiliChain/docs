@@ -4,8 +4,6 @@ order: 14
 label: MFI Acquisition Strategy
 ---
 
-# MFI Acquisition Strategy
-
 :::note[The cold start problem — and how to break it]
 MFIs will not commit capital to a protocol with no track record. AsiliChain cannot demonstrate a track record without MFI capital. Solution: seed Phase 1 with grant capital, earn repayment data, walk into Phase 2 MFI meetings with verified performance.
 :::
@@ -15,9 +13,11 @@ MFIs will not commit capital to a protocol with no track record. AsiliChain cann
 ```mermaid
 graph LR
     subgraph P1["Phase 1 — Seed Capital"]
-        GRANT["GIZ / UNDP / Mantle EcoFund\n$50k–$100k"]
+        GRANT["GIZ / UNDP / Mantle EcoFund
+$50k–$100k"]
         PILOT["200 farmers · ~500 loans"]
-        DATA["6–9 months repayment data\nHedera HCS audit trail"]
+        DATA["6–9 months repayment data
+Hedera HCS audit trail"]
     end
     subgraph P2["Phase 2 — MFI Entry"]
         UGAFODE["UGAFODE"]
@@ -25,9 +25,9 @@ graph LR
         ABI["aBi Finance (DANIDA/SIDA)"]
         PRIDE["Pride Microfinance"]
     end
-
     GRANT --> PILOT --> DATA
-    DATA -->|"N loans · Y% auto-repayment\nZero voluntary defaults"| UGAFODE & ENCOT & ABI
+    DATA -->|"N loans · Y% auto-repayment
+Zero voluntary defaults"| UGAFODE & ENCOT & ABI
     UGAFODE & ENCOT & ABI & PRIDE --> POOL["LendingVault USDC Pool $1M+"]
 ```
 

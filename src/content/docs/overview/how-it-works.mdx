@@ -10,8 +10,6 @@ next:
   label: Supply Chain Actors
 ---
 
-# How AsiliChain Works
-
 AsiliChain activates Uganda's government coffee farmer data financially, turning compliance records into credit infrastructure without building a parallel database.
 
 ## The Core Loop
@@ -26,7 +24,6 @@ sequenceDiagram
     participant H as Hedera HCS
     participant KP as Kotani Pay
     participant MTN as MTN MoMo
-
     F->>USSD: Dials *384#, selects "Deliver coffee"
     USSD->>API: Session data + farmer ID
     API->>MAAIF: Verify farmer ID + GPS
@@ -70,15 +67,23 @@ For farmers who want working capital:
 
 ```mermaid
 graph LR
-    REG["Farm registered\nGPS verified"]
-    GCT["GrowingCropToken\nIssued at planting\nLTV 30–65%"]
-    LOAN1["Pre-harvest loan\n14–18% APR"]
-    BT["BatchToken\nIssued at delivery\nLTV 60–70%"]
-    PO["PurchaseOrder\nBuyer commits"]
-    WRT["WarehouseReceiptToken\nLTV 75–80%"]
+    REG["Farm registered
+GPS verified"]
+    GCT["GrowingCropToken
+Issued at planting
+LTV 30–65%"]
+    LOAN1["Pre-harvest loan
+14–18% APR"]
+    BT["BatchToken
+Issued at delivery
+LTV 60–70%"]
+    PO["PurchaseOrder
+Buyer commits"]
+    WRT["WarehouseReceiptToken
+LTV 75–80%"]
     EXP["EXPORTED event"]
-    REPAY["Auto-repayment\nCreditScore +50"]
-
+    REPAY["Auto-repayment
+CreditScore +50"]
     REG --> GCT --> LOAN1
     LOAN1 --> BT --> PO --> WRT --> EXP --> REPAY
 ```

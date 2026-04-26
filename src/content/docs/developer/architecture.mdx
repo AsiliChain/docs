@@ -4,18 +4,22 @@ order: 1
 label: Architecture Overview
 ---
 
-# Architecture Overview
-
 ```mermaid
 graph TD
-    L1["🔷 Ethereum Mainnet\nProof-of-Stake · ultimate settlement"]
-    L2["🔵 Mantle Network — ZK Rollup\nOP Succinct/SP1 · 1-hr finality · type-1 zkEVM"]
-    AC["⚡ AsiliChain Contracts\nAll 7 contracts on Mantle"]
-    KP["📱 Kotani Pay — Farmer payouts\nUSSD + API · USDC → MTN MoMo"]
-    TF["🏦 TransFi — MFI deposits\nBank wire → USDC → LendingVault"]
-    HCS["📋 Hedera HCS — Audit layer\nIBM · Google · FedEx · Boeing governance"]
-    MAAIF["🏛️ MAAIF NTS — Government data\nGPS + Farmer IDs"]
-
+    L1["🔷 Ethereum Mainnet
+Proof-of-Stake · ultimate settlement"]
+    L2["🔵 Mantle Network — ZK Rollup
+OP Succinct/SP1 · 1-hr finality · type-1 zkEVM"]
+    AC["⚡ AsiliChain Contracts
+All 7 contracts on Mantle"]
+    KP["📱 Kotani Pay — Farmer payouts
+USSD + API · USDC → MTN MoMo"]
+    TF["🏦 TransFi — MFI deposits
+Bank wire → USDC → LendingVault"]
+    HCS["📋 Hedera HCS — Audit layer
+IBM · Google · FedEx · Boeing governance"]
+    MAAIF["🏛️ MAAIF NTS — Government data
+GPS + Farmer IDs"]
     L1 -->|"ZK proofs verified"| L2
     L2 --> AC
     AC -->|"Farmer payout trigger"| KP

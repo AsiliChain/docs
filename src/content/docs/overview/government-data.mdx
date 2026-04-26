@@ -4,8 +4,6 @@ order: 9
 label: Government Data Integration
 ---
 
-# Government Data Integration
-
 AsiliChain does not build a parallel farmer database. It reads from Uganda's own National Traceability System — turning a compliance dataset the government is already funding into financial infrastructure.
 
 ## The MAAIF Investment
@@ -32,12 +30,16 @@ This data satisfies EUDR Article 4 requirements. AsiliChain reads it via the MAA
 
 ```mermaid
 flowchart TD
-    CHECK{MAAIF NTS API\\navailable?}
-    PRIMARY[Read farmerID + GPS\\nfrom MAAIF NTS API]
-    FALLBACK[Direct agent registration\\nField agent records GPS\\nFlags for NTS migration]
+    CHECK{MAAIF NTS API\
+available?}
+    PRIMARY[Read farmerID + GPS\
+from MAAIF NTS API]
+    FALLBACK[Direct agent registration\
+Field agent records GPS\
+Flags for NTS migration]
     VERIFY[GFW deforestation check]
-    STORE[Hash stored on Mantle\\nRaw GeoJSON pinned to IPFS]
-
+    STORE[Hash stored on Mantle\
+Raw GeoJSON pinned to IPFS]
     CHECK -->|Yes| PRIMARY
     CHECK -->|No| FALLBACK
     PRIMARY --> VERIFY

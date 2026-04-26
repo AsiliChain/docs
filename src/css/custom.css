@@ -2,51 +2,64 @@
 
 /* 1. HIDE THEME PICKER — use auto (system preference) */
 starlight-theme-select { display: none !important; }
-:root {
+
+/* === LIGHT MODE (default and explicit) === */
+:root,
+:root[data-theme='light'] {
   --ac-brown-50:  #fdf6f0;
   --ac-brown-100: #f5e6d8;
   --ac-brown-200: #e8c9aa;
-  --ac-brown-500: #8b4513;
-  --ac-brown-600: #6f3610;
-  --ac-brown-700: #562a0d;
-  --ac-brown-900: #2c150a;
+  --ac-brown-500: #7a3b10;
+  --ac-brown-600: #5e2d0c;
+  --ac-brown-700: #4a2309;
 
-  /* Override Starlight accent with coffee brown */
-  --sl-color-accent-low:    var(--ac-brown-100);
-  --sl-color-accent:        var(--ac-brown-500);
-  --sl-color-accent-high:   var(--ac-brown-700);
-  --sl-color-text-accent:   var(--ac-brown-600);
-
-  /* Sidebar */
-  --sl-color-bg-sidebar:    var(--ac-brown-50);
-  --sl-sidebar-width:       17rem;
-
-  /* Content */
+  --sl-color-accent-low:    #f5e6d8;
+  --sl-color-accent:        #7a3b10;
+  --sl-color-accent-high:   #4a2309;
+  --sl-color-text-accent:   #5e2d0c;
+  --sl-color-bg-sidebar:    #fdf6f0;
   --sl-color-bg:            #ffffff;
   --sl-color-bg-nav:        #ffffff;
-  --sl-color-hairline-light: #ede9e4;
-  --sl-color-hairline:       #e0d8cf;
+  --sl-color-hairline-light: #ede5dc;
+  --sl-color-hairline:       #ddd0c2;
 
-  /* Typography */
-  --sl-font: 'Inter', -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif;
-  --sl-line-height: 1.75;
+  /* Force readable text colours on light theme */
+  --sl-color-text:           #1a0f07;
+  --sl-color-text-secondary: #5c3d22;
+  --sl-color-gray-1:         #1a0f07;
+  --sl-color-gray-2:         #3d2310;
+  --sl-color-gray-3:         #6b4020;
+  --sl-color-gray-4:         #9a6040;
+  --sl-color-gray-5:         #c89070;
+  --sl-color-gray-6:         #f5e6d8;
 }
 
-@media (prefers-color-scheme: dark) {
-  :root {
-    --ac-brown-50:  #1c0f08;
-    --ac-brown-100: #2e1a0f;
-    --ac-brown-200: #4a2a15;
-    --sl-color-accent-low:   #3a1a08;
-    --sl-color-accent:       #c4793a;
-    --sl-color-accent-high:  #e8a060;
-    --sl-color-text-accent:  #d08040;
-    --sl-color-bg-sidebar:   #130a04;
-    --sl-color-bg:           #1a0f07;
-    --sl-color-bg-nav:       #130a04;
-    --sl-color-hairline-light: #2a1a0f;
-    --sl-color-hairline:       #3a2010;
-  }
+/* === DARK MODE === */
+:root[data-theme='dark'] {
+  --ac-brown-50:  #1c0f08;
+  --ac-brown-100: #2e1a0f;
+  --ac-brown-500: #c47a3a;
+  --ac-brown-600: #e09050;
+  --ac-brown-700: #f0a060;
+
+  --sl-color-accent-low:    #3a1a08;
+  --sl-color-accent:        #c47a3a;
+  --sl-color-accent-high:   #f0a060;
+  --sl-color-text-accent: #e09050;
+  --sl-color-bg-sidebar:   #140a04;
+  --sl-color-bg:           #1c0f07;
+  --sl-color-bg-nav:       #140a04;
+  --sl-color-hairline-light: #2e1a0f;
+  --sl-color-hairline:       #3d2410;
+
+  --sl-color-text:           #f0e8e0;
+  --sl-color-text-secondary:  #c8a888;
+  --sl-color-gray-1:         #f0e8e0;
+  --sl-color-gray-2:         #d8c0a0;
+  --sl-color-gray-3:         #b89070;
+  --sl-color-gray-4:         #906040;
+  --sl-color-gray-5:         #603020;
+  --sl-color-gray-6:         #2e1a0f;
 }
 
 /* 3. SIDEBAR */
@@ -250,4 +263,29 @@ header.header {
   .header .sl-flex:not(.right-group) > site-search {
     margin-right: 0.5rem;
   }
+}
+
+/* 6. Mobile table scroll */
+.sl-markdown-content .table-wrapper,
+.sl-markdown-content table {
+  display: block;
+  overflow-x: auto;
+  -webkit-overflow-scrolling: touch;
+  max-width: 100%;
+}
+
+@media (min-width: 768px) {
+  .sl-markdown-content table {
+    display: table;
+    overflow-x: visible;
+  }
+}
+
+.sl-markdown-content th {
+  white-space: nowrap;
+}
+
+.sl-markdown-content td,
+.sl-markdown-content th {
+  min-width: 120px;
 }

@@ -20,36 +20,31 @@ AsiliChain is on Mantle because Mantle is the only chain where all four of the f
 
 ```mermaid
 graph TD
-    AC[\"⚡ AsiliChain\"]
-
-    subgraph MANTLE [\"Mantle Ecosystem\"]
-        MN[\"Mantle Network\"]
-        TAAS[\"Tokenization-as-a-Service\"]
-        QCDT[\"QCDT (DFSA-approved MMF)\"]
-        ECOFUND[\"$200M EcoFund\"]
-        BYBIT[\"Bybit 80M users\"]
-        AAVE[\"Aave V3 on Mantle\"]
+    AC["⚡ AsiliChain"]
+    subgraph MANTLE ["Mantle Ecosystem"]
+        MN["Mantle Network"]
+        TAAS["Tokenization-as-a-Service"]
+        QCDT["QCDT (DFSA-approved MMF)"]
+        ECOFUND["$200M EcoFund"]
+        BYBIT["Bybit 80M users"]
+        AAVE["Aave V3 on Mantle"]
     end
-
-    subgraph PAYMENT [\"Payment Rails\"]
-        KP[\"Kotani Pay → MTN MoMo\"]
-        TF[\"TransFi → Bank Wire\"]
-        AT[\"Africa's Talking USSD\"]
+    subgraph PAYMENT ["Payment Rails"]
+        KP["Kotani Pay → MTN MoMo"]
+        TF["TransFi → Bank Wire"]
+        AT["Africa's Talking USSD"]
     end
-
-    subgraph DATA [\"Data Infrastructure\"]
-        MAAIF[\"MAAIF NTS\"]
-        GFW[\"Global Forest Watch\"]
-        CHAINLINK[\"Chainlink Price Feeds\"]
-        ALCHEMY[\"Alchemy Webhooks\"]
+    subgraph DATA ["Data Infrastructure"]
+        MAAIF["MAAIF NTS"]
+        GFW["Global Forest Watch"]
+        CHAINLINK["Chainlink Price Feeds"]
+        ALCHEMY["Alchemy Webhooks"]
     end
-
-    subgraph AUDIT [\"Audit & Compliance\"]
-        HEDERA[\"Hedera HCS\"]
-        IPFS[\"Pinata / IPFS\"]
-        TRACES[\"EU TRACES\"]
+    subgraph AUDIT ["Audit & Compliance"]
+        HEDERA["Hedera HCS"]
+        IPFS["Pinata / IPFS"]
+        TRACES["EU TRACES"]
     end
-
     AC --> MANTLE
     AC --> PAYMENT
     AC --> DATA

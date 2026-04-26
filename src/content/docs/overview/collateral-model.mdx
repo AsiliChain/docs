@@ -4,8 +4,6 @@ order: 8
 label: Collateral & Lending
 ---
 
-# Collateral and Lending Model
-
 :::note[Credit is optional]
 Not every farmer wants or needs a loan. Farmers who are economically self-sufficient benefit from AsiliChain — faster payment, EUDR compliance, price transparency — without touching the lending product.
 :::
@@ -21,11 +19,18 @@ Not every farmer wants or needs a loan. Farmers who are economically self-suffic
 
 ```mermaid
 graph LR
-    GCT["🌱 GrowingCropToken\nLTV: 30–65%\nPre-harvest"]
-    BT["☕ BatchToken ERC-1155\nLTV: 60–70%\nPost-harvest graded"]
-    WRT["📄 WarehouseReceiptToken\nLTV: 75–80%\nBuyer committed"]
-    DONE["✅ Auto-repayment\nEXPORTED event\nCreditScore +50"]
-
+    GCT["🌱 GrowingCropToken
+LTV: 30–65%
+Pre-harvest"]
+    BT["☕ BatchToken ERC-1155
+LTV: 60–70%
+Post-harvest graded"]
+    WRT["📄 WarehouseReceiptToken
+LTV: 75–80%
+Buyer committed"]
+    DONE["✅ Auto-repayment
+EXPORTED event
+CreditScore +50"]
     GCT -->|"Harvest delivered"| BT
     BT -->|"Buyer commits PurchaseOrder"| WRT
     WRT -->|"Buyer pays USDC"| DONE

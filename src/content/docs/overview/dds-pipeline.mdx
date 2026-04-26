@@ -4,30 +4,40 @@ order: 12
 label: DDS Generation Pipeline
 ---
 
-# DDS Generation Pipeline
-
 The Due Diligence Statement pipeline generates, signs, stores, and files EUDR-compliant documents automatically from normal AsiliChain operations. No manual input from the exporter beyond initiating the request.
 
 ## Pipeline Overview
 
 ```mermaid
 flowchart TD
-    INIT["Exporter calls\nPOST /eudr/generate-dds"]
-
+    INIT["Exporter calls
+POST /eudr/generate-dds"]
     subgraph FETCH ["Data Fetch — parallel"]
-        MANTLE["Mantle\nBatchToken IDs\nFarmerIDs\nCooperative licence"]
-        HEDERA["Hedera HCS\n8-stage event history\nCustody timestamps"]
-        GFW["Global Forest Watch\nFinal deforestation check"]
+        MANTLE["Mantle
+BatchToken IDs
+FarmerIDs
+Cooperative licence"]
+        HEDERA["Hedera HCS
+8-stage event history
+Custody timestamps"]
+        GFW["Global Forest Watch
+Final deforestation check"]
     end
-
-    BUILD["pdf-lib\nAssemble DDS document"]
-    SIGN["Cooperative EIP-712\nsignature"]
-    IPFS["Pinata → IPFS\nPermanent pin"]
-    TRACES["EU TRACES API\nFiled + reference returned"]
-    MANTLE2["Mantle\nDDS IPFS CID recorded\non BatchToken"]
-    HEDERA2["Hedera HCS\nDDS_GENERATED event"]
-    RESP["API response:\ndds_id · ipfs_url · traces_ref"]
-
+    BUILD["pdf-lib
+Assemble DDS document"]
+    SIGN["Cooperative EIP-712
+signature"]
+    IPFS["Pinata → IPFS
+Permanent pin"]
+    TRACES["EU TRACES API
+Filed + reference returned"]
+    MANTLE2["Mantle
+DDS IPFS CID recorded
+on BatchToken"]
+    HEDERA2["Hedera HCS
+DDS_GENERATED event"]
+    RESP["API response:
+dds_id · ipfs_url · traces_ref"]
     INIT --> FETCH
     MANTLE --> BUILD
     HEDERA --> BUILD

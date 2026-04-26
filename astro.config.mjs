@@ -27,6 +27,7 @@ export default defineConfig({
         PageTitle: './src/components/PageTitle.astro',
         Pagination: './src/components/Pagination.astro',
         SiteTitle: './src/components/SiteTitle.astro',
+        ThemeSelect: './src/components/ThemeSelect.astro',
       },
       social: [
         { icon: 'github', label: 'GitHub', href: 'https://github.com/AsiliChain' },
@@ -42,10 +43,11 @@ export default defineConfig({
         { tag: 'meta', attrs: { name: 'theme-color', content: '#4B2E0A' } },
       ],
       expressiveCode: {
-        shikiConfig: {
-          langs: [],
+        defaultProps: {
+          overridesByLang: {
+            mermaid: { frame: 'none' },
+          },
         },
-        themes: ['starlight-dark', 'starlight-light'],
       },
       plugins: [
         starlightOpenAPI([

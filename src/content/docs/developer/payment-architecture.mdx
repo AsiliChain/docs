@@ -4,8 +4,6 @@ order: 5
 label: Payment Architecture
 ---
 
-# Payment Architecture
-
 AsiliChain handles two distinct payment flows: outbound farmer payouts and inbound MFI deposits. Each uses a dedicated integration designed for its specific institutional and regulatory context.
 
 ## Payment Flow Overview
@@ -13,19 +11,27 @@ AsiliChain handles two distinct payment flows: outbound farmer payouts and inbou
 ```mermaid
 graph TD
     subgraph INBOUND ["Inbound — MFI Capital"]
-        MFI["UGAFODE / ENCOT / aBi Finance\nBank wire (UGX or USD)"]
-        TF["TransFi\nBank → USDC conversion\nISO27001 + SOC2 Type 2"]
-        LV["LendingVault.sol\nMantle mainnet\nUSDC pool"]
+        MFI["UGAFODE / ENCOT / aBi Finance
+Bank wire (UGX or USD)"]
+        TF["TransFi
+Bank → USDC conversion
+ISO27001 + SOC2 Type 2"]
+        LV["LendingVault.sol
+Mantle mainnet
+USDC pool"]
     end
-
     subgraph OUTBOUND ["Outbound — Farmer Payouts"]
-        LV2["LendingVault.sol\nLoan disbursement approved"]
-        API["AsiliChain API\nPOST /kotanipay/payout"]
-        KP["Kotani Pay\nUSDC → UGX conversion"]
-        MTN["MTN Mobile Money\nUganda"]
-        F["👨‍🌾 Farmer\nphone notification < 60s"]
+        LV2["LendingVault.sol
+Loan disbursement approved"]
+        API["AsiliChain API
+POST /kotanipay/payout"]
+        KP["Kotani Pay
+USDC → UGX conversion"]
+        MTN["MTN Mobile Money
+Uganda"]
+        F["👨‍🌾 Farmer
+phone notification < 60s"]
     end
-
     MFI -->|"Wire transfer"| TF
     TF -->|"USDC on Mantle"| LV
     LV -->|"Loan approved"| LV2

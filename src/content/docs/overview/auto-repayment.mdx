@@ -4,8 +4,6 @@ order: 6
 label: Auto-Repayment
 ---
 
-# Auto-Repayment
-
 Auto-repayment is the mechanism by which AsiliChain loans repay themselves — triggered by the physical act of coffee being exported, with no collection agent, no manual payment, and no default risk from borrower non-cooperation.
 
 ## How It Works
@@ -19,7 +17,6 @@ sequenceDiagram
     participant H as Hedera HCS
     participant KP as Kotani Pay
     participant F as 👨‍🌾 Farmer MTN MoMo
-
     BUY->>EXP: Pays USDC for shipment
     EXP->>M: TraceLog.updateStage(batchId, EXPORTED)
     M->>LV: EXPORTED event detected
