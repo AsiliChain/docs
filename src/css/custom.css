@@ -1,6 +1,7 @@
 /* ─── AsiliChain Docs — Coffee Brown Design System ─── */
 
-/* 1. COLOR TOKENS — Coffee brown palette */
+/* 1. HIDE THEME PICKER — use auto (system preference) */
+starlight-theme-select { display: none !important; }
 :root {
   --ac-brown-50:  #fdf6f0;
   --ac-brown-100: #f5e6d8;
