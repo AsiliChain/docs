@@ -1,11 +1,17 @@
 /* ─── AsiliChain Docs — Coffee Brown Design System ─── */
 
-/* 1. HIDE THEME PICKER — use auto (system preference) */
-starlight-theme-select { display: none !important; }
+/* iOS Safari fallback for CSS variable misreading */
+@supports not (color: oklch(0 0 0)) {
+  body {
+    background-color: #ffffff;
+    color: #1a0f07;
+  }
+}
 
 /* === LIGHT MODE (default and explicit) === */
 :root,
 :root[data-theme='light'] {
+  color-scheme: light;
   --ac-brown-50:  #fdf6f0;
   --ac-brown-100: #f5e6d8;
   --ac-brown-200: #e8c9aa;
@@ -36,6 +42,7 @@ starlight-theme-select { display: none !important; }
 
 /* === DARK MODE === */
 :root[data-theme='dark'] {
+  color-scheme: dark;
   --ac-brown-50:  #1c0f08;
   --ac-brown-100: #2e1a0f;
   --ac-brown-500: #c47a3a;

@@ -1,3 +1,27 @@
 ---
-// Empty component — renders nothing, removing the theme picker
 ---
+<script is:inline>
+  // Sync to OS preference on every load, before Starlight reads localStorage
+  (function () {
+    // Clear old stuck values from previous broken builds
+    const stored = localStorage.getItem('starlight-theme');
+    if (stored && !['light', 'dark'].includes(stored)) {
+      localStorage.removeItem('starlight-theme');
+    }
+
+    const prefersDark = window.matchMedia('(prefers-color-scheme: dark)').matches;
+    const theme = prefersDark ? 'dark' : 'light';
+    // Write to localStorage so Starlight picks it up
+    localStorage.setItem('starlight-theme', theme);
+    // Apply immediately to <html> to avoid flash
+    document.documentElement.setAttribute('data-theme', theme);
+    // Also listen for OS changes while the page is open
+    window.matchMedia('(prefers-color-scheme: dark)')
+      .addEventListener('change', (e) => {
+        const newTheme = e.matches ? 'dark' : 'light';
+        localStorage.setItem('starlight-theme', newTheme);
+        document.documentElement.setAttribute('data-theme', newTheme);
+      });
+  })();
+</script>
+<!-- Render nothing — no picker UI -->
