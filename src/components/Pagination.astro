@@ -1,12 +1,87 @@
 ---
 import AiCtaButtons from './AiCtaButtons.astro';
+const { prev, next } = Astro.props;
 ---
-<AiCtaButtons />
-{/*
-  Note: Pagination is handled automatically by Starlight's default.
-  Custom prev/next requires using Starlight's sidebar config instead of component override.
-*/}
+{(prev || next) && (
+<nav class="ac-pagination" aria-label="Pagination">
+  {prev && (
+    <a href={prev.href} class="ac-page-nav ac-page-prev" rel="prev">
+      <span class="ac-nav-arrow">←</span>
+      <span class="ac-nav-label">{prev.label}</span>
+    </a>
+  )}
+  <a href="/docs/" class="ac-home-link">Home</a>
+  {next && (
+    <a href={next.href} class="ac-page-nav ac-page-next" rel="next">
+      <span class="ac-nav-label">{next.label}</span>
+      <span class="ac-nav-arrow">→</span>
+    </a>
+  )}
+</nav>
+)}
+<div class="ac-cta-section">
+  <AiCtaButtons />
+</div>
 <style>
-  /* Hide debug */
-  .ac-debug { display: none; }
+.ac-pagination {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin: 2rem 0 1rem;
+  padding: 1rem 0;
+  border-top: 1px solid var(--sl-color-hairline-light);
+  border-bottom: 1px solid var(--sl-color-hairline-light);
+}
+.ac-page-nav {
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+  padding: 0.6rem 1rem;
+  font-size: 0.85rem;
+  font-weight: 500;
+  color: var(--sl-color-text-accent);
+  text-decoration: none;
+  border: 1px solid var(--sl-color-hairline);
+  border-radius: 6px;
+  background: var(--sl-color-bg);
+  transition: all 0.15s;
+  max-width: 40%;
+}
+.ac-page-nav:hover {
+  background: var(--sl-color-accent-low);
+  border-color: var(--sl-color-accent);
+}
+.ac-page-prev { margin-right: auto; }
+.ac-page-next { margin-left: auto; text-align: right; }
+.ac-nav-arrow { font-size: 1rem; }
+.ac-nav-label {
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+  max-width: 150px;
+}
+.ac-home-link {
+  padding: 0.6rem 1rem;
+  font-size: 0.8rem;
+  font-weight: 500;
+  color: var(--sl-color-text-secondary);
+  text-decoration: none;
+  border: 1px solid var(--sl-color-hairline);
+  border-radius: 6px;
+}
+.ac-home-link:hover {
+  color: var(--sl-color-text);
+}
+.ac-cta-section {
+  margin-top: 1rem;
+  padding-top: 1rem;
+  border-top: 1px solid var(--sl-color-hairline-light);
+}
+@media (max-width: 50rem) {
+  .ac-pagination { flex-direction: column; gap: 0.75rem; }
+  .ac-page-nav { max-width: 100%; width: 100%; justify-content: center; }
+  .ac-page-prev { margin: 0; order: 1; }
+  .ac-home-link { order: 0; }
+  .ac-page-next { margin: 0; order: 2; }
+}
 </style>
