@@ -246,3 +246,10 @@ header.header {
   height: 1rem;
   border: none !important;
 }
+
+/* 5. HEADER — Desktop: nudge search toward right-group */
+@media (min-width: 50rem) {
+  .header .sl-flex:not(.right-group) > site-search {
+    margin-right: 0.5rem;
+  }
+}
