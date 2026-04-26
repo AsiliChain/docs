@@ -1,54 +1,12 @@
 ---
-import type { Props } from '@astrojs/starlight/props';
 import AiCtaButtons from './AiCtaButtons.astro';
-const { pagination } = Astro.props;
-const prev = pagination?.prev;
-const next = pagination?.next;
 ---
 <AiCtaButtons />
-{(prev || next) && (
-  <nav class="ac-pagination" aria-label="Page navigation">
-    <div class="ac-pagination-prev">
-      {prev && (
-        <a href={prev.href} rel="prev">
-          <span class="arrow">←</span>
-          <span class="label">{prev.label}</span>
-        </a>
-      )}
-    </div>
-    <div class="ac-pagination-next">
-      {next && (
-        <a href={next.href} rel="next">
-          <span class="label">{next.label}</span>
-          <span class="arrow">→</span>
-        </a>
-      )}
-    </div>
-  </nav>
-)}
+{/*
+  Note: Pagination is handled automatically by Starlight's default.
+  Custom prev/next requires using Starlight's sidebar config instead of component override.
+*/}
 <style>
-  .ac-pagination {
-    display: flex;
-    justify-content: space-between;
-    align-items: center;
-    margin-top: 3rem;
-    padding-top: 1.5rem;
-    border-top: 1px solid var(--sl-color-hairline-light);
-  }
-  .ac-pagination-prev,
-  .ac-pagination-next { flex: 1; }
-  .ac-pagination-next { text-align: right; }
-  .ac-pagination a {
-    display: inline-flex;
-    align-items: center;
-    gap: 0.4rem;
-    font-size: 0.875rem;
-    font-weight: 500;
-    color: var(--sl-color-text-accent);
-    text-decoration: none;
-    transition: opacity 0.15s;
-  }
-  .ac-pagination a:hover { opacity: 0.7; }
-  .arrow { font-size: 1rem; line-height: 1; }
-  .label { font-size: 0.875rem; }
+  /* Hide debug */
+  .ac-debug { display: none; }
 </style>
