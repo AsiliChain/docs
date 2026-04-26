@@ -1,0 +1,92 @@
+---
+import { logos } from 'virtual:starlight/user-images';
+import config from 'virtual:starlight/user-config';
+const { siteTitle, siteTitleHref } = Astro.locals.starlightRoute;
+---
+
+<div class="ac-site-title-wrapper">
+  <a href={siteTitleHref} class="site-title sl-flex">
+    {
+      config.logo && logos.dark && (
+        <>
+          <img
+            class:list={{ 'light:sl-hidden print:hidden': !('src' in config.logo) }}
+            alt={config.logo.alt}
+            src={logos.dark.src}
+            width={logos.dark.width}
+            height={logos.dark.height}
+          />
+          {!('src' in config.logo) && (
+            <img
+              class="dark:sl-hidden print:block"
+              alt={config.logo.alt}
+              src={logos.light?.src}
+              width={logos.light?.width}
+              height={logos.light?.height}
+            />
+          )}
+        </>
+      )
+    }
+    <span class:list={{ 'sr-only': config.logo?.replacesTitle }} translate="no">
+      {siteTitle}
+    </span>
+  </a>
+  <nav class="ac-header-nav" aria-label="Main sections">
+    <a href="/docs/overview/">Overview</a>
+    <a href="/docs/developer/">Developer Docs</a>
+    <a href="/docs/api-reference/">API Reference</a>
+  </nav>
+</div>
+
+<style>
+  @layer starlight.core {
+    .ac-site-title-wrapper {
+      display: flex;
+      align-items: center;
+      gap: 0;
+      min-width: 0;
+    }
+    .site-title {
+      align-items: center;
+      gap: var(--sl-nav-gap);
+      font-size: var(--sl-text-h4);
+      font-weight: 600;
+      color: var(--sl-color-text-accent);
+      text-decoration: none;
+      white-space: nowrap;
+      min-width: 0;
+    }
+    .site-title span {
+      overflow: hidden;
+    }
+    .site-title img {
+      height: calc(var(--sl-nav-height) - 2 * var(--sl-nav-pad-y));
+      width: auto;
+      max-width: 100%;
+      object-fit: contain;
+      object-position: 0 50%;
+    }
+
+    .ac-header-nav {
+      display: flex;
+      gap: 1.25rem;
+      align-items: center;
+      margin-left: 1.5rem;
+    }
+    .ac-header-nav a {
+      font-size: 0.85rem;
+      font-weight: 500;
+      color: var(--sl-color-text);
+      text-decoration: none;
+      opacity: 0.75;
+      transition: opacity 0.15s;
+      white-space: nowrap;
+    }
+    .ac-header-nav a:hover { opacity: 1; }
+
+    @media (max-width: 55rem) {
+      .ac-header-nav { display: none; }
+    }
+  }
+</style>

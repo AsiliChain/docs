@@ -23,9 +23,9 @@ export default defineConfig({
       favicon: '/favicon.png',
       description: 'Traceability, collateral finance, and EUDR compliance for Africa\'s coffee farmers.',
       components: {
-        Header: './src/components/Header.astro',
         PageTitle: './src/components/PageTitle.astro',
         Pagination: './src/components/Pagination.astro',
+        SiteTitle: './src/components/SiteTitle.astro',
       },
       social: [
         { icon: 'github', label: 'GitHub', href: 'https://github.com/AsiliChain' },
