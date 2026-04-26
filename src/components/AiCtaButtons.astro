@@ -1,20 +1,50 @@
 ---
-import type { Props } from '@astrojs/starlight/props';
 ---
 
-<div class="ai-cta-buttons">
-  <button class="ai-cta-btn" id="copy-markdown-btn" title="Copy as Markdown for AI tools">
+<div class="ac-ai-dropdown">
+  <button class="ac-copy-btn" id="ac-copy-btn">
     <svg xmlns="http://www.w3.org/2000/svg" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="9" y="9" width="13" height="13" rx="2" ry="2"></rect><path d="M5 15H4a2 2 0 0 1-2-2V4a2 2 0 0 1 2-2h9a2 2 0 0 1 2 2v1"></path></svg>
     <span>Copy for LLM</span>
+    <svg class="ac-chevron" xmlns="http://www.w3.org/2000/svg" width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><polyline points="6 9 12 15 18 9"></polyline></svg>
   </button>
-  <button class="ai-cta-btn" id="chatgpt-btn" title="Get insights from ChatGPT">
-    <svg xmlns="http://www.w3.org/2000/svg" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="10"></circle><path d="M9.09 9a3 3 0 0 1 5.83 1c0 2-3 3-3 3"></path><line x1="12" y1="17" x2="12.01" y2="17"></line></svg>
-    <span>ChatGPT</span>
-  </button>
-  <button class="ai-cta-btn" id="cursor-btn" title="Connect to Cursor IDE">
-    <svg xmlns="http://www.w3.org/2000/svg" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M12 2L2 7l10 5 10-5-10-5z"></path><path d="M2 17l10 5 10-5"></path><path d="M2 12l10 5 10-5"></path></svg>
-    <span>Cursor</span>
-  </button>
+  <div class="ac-dropdown-menu" id="ac-dropdown-menu">
+    <button class="ac-dropdown-item" id="chatgpt-btn">
+      <span class="ac-item-icon">
+        <svg xmlns="http://www.w3.org/2000/svg" width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="10"></circle><path d="M9.09 9a3 3 0 0 1 5.83 1c0 2-3 3-3 3"></path><line x1="12" y1="17" x2="12.01" y2="17"></line></svg>
+      </span>
+      <span class="ac-item-text">
+        <span class="ac-item-title">Open in ChatGPT</span>
+        <span class="ac-item-desc">Get insights from ChatGPT</span>
+      </span>
+    </button>
+    <button class="ac-dropdown-item" id="cursor-btn">
+      <span class="ac-item-icon">
+        <svg xmlns="http://www.w3.org/2000/svg" width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M12 2L2 7l10 5 10-5-10-5z"></path><path d="M2 17l10 5 10-5"></path><path d="M2 12l10 5 10-5"></path></svg>
+      </span>
+      <span class="ac-item-text">
+        <span class="ac-item-title">Connect to Cursor</span>
+        <span class="ac-item-desc">Install MCP server on Cursor</span>
+      </span>
+    </button>
+    <button class="ac-dropdown-item" id="vscode-btn">
+      <span class="ac-item-icon">
+        <svg xmlns="http://www.w3.org/2000/svg" width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polyline points="16 18 22 12 16 6"></polyline><polyline points="8 6 2 12 8 18"></polyline></svg>
+      </span>
+      <span class="ac-item-text">
+        <span class="ac-item-title">Connect to VS Code</span>
+        <span class="ac-item-desc">Install MCP server on VS Code</span>
+      </span>
+    </button>
+    <button class="ac-dropdown-item" id="claude-btn">
+      <span class="ac-item-icon">
+        <svg xmlns="http://www.w3.org/2000/svg" width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="10"></circle><path d="M8 14s1.5 2 4 2 4-2 4-2"></path><line x1="9" y1="9" x2="9.01" y2="9"></line><line x1="15" y1="9" x2="15.01" y2="9"></line></svg>
+      </span>
+      <span class="ac-item-text">
+        <span class="ac-item-title">Open in Claude</span>
+        <span class="ac-item-desc">Get insights from Claude</span>
+      </span>
+    </button>
+  </div>
 </div>
 <div class="ai-toast" id="ai-toast"></div>
 
@@ -64,74 +94,159 @@ async function copyMarkdown() {
 function openChatGPT() {
   const markdown = getPageContent();
   if (!markdown) return;
-  
   const maxLen = 1500;
-  let truncated = markdown;
-  if (truncated.length > maxLen) {
-    truncated = markdown.substring(0, maxLen) + '\n\n... (truncated)';
-  }
-  
+  const truncated = markdown.length > maxLen ? markdown.substring(0, maxLen) + '\n\n... (truncated)' : markdown;
   const prompt = `Please analyze the following documentation:\n\n${truncated}`;
-  const url = `https://chat.openai.com/?q=${encodeURIComponent(prompt)}`;
-  window.open(url, '_blank');
+  window.open(`https://chat.openai.com/?q=${encodeURIComponent(prompt)}`, '_blank');
+}
+
+function openClaude() {
+  const markdown = getPageContent();
+  if (!markdown) return;
+  const maxLen = 1500;
+  const truncated = markdown.length > maxLen ? markdown.substring(0, maxLen) + '\n\n... (truncated)' : markdown;
+  const prompt = `Please analyze the following documentation:\n\n${truncated}`;
+  window.open(`https://claude.ai/new?q=${encodeURIComponent(prompt)}`, '_blank');
 }
 
 function copyForCursor() {
   const markdown = getPageContent();
   if (!markdown) return;
-  
   const maxLen = 3000;
-  let truncated = markdown;
-  if (truncated.length > maxLen) {
-    truncated = markdown.substring(0, maxLen) + '\n\n... (truncated)';
-  }
-  
+  const truncated = markdown.length > maxLen ? markdown.substring(0, maxLen) + '\n\n... (truncated)' : markdown;
   const prompt = `Read this documentation page and help me implement it:\n\n${truncated}`;
-  navigator.clipboard.writeText(prompt).then(() => {
-    showToast('Prompt copied – paste in Cursor');
-  }).catch(() => {
-    showToast('Failed to copy');
-  });
+  navigator.clipboard.writeText(prompt).then(() => showToast('Prompt copied – paste in Cursor')).catch(() => showToast('Failed to copy'));
 }
 
-document.getElementById('copy-markdown-btn')?.addEventListener('click', copyMarkdown);
+function copyForVSCode() {
+  const markdown = getPageContent();
+  if (!markdown) return;
+  const maxLen = 3000;
+  const truncated = markdown.length > maxLen ? markdown.substring(0, maxLen) + '\n\n... (truncated)' : markdown;
+  const prompt = `Read this documentation page and help me implement it:\n\n${truncated}`;
+  navigator.clipboard.writeText(prompt).then(() => showToast('Prompt copied – paste in VS Code')).catch(() => showToast('Failed to copy'));
+}
+
+// Dropdown toggle
+const copyBtn = document.getElementById('ac-copy-btn');
+const dropdown = document.getElementById('ac-dropdown-menu');
+
+copyBtn?.addEventListener('click', (e) => {
+  e.stopPropagation();
+  dropdown?.classList.toggle('open');
+});
+
+document.addEventListener('click', () => {
+  dropdown?.classList.remove('open');
+});
+
+dropdown?.addEventListener('click', (e) => e.stopPropagation());
+
+// Button listeners
+document.getElementById('ac-copy-btn')?.addEventListener('click', copyMarkdown);
 document.getElementById('chatgpt-btn')?.addEventListener('click', openChatGPT);
 document.getElementById('cursor-btn')?.addEventListener('click', copyForCursor);
+document.getElementById('vscode-btn')?.addEventListener('click', copyForVSCode);
+document.getElementById('claude-btn')?.addEventListener('click', openClaude);
 </script>
 
 <style>
-.ai-cta-buttons {
-  display: flex;
-  gap: 0.5rem;
-  margin: 1rem 0;
-  padding: 0.75rem;
-  background: var(--ac-brown-50);
-  border-radius: 8px;
-  border: 1px solid var(--sl-color-hairline);
+.ac-ai-dropdown {
+  position: relative;
+  display: inline-block;
 }
 
-.ai-cta-btn {
+.ac-copy-btn {
   display: inline-flex;
   align-items: center;
-  gap: 0.35rem;
-  padding: 0.4rem 0.65rem;
-  font-size: 0.75rem;
+  gap: 0.4rem;
+  padding: 0.45rem 0.75rem;
+  font-size: 0.8rem;
   font-weight: 500;
-  color: var(--sl-color-text);
-  background: var(--sl-color-bg);
-  border: 1px solid var(--sl-color-hairline);
+  color: #fff;
+  background: var(--ac-brown-500);
+  border: 1px solid var(--ac-brown-500);
   border-radius: 6px;
   cursor: pointer;
-  transition: all 0.15s ease;
+  transition: all 0.15s;
+  white-space: nowrap;
 }
-
-.ai-cta-btn:hover {
-  background: var(--ac-brown-100);
-  border-color: var(--ac-brown-500);
+.ac-copy-btn:hover {
+  background: var(--ac-brown-600);
+  border-color: var(--ac-brown-600);
 }
-
-.ai-cta-btn svg {
+.ac-copy-btn svg {
   flex-shrink: 0;
+}
+.ac-chevron {
+  margin-left: 0.1rem;
+  transition: transform 0.2s;
+}
+.ac-copy-btn[aria-expanded="true"] .ac-chevron,
+.ac-dropdown-menu.open ~ .ac-copy-btn .ac-chevron {
+  transform: rotate(180deg);
+}
+
+.ac-dropdown-menu {
+  position: absolute;
+  top: calc(100% + 4px);
+  right: 0;
+  min-width: 240px;
+  max-width: 300px;
+  background: var(--sl-color-bg);
+  border: 1px solid var(--sl-color-hairline);
+  border-radius: 8px;
+  box-shadow: 0 4px 16px rgba(0,0,0,0.12);
+  z-index: 100;
+  display: none;
+  padding: 0.35rem;
+}
+.ac-dropdown-menu.open {
+  display: block;
+}
+
+.ac-dropdown-item {
+  display: flex;
+  align-items: center;
+  gap: 0.6rem;
+  width: 100%;
+  padding: 0.5rem 0.6rem;
+  text-align: left;
+  background: none;
+  border: none;
+  border-radius: 6px;
+  cursor: pointer;
+  transition: background 0.12s;
+}
+.ac-dropdown-item:hover {
+  background: var(--ac-brown-50);
+}
+.ac-item-icon {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 28px;
+  height: 28px;
+  flex-shrink: 0;
+  border: 1px solid var(--sl-color-hairline);
+  border-radius: 6px;
+  color: var(--ac-brown-500);
+}
+.ac-item-text {
+  display: flex;
+  flex-direction: column;
+  gap: 0.1rem;
+}
+.ac-item-title {
+  font-size: 0.8rem;
+  font-weight: 500;
+  color: var(--sl-color-text);
+  line-height: 1.2;
+}
+.ac-item-desc {
+  font-size: 0.7rem;
+  color: var(--sl-color-text-secondary, #6b7280);
+  line-height: 1.2;
 }
 
 .ai-toast {
@@ -148,10 +263,16 @@ document.getElementById('cursor-btn')?.addEventListener('click', copyForCursor);
   opacity: 0;
   transition: all 0.25s ease;
   z-index: 9999;
+  pointer-events: none;
 }
-
 .ai-toast.show {
   transform: translateX(-50%) translateY(0);
   opacity: 1;
+}
+
+@media (prefers-color-scheme: dark) {
+  .ac-dropdown-item:hover {
+    background: var(--ac-brown-100);
+  }
 }
 </style>

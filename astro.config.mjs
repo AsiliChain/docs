@@ -25,6 +25,7 @@ export default defineConfig({
       components: {
         Header: './src/components/Header.astro',
         PageTitle: './src/components/PageTitle.astro',
+        Pagination: './src/components/Pagination.astro',
       },
       social: [
         { icon: 'github', label: 'GitHub', href: 'https://github.com/AsiliChain' },
