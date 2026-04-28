@@ -73,6 +73,7 @@ export default defineConfig({
             { label: 'The Problem', link: '/overview/the-problem' },
             { label: 'How AsiliChain Works', link: '/overview/how-it-works' },
             { label: 'Eight-Stage Traceability', link: '/overview/traceability' },
+            { label: 'Export Certification & Physical Journey', link: '/overview/export-certification' },
             { label: 'Auto-Repayment', link: '/overview/auto-repayment' },
             { label: 'Supply Chain Actors', link: '/overview/supply-chain-actors' },
             { label: 'Government Data Integration', link: '/overview/government-data' },

@@ -1,0 +1,119 @@
+---
+title: Export Certification & Physical Journey
+sidebar:
+  order: 7
+---
+
+Uganda coffee does not go directly from a cooperative warehouse
+to a European port. Between the WAREHOUSED stage and the EXPORTED
+stage there is a significant logistics and certification journey
+that involves three government bodies, a physical transit to
+Kampala, and an international freight leg through Mombasa.
+
+This page explains who certifies, what they issue, where it
+happens, and how AsiliChain connects to that process.
+
+## The Three Certifying Bodies
+
+Three separate Ugandan government bodies issue documents that are
+required for legal coffee export to the EU. They are independent
+of each other and each must be satisfied before a container leaves
+Uganda.
+
+| Body | Document issued | What it confirms |
+|------|----------------|-----------------|
+| **Uganda Coffee Development Authority (UCDA)** | Export permit | Quality and quantity of the coffee lot has passed pre-shipment inspection |
+| **Ministry of Agriculture, Animal Industry and Fisheries (MAAIF)** | Phytosanitary certificate | The consignment is free of pests, disease, and prohibited substances |
+| **Uganda Export Promotions Board (UEPB)** | Certificate of Origin | The coffee originates from Uganda, enabling preferential EU trade terms |
+
+All three documents must accompany the shipment. The UCDA export
+permit is the primary gate. Without it, the container does not
+move. The phytosanitary certificate and Certificate of Origin are
+obtained in parallel and submitted with the shipping documentation.
+
+## The Physical Journey
+
+Coffee moves through a defined sequence of physical locations
+between the cooperative warehouse and the EU destination port.
+
+```
+[Cooperative Warehouse] (regional: Mbale, Kasese, etc.)
+        ↓
+[Transport to Kampala] (licensed exporter arranges)
+        ↓
+[Kampala Inland Container Depot / licensed export warehouse]
+        ↓
+[UCDA pre-shipment inspection]
+        ↓
+[MAAIF phytosanitary inspection]
+        ↓
+[Container sealing and dispatch]
+        ↓
+[Mombasa Port] (primary) or [Dar es Salaam] (secondary)
+        ↓
+[EU destination port]
+```
+
+Each step involves documentation, inspection, and physical handling
+that must be coordinated by the licensed exporter. The total
+transit time from Kampala to Mombasa is approximately 2-3 days
+by road.
+
+## What AsiliChain Handles
+
+AsiliChain provides three data elements that support the export
+process, all of which are already on-chain from earlier stages:
+
+| Data element | Source | Export relevance |
+|--------------|--------|-----------------|
+| **DDS (Due Diligence Statement)** | Auto-generated from TraceLog data | Required for EUDR compliance; references the batch ID, farm GPS, and custody chain |
+| **GPS traceability record** | Recorded at REGISTERED and DELIVERED stages | Confirms farm origin; enables geo-fencing against deforestation-free zones |
+| **GFW deforestation clearance** | Verified at REGISTERED stage via Global Forest Watch API | Required for EUDR — proves no forest clearing after 2020 |
+
+AsiliChain does not generate the UCDA permit, phytosanitary
+certificate, or Certificate of Origin. These are issued by Ugandan
+government agencies and are outside the AsiliChain protocol.
+
+## What the Exporter Handles Independently
+
+The licensed exporter is responsible for all certification and
+logistics activities required by Ugandan law:
+
+- **UCDA export permit**: Application, inspection scheduling, and
+  collection of the permit after pre-shipment inspection
+- **MAAIF phytosanitary certificate**: Application and inspection
+- **UEPB Certificate of Origin**: Application and issuance
+- **Freight forwarding**: Container booking, transport coordination,
+  port handling, and shipping documentation
+
+AsiliChain does not replace any of these processes. The exporter
+must complete them separately and then confirm the EXPORTED stage
+through the AsiliChain dashboard.
+
+## Connecting to the EXPORTED Stage
+
+The EXPORTED stage in AsiliChain is triggered by the exporter after
+the UCDA permit is issued and the container is dispatched from
+Kampala toward Mombasa.
+
+**V1 behavior:**
+- The exporter confirms EXPORTED status via the dashboard
+- AsiliChain does not verify the UCDA permit directly
+- The system trusts the exporter's confirmation
+
+**Future roadmap:**
+- UCDA API integration to auto-confirm permit issuance
+- Real-time container tracking via GPS telemetry
+- Automatic DDS finalization when EXPORTED is confirmed
+
+This is a known gap in V1. The protocol records the exporter's
+confirmation but does not independently verify the underlying
+government documents. Future integrations will close this gap
+by connecting directly to UCDA's systems.
+
+:::note[Why this gap matters]
+EU compliance officers and due diligence teams will ask: "How do
+you know the coffee actually left Uganda with valid permits?"
+This page documents the honest answer — the exporter confirms,
+and future API integrations will automate verification.
+:::

@@ -14,7 +14,7 @@ EU Regulation 2023/1115 Article 4 specifies the exact requirements for a valid D
 | **Polygon for farms > 4 hectares** | Agent app GPS walk-perimeter function; auto-closes polygon | Agent PWA | ✅ Built into registration flow |
 | **Deforestation-free since December 31, 2020** | GFW API checked at registration AND at DDS generation | Global Forest Watch API | ✅ Two-point verification |
 | **No mass-balance blending** | BatchToken carries specific farmer IDs; impossible to blend without detection | BatchToken.sol architecture | ✅ Architecturally impossible to violate |
-| **Legal production** | UCDA cooperative licence verified on-chain; MAAIF NTS provides legal production status | UCDA registry + MAAIF NTS | ✅ Verified at minting |
+| **Legal production** | UCDA cooperative licence verified on-chain; MAAIF NTS provides legal production status | [UCDA export certification](/overview/export-certification) | ✅ Verified at minting |
 | **DDS filed before EU entry** | Auto-generated on GRADED status; IPFS-pinned; TRACES API filed | `/api/eudr/generate-dds` | ✅ Automated pipeline |
 | **Records kept 5 years minimum** | Hedera HCS + Mantle + IPFS: permanent and immutable by design | Three independent systems | ✅ Permanent by architecture |
 | **Supply chain description** | Eight-stage TraceLog provides complete provenance chain | TraceLog.sol + Hedera HCS | ✅ Automatically built |
