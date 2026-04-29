@@ -14,11 +14,11 @@ EU Regulation 2023/1115 Article 4 specifies the exact requirements for a valid D
 | **Polygon for farms > 4 hectares** | Agent app GPS walk-perimeter function; auto-closes polygon | Agent PWA | ✅ Built into registration flow |
 | **Deforestation-free since December 31, 2020** | GFW API checked at registration AND at DDS generation | Global Forest Watch API | ✅ Two-point verification |
 | **No mass-balance blending** | BatchToken carries specific farmer IDs; impossible to blend without detection | BatchToken.sol architecture | ✅ Architecturally impossible to violate |
-| **Legal production** | UCDA cooperative licence verified on-chain; MAAIF NTS provides legal production status | [UCDA export certification](/overview/export-certification) | ✅ Verified at minting |
+| **Legal production** | Department of Coffee Development cooperative licence verified on-chain; MAAIF NTS provides legal production status | [Department of Coffee Development export certification](/overview/export-certification) | ✅ Verified at minting |
 | **DDS filed before EU entry** | Auto-generated on GRADED status; IPFS-pinned; TRACES API filed | `/api/eudr/generate-dds` | ✅ Automated pipeline |
 | **Records kept 5 years minimum** | Hedera HCS + Mantle + IPFS: permanent and immutable by design | Three independent systems | ✅ Permanent by architecture |
 | **Supply chain description** | Eight-stage TraceLog provides complete provenance chain | TraceLog.sol + Hedera HCS | ✅ Automatically built |
-| **Risk classification per country** | Uganda benchmarked — standard risk. GFW integration provides site-specific assessment. | GFW + UCDA + MAAIF | ✅ Automated |
+| **Risk classification per country** | Uganda benchmarked — standard risk. GFW integration provides site-specific assessment. | GFW + Department of Coffee Development + MAAIF | ✅ Automated |
 | **Operator due diligence documentation** | DDS document signed with cooperative EIP-712 signature | CreditScore.sol + DDS pipeline | ✅ Cryptographically signed |
 
 ## What the DDS Document Contains
@@ -30,12 +30,12 @@ DDS Document Structure:
 │
 ├── Header
 │   ├── Shipment ID (SHIP-2026-XXXXX)
-│   ├── Exporter UCDA licence number
+│   ├── Exporter Department of Coffee Development licence number
 │   ├── Buyer company + country + destination port
 │   └── Shipping date
 │
 ├── Supply Chain Section
-│   ├── Cooperative ID + UCDA licence
+│   ├── Cooperative ID + Department of Coffee Development licence
 │   ├── Number of farms in shipment: N
 │   ├── Total weight: X kg
 │   └── BatchToken IDs: [list]
