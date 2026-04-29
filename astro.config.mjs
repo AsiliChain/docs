@@ -43,9 +43,11 @@ export default defineConfig({
         { tag: 'meta', attrs: { name: 'theme-color', content: '#4B2E0A' } },
       ],
       expressiveCode: {
+        themes: ['starlight-dark', 'starlight-light'],
+        useStarlightDarkModeSwitch: true,
         defaultProps: {
           overridesByLang: {
-            mermaid: { frame: 'none' },
+            mermaid: { frame: 'none', class: 'mermaid' },
           },
         },
       },
