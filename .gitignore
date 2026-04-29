@@ -21,4 +21,4 @@ node_modules/
 Thumbs.db
 
 # Migration scripts (reference only)
-fix_*.py
+fix_*.pymemory-bank/
