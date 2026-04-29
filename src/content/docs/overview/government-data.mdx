@@ -49,22 +49,44 @@ approved provider.
 ## Primary and Fallback Paths
 
 ```mermaid
-flowchart TD
-    CHECK{MAAIF NTS API\
-available?}
-    PRIMARY[Read farmerID + GPS\
-from MAAIF NTS API]
-    FALLBACK[Direct agent registration\
-Field agent records GPS\
-Flags for NTS migration]
-    VERIFY[GFW deforestation check]
-    STORE[Hash stored on Mantle\
-Raw GeoJSON pinned to IPFS]
-    CHECK -->|Yes| PRIMARY
-    CHECK -->|No| FALLBACK
-    PRIMARY --> VERIFY
-    FALLBACK --> VERIFY
-    VERIFY --> STORE
+  flowchart TD
+      CHECK{MAAIF NTS API available?}
+      PRIMARY[Read farmerID and GPS from MAAIF NTS API]
+      FALLBACK[Direct agent registration. Field agent records GPS. Flags for NTS migration.]
+      VERIFY[GFW deforestation check]
+      STORE[Hash stored on Mantle. Raw GeoJSON pinned to IPFS.]
+      CHECK -->|Yes| PRIMARY
+      CHECK -->|No| FALLBACK
+      PRIMARY --> VERIFY
+      FALLBACK --> VERIFY
+      VERIFY --> STORE
+```
+
+**Primary path:** MAAIF NTS API returns farmer record in < 2 seconds. AsiliChain hashes the GPS polygon, stores hash on Mantle, pins raw GeoJSON to IPFS with access controls.
+
+**Fallback path:** Field agent uses the AsiliChain agent app to GPS-walk the farm boundary manually. Record is stored identically but flagged for NTS reconciliation during the next MAAIF sync. Protocol continues without interruption.
+
+## MAAIF NTS API Integration
+
+```bash
+GET https://nts.maaif.go.ug/api/v1/farmers/{national_farmer_id}
+Authorization: Bearer {MAAIF_API_KEY}
+```
+
+Response includes:
+```json
+{
+  "farmer_id": "UG-KAS-2024-001234",
+  "cooperative_id": "COOP-MBALE-001",
+  "export_licence": "DCD-COOP-00889",
+  "farm_boundary": {
+    "type": "Polygon",
+    "coordinates": [[[ 34.1772, 1.0656 ], ...]]
+  },
+  "area_hectares": 2.4,
+  "cultivar": "Robusta",
+  "registration_date": "2024-03-01"
+}
 ```
 
 **Primary path:** MAAIF NTS API returns farmer record in < 2 seconds. AsiliChain hashes the GPS polygon, stores hash on Mantle, pins raw GeoJSON to IPFS with access controls.
