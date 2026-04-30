@@ -11,7 +11,8 @@ No single component failure can strand farmer funds or permanently break a compl
 | Chainlink price feed stale | LendingVault pauses new loans. 48-hr timelocked admin override. | New loans paused. Existing unaffected. |
 | Kotani Pay API timeout | Three retries (30/60/120s). Manual cash fallback against on-chain receipt. | Payment delayed ≤10 minutes. |
 | TransFi deposit conversion fails | TransFi ISO27001 SLA handles internally. AsiliChain retries deposit call. | No farmer impact. Pool temporarily smaller. |
-| MAAIF NTS API unavailable | Auto-switch to direct agent registration. Records flagged for migration. | No impact. Protocol continues. |
+| NTS API unavailable | MAAIF NTS API is down or unreachable at farmer registration time. | Automatic fallback to agent GPS walk. Field agent records farm boundary manually. Record flagged for NTS reconciliation at next sync. Protocol continues. 4–8 week onboarding cost increase vs API path. |
+| NTS access revoked | MAAIF or Department of Coffee Development revokes AsiliChain API credentials permanently. | Manual agent registration becomes permanent primary path. Existing registered farmers unaffected — their data is already on-chain. New farmer onboarding cost increases. New API access conversation initiated with ministry. |
 | Mantle network unavailable | All contract operations pause. Hedera HCS continues. Kotani Pay queue persists. | No new submissions. Pending payments queued. |
 | USSD session drop | Stateless sessions. Supabase draft saves. Agent resumes from last checkpoint. | Resubmit final step only. |
 | Harvest failure > 50% | LendingVault 90-day forbearance. 3-of-5 multisig governance vote. | Loans paused. No penalty. |
