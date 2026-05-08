@@ -1,0 +1,135 @@
+---
+title: Agent Architecture
+sidebar:
+  order: 5
+---
+
+## Full Agent Layer Diagram
+
+```mermaid
+graph TD
+    subgraph EXTERNAL["External Data"]
+        CL["Chainlink Coffee/USD"]
+        GFW["Global Forest Watch API"]
+        WX["OpenWeatherMap\nUganda drought index"]
+        AT["Africa's Talking\nUSSD gateway"]
+    end
+
+    subgraph AGENTS["ERC-8004 Agent Layer (Mantle)"]
+        RM["LendingVault\nRisk Monitor"]
+        USSD["USSD\nSession Agent"]
+        DDS["DDS Anomaly\nDetector"]
+        CI["Cooperative\nIntelligence Agent"]
+    end
+
+    subgraph CONTRACTS["Smart Contracts (Mantle chainId 5000)"]
+        FR["FarmerRegistry.sol"]
+        BT["BatchToken.sol"]
+        TL["TraceLog.sol"]
+        LV["LendingVault.sol"]
+        CS["CreditScore.sol"]
+        PO["PurchaseOrder.sol"]
+        PF["ProtocolFee.sol"]
+    end
+
+    subgraph AUDIT["Audit Layer"]
+        HCS["Hedera HCS\nAppend-only log"]
+        ERC["ERC-8004 Registries\nIdentity / Reputation / Validation"]
+    end
+
+    subgraph OUTPUT["Outputs"]
+        DASH["Cooperative Dashboard"]
+        KP["Kotani Pay\nMTN MoMo payout"]
+        TRACES["EU TRACES\nDDS filing"]
+    end
+
+    CL --> RM
+    WX --> RM
+    RM --> LV
+    RM --> HCS
+    RM --> ERC
+
+    AT --> USSD
+    USSD --> FR
+    USSD --> BT
+    USSD --> KP
+    USSD --> HCS
+
+    TL --> DDS
+    GFW --> DDS
+    DDS --> TRACES
+    DDS --> HCS
+
+    CS --> CI
+    LV --> CI
+    BT --> CI
+    TL --> CI
+    HCS --> CI
+    CL --> CI
+    CI --> DASH
+    CI --> ERC
+```
+
+## Design Principles
+
+**Agents read, contracts write.**
+No agent can modify contract state directly. Agents
+read from contracts via public view functions and
+external APIs. They submit transactions through the
+same access-controlled API layer that human operators
+use. The on-chain security model is unchanged.
+
+**Every decision is recorded before execution.**
+An agent recommendation is written to Hedera HCS and
+the ERC-8004 Validation Registry before any action
+is taken. If the action fails, the recommendation
+record still exists. This creates an audit trail of
+intent, not just outcome.
+
+**Agents have identities, not just addresses.**
+Under ERC-8004, each AsiliChain agent has an NFT-based
+identity on Mantle mainnet. Its decisions accumulate
+against a reputation score. MFIs evaluating the protocol
+can query an agent's historical recommendation accuracy
+before trusting it with their capital.
+
+**No autonomous high-stakes execution in Phase 1.**
+Liquidation, forbearance approval, and emergency pause
+all require human multisig in Phase 1 and Phase 2.
+Agents provide the inputs to those decisions — they do
+not make them unilaterally. Autonomous execution of
+high-stakes actions is a Phase 3 capability, gated on
+an established on-chain track record.
+
+## Integration with ERC-8004 Registries
+
+AsiliChain agents interact with three registries
+deployed on Mantle mainnet:
+
+```typescript
+// ERC-8004 registry addresses on Mantle mainnet
+const ERC8004_IDENTITY_REGISTRY   = "0x...";  // confirm from Mantle docs
+const ERC8004_REPUTATION_REGISTRY = "0x...";  // confirm from Mantle docs
+const ERC8004_VALIDATION_REGISTRY = "0x...";  // confirm from Mantle docs
+```
+
+:::note[Registry addresses]
+Confirm current ERC-8004 registry contract addresses
+from the Mantle developer documentation before
+deployment. These were deployed on Mantle mainnet in
+February 2026 and may have been updated since.
+:::
+
+## Agent Technology Stack
+
+| Layer | Technology |
+|-------|-----------|
+| Agent runtime | Python 3.12, CrewAI framework |
+| LLM for reasoning | Configurable (MiniMax M1, Claude, GPT-4) |
+| On-chain reads | viem.js public client, Mantle mainnet RPC |
+| On-chain writes | API wallet relayer (same gas sponsorship as human ops) |
+| ERC-8004 registration | ethers.js, Mantle mainnet |
+| HCS writes | @hashgraph/sdk |
+| Scheduling | Node.js cron (15-min / 30-min cycles) |
+| External APIs | Chainlink, GFW, OpenWeatherMap, Africa's Talking |
+| Agent endpoints | Next.js API routes at agents.asilichain.xyz |

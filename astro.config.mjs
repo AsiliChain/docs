@@ -121,6 +121,12 @@ export default defineConfig({
             { label: 'Failure Modes', link: '/developer/failure-modes' },
             { label: 'Security & Audit', link: '/developer/security' },
             { label: 'Gas Sponsorship', link: '/developer/gas-sponsorship' },
+            { label: 'AI Agent Layer', link: '/developer/ai-agents/' },
+            { label: 'Agent Architecture', link: '/developer/ai-agents/architecture' },
+            { label: 'Risk Monitor', link: '/developer/ai-agents/risk-monitor' },
+            { label: 'USSD Session Agent', link: '/developer/ai-agents/ussd-agent' },
+            { label: 'DDS Anomaly Detector', link: '/developer/ai-agents/dds-anomaly' },
+            { label: 'Cooperative Intelligence', link: '/developer/ai-agents/coop-intelligence' },
           ]
         },
         {

@@ -1,0 +1,98 @@
+---
+title: USSD Session Agent
+sidebar:
+  order: 2
+---
+
+The USSD Session Agent sits between the Africa's Talking
+USSD gateway and the AsiliChain API. A static menu tree
+can only handle expected inputs. The USSD Session Agent
+handles the real world: farmers who pause mid-session,
+weight entries that look wrong, cooperative IDs that do
+not match registered records, and network drops that leave
+a session in an unknown state.
+
+## Deployment Point
+Farmer dials *384#
+↓
+Africa's Talking USSD Gateway
+↓
+[USSD Session Agent]            ← deployed here
+↓
+AsiliChain API
+→ FarmerRegistry.sol
+→ BatchToken.mintBatch()
+→ Kotani Pay payout trigger
+
+## What It Does
+
+The agent manages USSD session state with contextual
+awareness that a static handler cannot provide.
+
+**Session recovery**
+
+A farmer starts a delivery session, enters the weight,
+then loses signal. Africa's Talking marks the session
+timed out. When the farmer dials again, the USSD Session
+Agent recognises the incomplete session from the farmer's
+registered ID and resumes from the weight entry step
+rather than restarting. The agent holds session state
+in Supabase with a 24-hour expiry.
+
+**Input validation with context**
+
+A farmer enters 6750 kg instead of 67.5 kg. A static
+handler either accepts it (minting a wildly incorrect
+BatchToken) or rejects it with a generic error. The
+agent knows the farmer's historical delivery weights
+from CreditScore.sol delivery records and flags the
+anomaly before submission:
+Agent logic:
+historicalAvgWeight = mean of last 5 deliveries
+for this farmer from CreditScore delivery records
+if submittedWeight > historicalAvgWeight × 3:
+→ respond via USSD: "Confirm weight: [X] kg?
+Your recent deliveries average [Y] kg.
+Press 1 to confirm, 2 to re-enter."
+
+**Language and cooperative context**
+
+The agent is aware of the cooperative the farmer belongs
+to (from FarmerRegistry) and adapts session prompts
+accordingly. Phase 2 targets Luganda-language support
+for Baganda cooperative members in Central Uganda.
+
+## On-Chain Record
+
+The USSD Session Agent writes to Hedera HCS on every
+confirmed delivery submission:
+
+```json
+{
+  "agent": "asilichain-ussd-session",
+  "erc8004_agent_id": "0xAGENT_NFT_ID_2",
+  "event": "SESSION_COMPLETED",
+  "farmer_id": "UG-KAS-2024-001234",
+  "submitted_weight_kg": 67.5,
+  "anomaly_flagged": false,
+  "session_resumed": false,
+  "elapsed_seconds": 42,
+  "mantle_tx_hash": "0xabc..."
+}
+```
+
+## ERC-8004 Registration
+
+```typescript
+const agentMetadata = {
+  name: "AsiliChain USSD Session Agent",
+  description: "RWA Coordination Agent. Manages *384# USSD delivery sessions for Uganda coffee farmers. Handles session recovery, input anomaly detection, and cooperative context. Operates on Africa's Talking gateway connected to Mantle via AsiliChain API.",
+  services: [
+    {
+      name: "MCP",
+      endpoint: "https://agents.asilichain.xyz/ussd-agent/mcp",
+      version: "2025-06-18"
+    }
+  ]
+};
+```

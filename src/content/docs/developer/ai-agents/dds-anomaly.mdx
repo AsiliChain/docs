@@ -1,0 +1,97 @@
+---
+title: DDS Anomaly Detector
+sidebar:
+  order: 3
+---
+
+The DDS Anomaly Detector runs between the GRADED stage
+event and the DDS generation pipeline. Its role is to
+catch data problems before they become filed EU documents.
+A DDS filed with anomalous data to EU TRACES cannot be
+recalled without a formal correction process. Prevention
+at this stage is cheaper and less risky than correction
+after filing.
+
+## Deployment Point
+TraceLog.updateStage(GRADED)
+↓
+[DDS Anomaly Detector]         ← deployed here
+↓
+POST /eudr/generate-dds
+→ GFW verification
+→ pdf-lib document assembly
+→ IPFS pinning
+→ EU TRACES filing
+
+## What It Checks
+
+The detector runs five checks before allowing the DDS
+pipeline to proceed:
+
+**Check 1 — GPS polygon drift**
+
+Compares the current GPS polygon from FarmerRegistry with
+the GFW-verified polygon from initial registration. If the
+polygon centroid has moved more than 50 metres from the
+registered position, the agent flags for manual review.
+This catches farm boundary data corruption or fraudulent
+substitution.
+if distance(currentCentroid, registeredCentroid) > 50m:
+→ block DDS generation
+→ write GPS_DRIFT_ALERT to Hedera HCS
+→ notify cooperative dashboard
+
+**Check 2 — Grade consistency**
+
+Compares the grade recorded at GRADED stage against the
+cooperative's historical grade distribution for that season.
+A screen18 grading on a batch from a cooperative that has
+never produced screen18 in three seasons is anomalous.
+if batchGrade not in top 2 historical grades for cooperative:
+→ flag for cooperative quality officer review
+→ DDS generation proceeds with ANOMALY_FLAG in document
+
+**Check 3 — Weight-to-farm-size consistency**
+
+A 2.4 hectare Robusta farm cannot produce 50,000 kg in
+one delivery. Checks submitted batch weight against
+expected yield range for the farm's declared area and
+cultivar from FarmerRegistry.
+
+**Check 4 — Final GFW re-verification**
+
+Runs a fresh GFW satellite check on the farm polygon at
+the moment of DDS generation, not only at registration.
+A farm that passed GFW at registration in January but
+had tree cover cleared in March will fail this check
+before the April DDS is filed.
+
+**Check 5 — Duplicate batch detection**
+
+Ensures the same batch has not already been included in
+a previously filed DDS for a different shipment. Prevents
+the same physical coffee being documented twice.
+
+## On-Chain Record
+
+Every anomaly check result — pass or fail — is written
+to Hedera HCS before DDS generation proceeds:
+
+```json
+{
+  "agent": "asilichain-dds-anomaly-detector",
+  "erc8004_agent_id": "0xAGENT_NFT_ID_3",
+  "batch_id": "BATCH-2026-004821",
+  "checks_run": 5,
+  "checks_passed": 5,
+  "checks_failed": 0,
+  "anomalies": [],
+  "dds_cleared": true,
+  "timestamp": "2026-04-17T14:00:00Z"
+}
+```
+
+If any check fails, the reason is recorded before the
+DDS is blocked. The EU TRACES filing never happens
+for a blocked batch. The cooperative receives a specific
+explanation of which check failed and why.

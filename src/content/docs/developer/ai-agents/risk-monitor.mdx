@@ -1,0 +1,141 @@
+---
+title: LendingVault Risk Monitor
+sidebar:
+  order: 1
+---
+
+The LendingVault Risk Monitor is the most critical agent
+in the AsiliChain protocol. It sits between the Chainlink
+coffee price feed and the LendingVault, watching for
+conditions that would leave active loans undercollateralised
+and recommending action before the protocol absorbs a loss.
+
+## Deployment Point
+Chainlink AggregatorV3 (Coffee/USD)
+↓
+[LendingVault Risk Monitor Agent]     ← deployed here
+↓
+LendingVault.sol
+(loan origination + collateral decisions)
+
+The agent runs on a scheduled loop (every 15 minutes
+on Mantle Sepolia, every 30 minutes on Mantle mainnet)
+and on every `BatchMinted` event from BatchToken.sol.
+
+## What It Monitors
+
+The agent reads four inputs simultaneously:
+
+1. **Chainlink coffee price** — current USD per kg, 8-decimal
+   precision, from AggregatorV3 on Mantle
+2. **Active loan positions** — all loans in LendingVault
+   with their principal, collateral token ID, and current
+   LTV from BatchToken.getBatchData()
+3. **Uganda weather data** — drought risk index from
+   OpenWeatherMap API for the Eastern Uganda coffee
+   growing region (Mbale, Mt. Elgon, Rwenzori)
+4. **Cooperative repayment history** — on-chain CreditScore
+   data from CreditScore.sol, per cooperative aggregate
+
+## What It Decides
+
+The agent evaluates three risk scenarios on every cycle:
+
+**Scenario 1 — Price undercollateralisation**
+
+If coffee price drops more than 20% from the price at
+loan origination, the loan LTV may exceed the tier ceiling.
+Agent logic:
+currentValue = batchWeight × currentCoffeePrice × gradeMultiplier
+currentLTV = loanPrincipal / currentValue
+if currentLTV > TIER_CEILING + 5%:
+→ record RISK_ALERT to Hedera HCS
+→ recommend forbearance to cooperative dashboard
+→ if currentLTV > TIER_CEILING + 15%:
+→ recommend partial collateral liquidation
+→ write recommendation hash to Mantle via
+ERC-8004 Validation Registry
+
+**Scenario 2 — Drought risk elevation**
+
+If the Uganda drought risk index exceeds threshold for
+the relevant growing region, the agent flags all
+GrowingCropToken loans in that region for review.
+Agent logic:
+if droughtRiskIndex > 0.65 for region:
+→ pause new GrowingCropToken loan origination
+for that cooperative (via LendingVault.pause())
+→ notify cooperative dashboard
+→ write DROUGHT_RISK_FLAG to Hedera HCS
+
+**Scenario 3 — Stale Chainlink feed**
+
+If the Chainlink price feed is older than 1 hour,
+the agent pauses all new loan originations immediately.
+This mirrors the on-chain staleness check in
+LendingVault.sol but catches it off-chain first.
+
+## On-Chain Record
+
+Every risk evaluation — not just alerts — is recorded.
+The agent writes a structured message to Hedera HCS
+on every cycle:
+
+```json
+{
+  "agent": "asilichain-risk-monitor",
+  "erc8004_agent_id": "0xAGENT_NFT_ID",
+  "timestamp": "2026-04-17T10:00:00Z",
+  "coffee_price_usdc": 2.34,
+  "active_loans": 47,
+  "at_risk_loans": 0,
+  "drought_risk_mbale": 0.22,
+  "action": "NO_ACTION",
+  "mantle_block": 14782341
+}
+```
+
+Alert events are also written to the ERC-8004 Validation
+Registry on Mantle mainnet with a cryptographic hash of
+the inputs used to generate the recommendation. This makes
+every recommendation independently verifiable — an MFI
+can confirm the agent used the correct price and LTV data.
+
+## ERC-8004 Registration
+
+```typescript
+// Agent registration on Mantle mainnet
+const agentMetadata = {
+  type: "https://eips.ethereum.org/EIPS/eip-8004#registration-v1",
+  name: "AsiliChain LendingVault Risk Monitor",
+  description: "RWA Coordination Agent. Monitors BatchToken collateral positions against Chainlink coffee price feed. Recommends forbearance and liquidation when LTV thresholds are breached. Every decision recorded on Mantle.",
+  services: [
+    {
+      name: "MCP",
+      endpoint: "https://agents.asilichain.xyz/risk-monitor/mcp",
+      version: "2025-06-18"
+    }
+  ],
+  x402Support: false,
+  active: true
+};
+```
+
+## Phase Deployment
+
+| Phase | Status | Configuration |
+|-------|--------|--------------|
+| Phase 1 Sepolia | Testing | 15-minute cycle, alerts to dashboard only |
+| Phase 1 Mainnet | Active | 30-minute cycle, alerts + HCS records |
+| Phase 2+ | Active | Real-time on large position changes |
+
+:::caution[Human approval required for liquidation]
+The Risk Monitor recommends liquidation but cannot
+execute it autonomously in Phase 1 and Phase 2. A
+3-of-5 multisig approval is required for any
+liquidation action. The agent's recommendation is
+the input to that governance decision, not the
+decision itself. Autonomous execution is a Phase 3
+consideration after the recommendation track record
+is established.
+:::

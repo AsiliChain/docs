@@ -1,0 +1,109 @@
+---
+title: Cooperative Intelligence Agent
+sidebar:
+  order: 4
+---
+
+The Cooperative Intelligence Agent powers the cooperative
+dashboard. It synthesises on-chain data from all seven
+AsiliChain contracts, Hedera HCS history, and external
+market data into actionable operational intelligence for
+the cooperative manager.
+
+## Deployment Point
+CreditScore.sol ──┐
+LendingVault.sol ─┤
+BatchToken.sol ───┤──→ [Cooperative Intelligence Agent] → Dashboard
+TraceLog.sol ─────┤
+Hedera HCS ───────┘
+Chainlink feeds ──┘
+
+The agent does not sit in any transaction path. It reads
+only. It cannot call any contract write function. Its
+output is a structured data feed to the cooperative
+dashboard — recommendations, alerts, and summaries.
+
+## What It Produces
+
+**Daily operational summary**
+
+Every morning at 6:00 EAT (UTC+3) the agent generates
+and pushes to the dashboard:
+
+- Active loans: count, total USDC, average LTV
+- Batches awaiting grade: names, weights, days since delivery
+- Batches approaching export: count, estimated auto-repayment
+  dates based on typical export timelines
+- Credit score movement: farmers who improved or declined
+  in the past 30 days
+- Price alert: current Chainlink coffee price vs the price
+  at loan origination for active loans. Simple traffic light:
+  green (price up, LTV safer), amber (price neutral),
+  red (price down, review loans)
+
+**Loan portfolio health**
+Agent calculates per cooperative:
+portfolioLTV = sum(activeLoanPrincipals)
+/ sum(currentCollateralValues)
+repaymentRate = settledLoans / (settledLoans + defaultedLoans)
+over trailing 90 days
+projectedAutoRepayments = batches at EXPORTED or COMMITTED
+× historicalAvgDaysToExport
+
+**Farmer cohort analysis**
+
+Groups the cooperative's farmers into three cohorts based
+on CreditScore trajectories:
+
+- **Growing:** Score increased more than 50 in last 90 days
+- **Stable:** Score unchanged
+- **At risk:** Score declined or has not delivered in 60+ days
+
+Cooperative manager can act on the at-risk cohort before
+defaults occur.
+
+## A2A Communication
+
+The Cooperative Intelligence Agent exposes an A2A endpoint
+following the ERC-8004 Agent-to-Agent protocol. This means
+external agents — an MFI's own risk system, a commodity
+trader's due diligence agent, or a future AsiliChain
+regulatory reporting agent — can query it directly with
+structured requests without going through the AsiliChain
+API.
+GET https://agents.asilichain.xyz/coop-intelligence/.well-known/agent-card.json
+
+This is how AsiliChain's agent layer participates in the
+broader ERC-8004 ecosystem rather than being a closed
+proprietary system.
+
+## ERC-8004 Registration
+
+```typescript
+const agentMetadata = {
+  name: "AsiliChain Cooperative Intelligence Agent",
+  description: "Financial Strategy Agent. Synthesises AsiliChain contract state, Hedera HCS history, and Chainlink price feeds into cooperative operational intelligence. Exposes A2A endpoint for MFI and buyer portal agent integration.",
+  services: [
+    {
+      name: "A2A",
+      endpoint: "https://agents.asilichain.xyz/coop-intelligence/.well-known/agent-card.json",
+      version: "0.3.0"
+    },
+    {
+      name: "MCP",
+      endpoint: "https://agents.asilichain.xyz/coop-intelligence/mcp",
+      version: "2025-06-18"
+    }
+  ],
+  x402Support: false,
+  active: true
+};
+```
+
+## Phase Deployment
+
+| Phase | Status | Capability |
+|-------|--------|-----------|
+| Phase 1 | Monitoring only | Daily summary, price alerts |
+| Phase 2 | Extended analytics | Loan portfolio health, cohort analysis |
+| Phase 3 | A2A enabled | External MFI and buyer portal agent queries |

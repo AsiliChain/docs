@@ -1,0 +1,79 @@
+---
+title: AI Agent Layer
+sidebar:
+  order: 12
+---
+
+AsiliChain deploys on-chain AI agents as a native layer
+of the protocol. These agents are not optional tools or
+background scripts. They are registered economic participants
+on Mantle Network, operating within the ERC-8004 standard,
+with verifiable on-chain identities, portable reputations,
+and cryptographically auditable decision records.
+
+Every agent action is recorded permanently on Mantle.
+Every decision is auditable by regulators, MFIs, and
+cooperative managers without requiring trust in AsiliChain.
+
+## Why an Agent Layer
+
+The AsiliChain smart contracts handle economic logic:
+minting, lending, repayment, and fee collection. They do
+this correctly but without context. They cannot detect that
+a moisture reading is three standard deviations outside
+normal for that cooperative's history. They cannot notice
+that a farm polygon has shifted between registrations.
+They cannot recommend forbearance before a drought causes
+defaults.
+
+The AI agent layer adds contextual intelligence to the
+protocol without touching the on-chain security model.
+Agents read contract state, external data feeds, and
+historical patterns. They recommend or execute actions.
+Every recommendation is recorded on-chain before execution.
+No agent can modify a contract directly without going
+through the same access control roles that humans use.
+
+## The On-Chain Standard: ERC-8004
+
+AsiliChain agents are registered under ERC-8004, the
+Ethereum standard for trustless agents deployed on Mantle
+mainnet in February 2026. ERC-8004 provides three
+on-chain registries that every AsiliChain agent uses:
+
+**Identity Registry**
+Every agent receives a unique NFT-based on-chain identity.
+The AsiliChain LendingVault Risk Monitor, the USSD Session
+Agent, and the DDS Anomaly Detector are each separately
+identifiable, discoverable, and auditable on Mantle.
+
+**Reputation Registry**
+Every agent builds a portable track record. Correct risk
+calls, accurate anomaly detections, and successful session
+completions are recorded against each agent's identity.
+MFIs evaluating the protocol can query an agent's
+performance history before trusting its recommendations.
+
+**Validation Registry**
+Cryptographic proof of work completed. When the Risk Monitor
+recommends forbearance, the recommendation is logged with
+a proof that the agent evaluated the correct inputs. The
+recommendation is not erasable and cannot be backdated.
+
+ERC-8004 is backwards-compatible with MCP (Model Context
+Protocol), A2A (Agent-to-Agent) communication, and the
+x402 payment standard. AsiliChain agents expose MCP
+endpoints for external agent integration.
+
+## Four Deployed Agents
+
+AsiliChain deploys four agents at specific points in the
+protocol where contextual intelligence creates measurable
+value. Each one is documented in its own page.
+
+| Agent | Deployment point | ERC-8004 category |
+|-------|-----------------|------------------|
+| LendingVault Risk Monitor | Between Chainlink feed and LendingVault | RWA Coordination Agent |
+| USSD Session Agent | Between Africa's Talking and AsiliChain API | RWA Coordination Agent |
+| DDS Anomaly Detector | Between TraceLog GRADED event and DDS pipeline | RWA Coordination Agent |
+| Cooperative Intelligence Agent | Cooperative dashboard data layer | Financial Strategy Agent |
