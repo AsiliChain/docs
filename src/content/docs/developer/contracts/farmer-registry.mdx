@@ -2,9 +2,19 @@
 title: FarmerRegistry.sol
 order: 1
 label: FarmerRegistry.sol
+badge:
+  text: Implemented
+  variant: success
 ---
 
 The first contract deployed. Stores verified farmer identities, MAAIF national IDs, GPS farm data references, and cooperative memberships. All other contracts depend on it.
+
+:::important Contract Status
+✅ Implemented — `FarmerRegistry.sol` is the first completed contract in
+the AsiliChain protocol. Compiles cleanly against OZ 5.6.1 on Solidity
+0.8.22. 63 tests passing (9 describe blocks). All other contracts in
+the Smart Contracts Index are specced but not yet written.
+:::
 
 ## Responsibilities
 
@@ -18,48 +28,120 @@ The first contract deployed. Stores verified farmer identities, MAAIF national I
 
 ```solidity
 struct Farmer {
-    string  maaifFarmerId;        // e.g. "UG-KAS-2024-001234"
-    address cooperativeWallet;    // The cooperative this farmer belongs to
-    bytes32 farmBoundaryIpfsCid;  // IPFS CID hash of GeoJSON polygon
-    uint256 farmAreaHectares;     // Scaled by 100 (e.g. 240 = 2.40 ha)
+    string  maaifFarmerId;        // MAAIF National Traceability System ID
+    address cooperativeWallet;    // Cooperative wallet — or INDEPENDENT_AGGREGATOR
+    bytes32 farmBoundaryIpfsCid;  // IPFS CID of GeoJSON polygon (EUDR DDS)
+    uint256 farmAreaHectares;     // Farm area × 100 (e.g. 250 = 2.50 ha)
+    bool    gfwDeforestationFree; // Global Forest Watch check result (GFW)
+    bool    active;               // false = deactivated (soft delete)
     uint256 registrationTimestamp;
-    bool    gfwDeforestationFree; // Confirmed at registration
-    bool    active;
 }
 
-mapping(address => Farmer) public farmers;       // wallet → Farmer
-mapping(string => address) public maaifToWallet; // maaifId → wallet
+mapping(address => Farmer) public farmers;        // wallet → Farmer
+mapping(string => address) public maaifToWallet;  // MAAIF ID → wallet (uniqueness guard)
+address public INDEPENDENT_AGGREGATOR;            // Set post-deploy via setIndependentAggregator()
 ```
 
 ## Interface
 
 ```solidity
-// Register a new farmer (AGENT_ROLE required)
+// Register a new farmer — AGENT_ROLE required
+// Pass INDEPENDENT_AGGREGATOR as cooperativeWallet for independent farmers
 function registerFarmer(
     address farmerWallet,
     string calldata maaifFarmerId,
+    address cooperativeWallet,
     bytes32 farmBoundaryIpfsCid,
     uint256 farmAreaHectares,
     bool gfwDeforestationFree
 ) external onlyRole(AGENT_ROLE);
 
-// Verify a farmer is registered and active
+// Returns true if farmer is registered and active
 function isRegistered(address farmerWallet) external view returns (bool);
 
-// Get farmer data (used by BatchToken.sol at mint time)
+// Returns full Farmer struct. Reverts only if never registered.
+// Readable for deactivated farmers — BatchToken and LendingVault need this.
 function getFarmer(address farmerWallet) external view returns (Farmer memory);
 
-// Deactivate a farmer (COOP_ROLE — for deceased, relocated, or fraudulent records)
-function deactivateFarmer(address farmerWallet) external onlyRole(COOP_ROLE);
+// Returns true if farmer's cooperativeWallet == INDEPENDENT_AGGREGATOR.
+// Returns false if INDEPENDENT_AGGREGATOR has not been set yet.
+function isIndependent(address farmerWallet) public view returns (bool);
+
+// Update GFW verification result — AGENT_ROLE required
+// Used when API layer runs a fresh GFW check (e.g. annually)
+function verifyFarmer(address farmerWallet, bool gfwDeforestationFree)
+    external onlyRole(AGENT_ROLE);
+
+// Soft-delete a farmer. AGENT_ROLE or COOP_ROLE.
+// Phase 1: any holder of either role can deactivate any farmer.
+// Cooperative-scoped deactivation (own members only) is deferred to v2.
+// MAAIF ID reservation is preserved — re-registration of same ID is blocked.
+function deactivateFarmer(address farmerWallet) external;
+
+// Set or rotate the INDEPENDENT_AGGREGATOR address — DEFAULT_ADMIN_ROLE
+// Must be called before any independent farmer is registered.
+function setIndependentAggregator(address aggregator)
+    external onlyRole(DEFAULT_ADMIN_ROLE);
+
+// Migrate a single independent farmer to a named cooperative — DEFAULT_ADMIN_ROLE
+// Farmer must be active and currently independent.
+// newCooperativeWallet must be non-zero and != INDEPENDENT_AGGREGATOR.
+function migrateFarmer(address farmerWallet, address newCooperativeWallet)
+    external onlyRole(DEFAULT_ADMIN_ROLE);
 ```
 
 ## Access Control Roles
 
-| Role | Granted to | Permission |
-|------|-----------|-----------|
-| `DEFAULT_ADMIN_ROLE` | AsiliChain deployer multisig | Grant/revoke all roles |
-| `COOP_ROLE` | Cooperative wallet | Deactivate farmers, update cooperative metadata |
-| `AGENT_ROLE` | Field agent wallets | Register new farmers |
+| Role | Granted to | Permissions |
+|---|---|---|
+| `DEFAULT_ADMIN_ROLE` | AsiliChain deployer multisig | Grant/revoke all roles; `setIndependentAggregator()`; `migrateFarmer()`; upgrade contract. See [Deployment Guide](/developer/deployment). |
+| `AGENT_ROLE` | Field agent wallets | `registerFarmer()`; `verifyFarmer()`; `deactivateFarmer()` |
+| `COOP_ROLE` | Cooperative wallet | `deactivateFarmer()` only. Phase 1: can deactivate any farmer. Cooperative-scoped deactivation deferred to v2. |
+
+
+
+## Independent Farmers
+
+Most Ugandan coffee farmers operate outside formal cooperatives.
+A 2020 IITA study across five districts found 55% selling to
+independent intermediaries; broader ILO research (2021) puts the
+unorganised majority at ~77% nationally. AsiliChain handles this
+through a protocol-managed **`INDEPENDENT_AGGREGATOR`** wallet — a
+multisig address set at deployment and stored as a public state variable.
+Full citations are in [References](/overview/references).
+
+When a field agent registers an independent farmer, they pass
+`INDEPENDENT_AGGREGATOR` as the `cooperativeWallet` argument.
+The farmer is registered identically to a cooperative-member farmer.
+BatchTokens, CreditScore, and EUDR DDS records are all created normally.
+Payout routes directly to the farmer's MTN MoMo via Kotani Pay.
+
+### Governance
+
+| Property | Value |
+|---|---|
+| Controller | AsiliChain deployer multisig (`DEFAULT_ADMIN_ROLE`) |
+| Set at | Post-deploy — Step 8a in `deploy.ts` |
+| Updatable by | `DEFAULT_ADMIN_ROLE` only via `setIndependentAggregator()` |
+| Payout routing | Kotani Pay routes to individual farmer MTN MoMo — the aggregator wallet is never a payment destination for farmer funds |
+| Fee routing | 0.5% protocol fee retained by treasury (not forwarded to a cooperative) |
+
+### Migration path
+
+A farmer who later joins a cooperative is migrated individually by
+`DEFAULT_ADMIN_ROLE` via `migrateFarmer(farmerWallet, newCooperativeWallet)`.
+This updates only that farmer's `cooperativeWallet` field and emits
+`FarmerMigrated` for audit trail. It does not affect any other farmer.
+
+:::caution Aggregator rotation
+If `INDEPENDENT_AGGREGATOR` is rotated to a new multisig address via
+`setIndependentAggregator()`, existing farmer records are NOT
+retroactively updated. `isIndependent()` reads each farmer's stored
+`cooperativeWallet`, not the current global value. Use `migrateFarmer()`
+to update individual records after a rotation. If all independent farmers
+must be migrated, batch the operation or handle it in an upgrade.
+See [Deployment Guide](/developer/deployment) for the operational warning.
+:::
 
 ## Registration Flow
 
@@ -77,19 +159,50 @@ API: FarmerRegistry.registerFarmer(wallet, maaifId, ipfsCid, area, gfwStatus)
 HCS: REGISTERED event written
 ```
 
+**Independent farmer path (same flow, one difference at step 5):**
+
+```
+Field agent opens agent app
+    ↓
+MAAIF NTS: returns farmerID + GPS polygon GeoJSON
+    ↓
+API: GFW check on farm polygon centroid
+    ↓
+API: pinGeoJSON(polygon) → Pinata → IPFS CID returned
+    ↓
+API: reads farmerRegistry.INDEPENDENT_AGGREGATOR()
+     passes it as cooperativeWallet argument
+    ↓
+API: FarmerRegistry.registerFarmer(wallet, maaifId,
+     INDEPENDENT_AGGREGATOR, ipfsCid, area, gfwStatus)
+    ↓
+BatchToken minted with cooperativeId = "INDEPENDENT"
+    ↓
+Payout routed directly to farmer MTN MoMo via Kotani Pay
+ProtocolFee: 0.5% deducted, remainder to farmer
+```
+
 ## Events
 
 ```solidity
 event FarmerRegistered(
     address indexed farmerWallet,
-    string maaifFarmerId,
-    address indexed cooperative,
-    uint256 timestamp
+    string maaifId,
+    address indexed cooperativeWallet
 );
 
-event FarmerDeactivated(
+event FarmerVerified(
     address indexed farmerWallet,
-    address indexed deactivatedBy,
-    uint256 timestamp
+    bool gfwDeforestationFree
+);
+
+event FarmerDeactivated(address indexed farmerWallet);
+
+event IndependentAggregatorSet(address indexed aggregator);
+
+event FarmerMigrated(
+    address indexed farmerWallet,
+    address indexed fromCooperative,
+    address indexed toCooperative
 );
 ```

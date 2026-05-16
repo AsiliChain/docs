@@ -30,6 +30,8 @@ label: References
 | EUDR risk for African producers | UNDP EUDR Impact Assessment 2023 | Risk-averse buyer concentration risk |
 | RWA tokenisation market: $33B+ (October 2025) | rwa.xyz / DeFiLlama October 2025 | RWA market context for BatchToken |
 | FinScope Uganda 2023: < 10% formal credit access | Financial Sector Deepening Uganda 2023 | Financial exclusion baseline |
+| Smallholder farmer organisation rates in Uganda (23% nationally; 45% in exporting districts) | ILO Uganda Coffee Value Chain Analysis, 2021 (Nalunga, Wedig, Farm Africa) | Independent farmer majority context for INDEPENDENT_AGGREGATOR design |
+| 55% of coffee farmers in five Ugandan districts sell to independent intermediaries | IITA / CGSpace, 2020 — "Transaction costs and market participation among smallholder coffee farmers in Uganda" (stable DOI) | Independent farmer registration path through AsiliChain |
 
 ## Technology
 
@@ -64,5 +66,28 @@ Items requiring validation before publication as factual claims:
 | Uganda exports 70% to Europe | Cross-check Department of Coffee Development export registry with EU trade data |
 | MAAIF $9.15M NTS commitment | Confirm with current MAAIF budget documentation |
 | Kotani Pay FIA VASP registration active | Verify directly with Kotani Pay compliance team |
-| Mantle gas: $0.002 per ZK proof | Confirm with current Mantle gas data — may vary |
-| UCDA dissolution confirmed — all references updated to Department of Coffee Development | National Coffee Amendment Act 2024 (Parliament of Uganda) — verify exact act name and date before publication |
+
+### Independent Farmer Market Data
+
+**IITA-2020-coffee**
+International Institute of Tropical Agriculture (IITA). (2020).
+*Diagnosis of the Ugandan Coffee Value Chain.*
+Five-district household and stakeholder survey (Buikwe, Luuka,
+Masaka, Mityana, Mubende). Conducted 2019, published 2020.
+Finding cited: 55% of surveyed farmers sold coffee to independent
+intermediaries rather than cooperatives.
+Source: IITA Publications / CGSpace —
+https://cgspace.cgiar.org/handle/10568/110911
+
+**ILO-2021-uganda-coffee**
+International Labour Organization (ILO). (2021).
+*Uganda Coffee Value Chain: Mapping and Analysis.*
+Finding cited: Only 23% of coffee farmers nationally were members
+of organised producer groups or cooperative societies.
+Primary sources within: Nalunga (2021), Wedig (2019),
+Farm Africa (2020).
+Source: ILO — https://www.ilo.org/publications/uganda-coffee-value-chain
+
+Both citations support the INDEPENDENT_AGGREGATOR design decision.
+See [Supply Chain Actors](/overview/supply-chain-actors) and
+[FarmerRegistry.sol](/developer/contracts/farmer-registry).

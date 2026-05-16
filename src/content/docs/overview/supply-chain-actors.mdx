@@ -27,23 +27,26 @@ Italy receives 39% of Uganda's European coffee exports. **The commodity trader f
 ```mermaid
 graph TD
     F["👨‍🌾 3.5M Smallholder Farmers"]
-    CO["🏘️ Cooperatives (~1,600)"]
-    IL["💸 Informal Lenders — 60–120% APR
-❌ Displaced by LendingVault"]
-    AGG["📦 Mid-tier Ugandan Exporters
-Great Lakes · Kyagalanyi
-→ AsiliChain Licensed Aggregator Tier"]
-    EXP["🚢 Commodity Traders
-Sucafina · Olam · Kawacom · Ibero · LD
-→ AsiliChain Buyer Portal"]
-    EU["🇪🇺 European Market — 70% of Uganda exports"]
+    CO["🏘️ Cooperatives (~1,600 registered)"]
+    INDEP["🧑‍🌾 Independent Farmers (~55–77%)\nSell direct to intermediaries"]
+    IA["🏛️ INDEPENDENT_AGGREGATOR\nProtocol-managed multisig\nControlled by DEFAULT_ADMIN_ROLE"]
+    IL["💸 Informal Lenders\n60–120% APR\n❌ Displaced by LendingVault"]
+    AGG["📦 Licensed Aggregator Tier\nMid-tier Ugandan exporters\nGreat Lakes · Kyagalanyi"]
+    EXP["🚢 Commodity Traders\nSucafina · Olam · Kawacom · Ibero · LD\nAsiliChain Buyer Portal"]
+    EU["🇪🇺 European Market\n70% of Uganda exports"]
+
     F --> CO
+    INDEP --> IA
     IL -.->|"Predatory pre-harvest credit"| F
+    IL -.->|"Predatory pre-harvest credit"| INDEP
     CO --> AGG & EXP
+    IA --> AGG & EXP
     AGG --> EXP
     EXP --> EU
-    style IL fill:#7B1D1D,color:#FFFFFF,stroke:#CC0000
-    style EXP fill:#1A3557,color:#FFFFFF,stroke:#2563EB
+
+    style IL fill:#FFEEEE,stroke:#CC0000
+    style EXP fill:#E8EEF5,stroke:#1A3557
+    style IA fill:#F0F4E8,stroke:#4B7A2A
 ```
 
 | Category | Role | AsiliChain strategy |
@@ -51,3 +54,18 @@ Sucafina · Olam · Kawacom · Ibero · LD
 | International commodity traders | Aggregate, ship, finance, access EU markets | **Partner** — verified supplier API for EUDR/ESG |
 | Mid-tier Ugandan exporters | Bridge cooperatives and commodity traders | **Licensed aggregator tier** — 0.5% fee on every transfer |
 | Local informal lenders | Pre-harvest credit at 60–120% APR | **Displaced** — LendingVault replaces their function |
+| Independent smallholders (~55–77%) | Sell direct to intermediaries, no cooperative | Registered via FarmerRegistry; `cooperativeWallet` set to `INDEPENDENT_AGGREGATOR`; full protocol access including 60-second MTN MoMo payout, EUDR DDS, and credit history. See [FarmerRegistry.sol](/developer/contracts/farmer-registry). |
+
+:::note Independent Farmer Path
+Most Ugandan coffee farmers operate outside formal cooperatives.
+A 2020 IITA five-district study found 55% selling to independent
+intermediaries; broader ILO research (2021) puts the unorganised
+majority at ~77% nationally. These farmers are fully supported by
+AsiliChain via the `INDEPENDENT_AGGREGATOR` pattern — a multisig
+wallet controlled by `DEFAULT_ADMIN_ROLE` that acts as a virtual
+cooperative for unaffiliated farmers. They receive 60-second MTN
+MoMo payout, full EUDR DDS coverage, and on-chain credit history.
+A farmer who later joins a cooperative is migrated individually via
+`migrateFarmer()` by `DEFAULT_ADMIN_ROLE`. Full citations in
+[References](/overview/references).
+:::

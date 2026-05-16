@@ -16,6 +16,7 @@ Before running any deployment script:
 - [ ] Hedera HCS topic created (`hedera-topic-create.ts` script run)
 - [ ] All environment variables in `.env` populated
 - [ ] Kotani Pay live test: $1 USDC → Uganda MTN number confirmed
+- [ ] `INDEPENDENT_AGGREGATOR_ADDRESS` set to AsiliChain multisig in `.env`
 - [ ] Alchemy webhook URL set and tested on Sepolia
 
 :::danger[Run on Mantle Sepolia first]
@@ -33,6 +34,19 @@ Step 5:  PurchaseOrder.sol        → requires BatchToken + TraceLog addresses
 Step 6:  ProtocolFee.sol          → no dependencies
 Step 7:  LendingVault.sol         → requires all of the above
 Step 8:  Post-deploy: grant roles → VAULT_ROLE, AGENT_ROLE, COOP_ROLE, BUYER_ROLE
+Step 8a: Set INDEPENDENT_AGGREGATOR in FarmerRegistry
+         → farmerRegistry.setIndependentAggregator(MULTISIG_ADDRESS)
+         Must run before any independent farmer is registered.
+         MULTISIG_ADDRESS = INDEPENDENT_AGGREGATOR_ADDRESS from .env
+
+:::caution Rotating INDEPENDENT_AGGREGATOR post-launch
+If you ever call `setIndependentAggregator()` with a new address after
+independent farmers have been registered, their existing records are **not**
+updated. `isIndependent()` reads each farmer's stored `cooperativeWallet`,
+not the current global value. You must call `migrateFarmer()` for each
+affected farmer individually, or batch the migration in an upgrade.
+Do this **before** rotating the multisig, not after.
+:::
 Step 9:  Post-deploy: set env     → copy all deployed addresses to .env
 Step 10: Verify contracts         → Mantle Explorer source verification
 ```
@@ -137,6 +151,16 @@ async function main() {
   await creditScore.grantRole(VAULT_ROLE, lendingVaultAddr);
   await traceLog.grantRole(VAULT_ROLE, lendingVaultAddr);
 
+  // Step 8a: Set INDEPENDENT_AGGREGATOR
+  // ⚠️ ROTATION WARNING: if this address ever changes post-launch,
+  // existing independent farmer records are NOT auto-updated.
+  // Call migrateFarmer() for each affected farmer before rotating.
+  const INDEPENDENT_AGGREGATOR = process.env.INDEPENDENT_AGGREGATOR_ADDRESS!;
+  if (!INDEPENDENT_AGGREGATOR)
+    throw new Error('INDEPENDENT_AGGREGATOR_ADDRESS not set in .env');
+  await farmerRegistry.setIndependentAggregator(INDEPENDENT_AGGREGATOR);
+  console.log('INDEPENDENT_AGGREGATOR set to:', INDEPENDENT_AGGREGATOR);
+
   console.log('\n=== DEPLOYMENT COMPLETE — copy to .env ===');
   console.log(`FARMER_REGISTRY_ADDRESS=${farmerRegistryAddr}`);
   console.log(`CREDIT_SCORE_ADDRESS=${creditScoreAddr}`);
@@ -145,6 +169,7 @@ async function main() {
   console.log(`PURCHASE_ORDER_ADDRESS=${purchaseOrderAddr}`);
   console.log(`PROTOCOL_FEE_ADDRESS=${protocolFeeAddr}`);
   console.log(`LENDING_VAULT_ADDRESS=${lendingVaultAddr}`);
+  console.log(`INDEPENDENT_AGGREGATOR_ADDRESS=${INDEPENDENT_AGGREGATOR}`);
 }
 
 main().catch(console.error);
