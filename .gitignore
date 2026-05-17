@@ -22,3 +22,6 @@ Thumbs.db
 
 # Migration scripts (reference only)
 fix_*.pymemory-bank/
+
+.opencode/
+.sisyphus/
