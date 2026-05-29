@@ -4,7 +4,7 @@ order: 7
 label: PurchaseOrder.sol
 ---
 
-Records a buyer's committed purchase of a specific BatchToken. Confirming a PurchaseOrder upgrades the BatchToken's collateral tier from WAREHOUSED (70% LTV) to COMMITTED (80% LTV) and automatically advances TraceLog to the COMMITTED stage.
+Records a buyer's committed purchase of a specific BatchToken. Confirming a PurchaseOrder upgrades the BatchToken's collateral tier from WAREHOUSED (70% LTV) to COMMITTED (80% LTV) and advances TraceLog to the COMMITTED stage.
 
 ## What a PurchaseOrder Does
 
@@ -19,18 +19,20 @@ The PurchaseOrder is the on-chain proof that a buyer has committed. This commitm
 
 ```solidity
 struct PurchaseOrder {
-    uint256 batchTokenId;
-    address buyerWallet;          // EU buyer's wallet (or buyer portal hot wallet)
-    string  buyerOrganisation;    // e.g. "Sucafina SA"
-    uint256 agreedPriceUsdc;      // Total USDC agreed for the batch
-    uint256 createdTimestamp;
-    uint256 confirmedTimestamp;
-    POStatus status;              // PENDING | CONFIRMED | CANCELLED
+    uint256  orderId;               // Monotonically increasing from 1
+    uint256  batchTokenId;
+    address  buyerWallet;           // EU buyer's wallet (or buyer portal hot wallet)
+    string   buyerOrganisation;     // e.g. "Sucafina SA"
+    uint256  agreedPriceUsdc;       // Total USDC agreed for the batch
+    uint256  createdTimestamp;
+    uint256  confirmedTimestamp;
+    POStatus status;                // PENDING | CONFIRMED | CANCELLED
 }
 
 enum POStatus { PENDING, CONFIRMED, CANCELLED }
-mapping(uint256 => PurchaseOrder) public orders; // orderId → PO
-mapping(uint256 => uint256) public batchToPO;    // batchTokenId → orderId
+
+mapping(uint256 => PurchaseOrder) public orders;              // orderId → PO
+mapping(uint256 => uint256)       public batchToActiveOrder;  // batchTokenId → active orderId. 0 = none
 ```
 
 ## Interface
@@ -39,19 +41,20 @@ mapping(uint256 => uint256) public batchToPO;    // batchTokenId → orderId
 // Create a PO (BUYER_ROLE — buyer portal hot wallet)
 function createPurchaseOrder(
     uint256 batchTokenId,
+    address buyerWallet,                        // ← passed at creation time
     string calldata buyerOrganisation,
     uint256 agreedPriceUsdc
 ) external onlyRole(BUYER_ROLE) returns (uint256 orderId);
 
 // Confirm a PO (COOP_ROLE — cooperative accepts the order)
-// Automatically advances TraceLog to COMMITTED
+// Calls traceLog.updateStage(batchTokenId, 4) for COMMITTED
 function confirmPurchaseOrder(uint256 orderId) external onlyRole(COOP_ROLE);
 
 // Cancel a PO (BUYER_ROLE or COOP_ROLE — within 48h of creation)
 function cancelPurchaseOrder(uint256 orderId) external;
 
-// Get PO for a batch
-function getPOForBatch(uint256 batchTokenId)
+// View a PO
+function getOrder(uint256 orderId)
     external view returns (PurchaseOrder memory);
 ```
 
@@ -59,11 +62,30 @@ function getPOForBatch(uint256 batchTokenId)
 
 When `confirmPurchaseOrder` is called:
 
-1. `PurchaseOrder.status → CONFIRMED`
-2. `TraceLog.updateStage(batchTokenId, COMMITTED)` — automatic stage advance
-3. `BatchToken` collateral tier recalculated to COMMITTED LTV (80%)
-4. `LendingVault` notified — existing loan can be topped up to new LTV if requested
-5. HCS event written: `COMMITTED` with PO reference and agreed price
+1. `PurchaseOrder.status` → `CONFIRMED`, `confirmedTimestamp` set to `block.timestamp`
+2. `batchToActiveOrder[batchTokenId]` deleted (PO is no longer "active")
+3. `traceLog.updateStage(batchTokenId, 4)` — stage `COMMITTED` (4 = TraceLog.Stage.COMMITTED)
+4. `BatchToken` collateral tier recalculated to COMMITTED LTV (80%)
+5. `LendingVault` notified — existing loan can be topped up to new LTV if requested
+6. HCS event written: `COMMITTED` with PO reference and agreed price
+
+## Guards (createPurchaseOrder)
+
+| Check | Revert if violated |
+|:---|:---|
+| `buyerWallet != address(0)` | `"PurchaseOrder: zero buyer wallet"` |
+| `bytes(buyerOrganisation).length > 0` | `"PurchaseOrder: empty buyer organisation"` |
+| `agreedPriceUsdc > 0` | `"PurchaseOrder: price must be greater than zero"` |
+| `batchToken.checkExists(batchTokenId)` | BatchToken revert |
+| `!batchToken.hasActiveLoan(batchTokenId)` | `"PurchaseOrder: batch is locked as collateral"` |
+| `batchToActiveOrder[batchTokenId] == 0` | `"PurchaseOrder: batch already has an active order"` |
+
+## Cancellation Rules
+
+- Only `BUYER_ROLE` or `COOP_ROLE` can cancel.
+- Must be within 48 hours of `createdTimestamp`.
+- Only `PENDING` orders can be cancelled.
+- Deletes `batchToActiveOrder` mapping entry.
 
 ## Events
 
@@ -71,21 +93,19 @@ When `confirmPurchaseOrder` is called:
 event PurchaseOrderCreated(
     uint256 indexed orderId,
     uint256 indexed batchTokenId,
-    address indexed buyer,
-    uint256 agreedPriceUsdc,
-    uint256 timestamp
+    address indexed buyerWallet
 );
 
 event PurchaseOrderConfirmed(
     uint256 indexed orderId,
     uint256 indexed batchTokenId,
-    uint256 timestamp
+    address indexed buyerWallet
 );
 
 event PurchaseOrderCancelled(
     uint256 indexed orderId,
-    address cancelledBy,
-    uint256 timestamp
+    uint256 indexed batchTokenId,
+    address indexed cancelledBy
 );
 ```
 

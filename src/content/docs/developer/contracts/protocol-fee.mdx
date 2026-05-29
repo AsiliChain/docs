@@ -33,25 +33,47 @@ The 4% protocol fee collected by this contract is allocated by governance vote:
 ## Interface
 
 ```solidity
-// Collect fee (VAULT_ROLE — called by LendingVault on every SETTLED event)
+// State variables — auto-generated public getters
+uint256 public totalCollected;      // cumulative USDC received
+uint256 public totalDistributed;    // cumulative USDC sent out
+address public usdcToken;           // USDC token address (immutable)
+
+// Core functions
 function collect(uint256 amountUsdc) external onlyRole(VAULT_ROLE);
 
-// View accumulated fees
-function totalCollected() external view returns (uint256);
-function pendingDistribution() external view returns (uint256);
+function distribute(
+    address recipient,
+    uint256 amount,
+    string calldata purpose           // ← required, e.g. "Operations Q3 2026"
+) external onlyRole(MULTISIG_ROLE);
 
-// Distribute to treasury (MULTISIG_ROLE — 3-of-5 required)
-function distribute(address recipient, uint256 amount)
-    external onlyRole(MULTISIG_ROLE);
-
-// View distribution history
-function getDistributions()
-    external view returns (Distribution[] memory);
+function pendingDistribution()
+    external view returns (uint256);  // totalCollected - totalDistributed
 ```
+
+## Push-Model Collection
+
+**Important:** `collect()` does **not** pull USDC from LendingVault.
+
+The correct flow is:
+1. `LendingVault` calls `usdc.transfer(protocolFeeAddr, amount)`
+2. `LendingVault` then calls `collect(amount)` to record the arrival
+3. `ProtocolFee` emits `FeeCollected` with running total
+
+This separation means `ProtocolFee` never holds a USDC allowance on behalf of LendingVault. It simply records what has already arrived.
+
+## Distribution Rules
+
+| Check | Revert if violated |
+|:---|:---|
+| `recipient != address(0)` | `"ProtocolFee: zero recipient"` |
+| `amount > 0` | `"ProtocolFee: zero amount"` |
+| `bytes(purpose).length > 0` | `"ProtocolFee: empty purpose"` |
+| `amount <= pendingDistribution()` | `"ProtocolFee: insufficient balance"` |
 
 ## Multisig Governance
 
-Protocol fee withdrawals require 3-of-5 multisig approval. Signers at launch:
+Protocol fee withdrawals require 3-of-5 `MULTISIG_ROLE` approval. Signers at launch:
 
 | Signer | Role |
 |--------|------|
@@ -63,13 +85,10 @@ Protocol fee withdrawals require 3-of-5 multisig approval. Signers at launch:
 
 This prevents unilateral treasury withdrawal and provides institutional confidence for MFI partners.
 
-## Transparency
-
-Every `collect()` call emits:
+## Events
 
 ```solidity
 event FeeCollected(
-    uint256 indexed batchTokenId,
     uint256 amountUsdc,
     uint256 totalCollectedToDate,
     uint256 timestamp
@@ -77,9 +96,9 @@ event FeeCollected(
 
 event FeeDistributed(
     address indexed recipient,
-    uint256 amountUsdc,
-    string purpose,
-    uint256 timestamp
+    uint256         amountUsdc,
+    string          purpose,
+    uint256         timestamp
 );
 ```
 
