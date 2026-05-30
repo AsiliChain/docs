@@ -24,9 +24,9 @@ USDC pool"]
         LV2["LendingVault.sol
 Loan disbursement approved"]
         API["AsiliChain API
-POST /kotanipay/payout"]
-        KP["Kotani Pay
-USDC → UGX conversion"]
+POST /fonbnk/v2/order"]
+        FB["Fonbnk
+Merchant balance → UGX conversion"]
         MTN["MTN Mobile Money
 Uganda"]
         F["👨‍🌾 Farmer
@@ -35,7 +35,7 @@ phone notification < 60s"]
     MFI -->|"Wire transfer"| TF
     TF -->|"USDC on Mantle"| LV
     LV -->|"Loan approved"| LV2
-    LV2 --> API --> KP --> MTN --> F
+    LV2 --> API --> FB --> MTN --> F
 ```
 
 ## Inbound: MFI Deposits via TransFi
@@ -60,30 +60,33 @@ Total elapsed: 1–24 hours (bank wire dependent)
 
 **MFI entry cost:** ~1.5–2.5% (FX spread + TransFi fee). Payback at 8% yield: < 3 months.
 
-## Outbound: Farmer Payouts via Kotani Pay
+## Outbound: Farmer Payouts via Fonbnk
 
-BatchToken confirmed → Kotani Pay called → MTN MoMo credited.
+BatchToken confirmed → Fonbnk API called → MTN MoMo credited.
+
+Fonbnk uses a **merchant balance model**: we pre-deposit USDC to Fonbnk's Celo address via CCIP bridge, then trigger disbursements via API. No Celo contracts or wallets needed.
 
 ```typescript
-// packages/api/lib/kotanipay.ts
+// packages/api/lib/fonbnk.ts
 export async function triggerFarmerPayout(params: {
   phone: string;        // +256XXXXXXXXX
   amount_usdc: number;  // from BatchToken value × LTV
-  farmer_id: string;
+  farmer_name: string;
   batch_id: string;
 }) {
-  const response = await fetch(`${process.env.KOTANIPAY_BASE_URL}/payout`, {
+  const response = await fetch(`${process.env.FONBNK_BASE_URL}/v2/order`, {
     method: 'POST',
     headers: {
-      'Authorization': `Bearer ${process.env.KOTANIPAY_API_KEY}`,
       'Content-Type': 'application/json',
+      'X-Client-Id': process.env.FONBNK_CLIENT_ID!,
+      'X-Signature': generateSignature(params, process.env.FONBNK_API_SECRET!),
     },
     body: JSON.stringify({
-      phone: params.phone,
-      amount_usdc: params.amount_usdc,
-      chain: 'mantle',
-      currency: 'UGX',
-      network: 'MTN_UG',
+      paymentChannels: {
+        deposit: { channel: 'merchant_balance', currencyType: 'merchant_balance', currencyCode: 'USD' },
+        payout: { channel: 'mobile_money', currencyType: 'fiat', currencyCode: 'UGX', countryIsoCode: 'UG' },
+      },
+      recipient: { phone: params.phone, name: params.farmer_name },
       reference: params.batch_id,
     }),
   });
@@ -121,7 +124,7 @@ function onExported(uint256 batchId, uint256 buyerPaymentUsdc) external {
     ProtocolFee(protocolFeeContract).collect(protocolFee);
     // Update credit score
     CreditScore(creditScoreContract).recordRepayment(loan.farmerId, +50);
-    // Disburse net to farmer via Kotani Pay (async, triggered by event)
+    // Disburse net to farmer via Fonbnk (async, triggered by event)
     emit NetDisbursementReady(loan.farmerId, netToFarmer);
 }
 ```

@@ -4,7 +4,7 @@ order: 2
 label: Alchemy
 ---
 
-Alchemy provides two services for AsiliChain: the Mantle mainnet RPC endpoint and webhook-based event detection. The webhook is the mechanism by which the AsiliChain API learns about on-chain events (like EXPORTED) and triggers off-chain actions (like Kotani Pay payout).
+Alchemy provides two services for AsiliChain: the Mantle mainnet RPC endpoint and webhook-based event detection. The webhook is the mechanism by which the AsiliChain API learns about on-chain events (like EXPORTED) and triggers off-chain actions (like Fonbnk payout).
 
 ## RPC Configuration
 
@@ -25,7 +25,7 @@ export const walletClient = createWalletClient({
 });
 ```
 
-## Webhook: EXPORTED Event → Kotani Pay Payout
+## Webhook: EXPORTED Event → Fonbnk Payout
 
 The most critical webhook listens for `StageUpdated` events where `newStage = EXPORTED (5)`. When fired, it calls the auto-repayment and payout flow.
 
@@ -61,7 +61,7 @@ The most critical webhook listens for `StageUpdated` events where `newStage = EX
 import { NextRequest, NextResponse } from 'next/server';
 import { verifyAlchemySignature } from '@/lib/alchemy';
 import { triggerAutoRepayment } from '@/lib/lendingVault';
-import { triggerFarmerPayout } from '@/lib/kotanipay';
+import { triggerFarmerPayout } from '@/lib/fonbnk';
 import { writeHCSEvent } from '@/lib/hedera';
 
 export async function POST(req: NextRequest) {
@@ -81,7 +81,7 @@ export async function POST(req: NextRequest) {
 
     if (decoded.newStage === TraceStage.EXPORTED) {
       // Auto-repayment: LendingVault.onExported already called on-chain
-      // But we need to trigger the Kotani Pay payout off-chain
+      // But we need to trigger the Fonbnk payout off-chain
       const loan = await getLoanForBatch(decoded.tokenId);
 
       if (loan && loan.active) {

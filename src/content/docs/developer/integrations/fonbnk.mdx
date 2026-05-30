@@ -1,0 +1,100 @@
+---
+title: Fonbnk — Farmer Payouts
+order: 1
+label: Fonbnk — Farmer Payouts
+---
+
+Fonbnk handles all outbound USDC → UGX → MTN Mobile Money payments to farmers. It uses a **merchant balance model**: we deposit USDC to Fonbnk's Celo address, they credit our merchant balance, then we trigger disbursements via their API.
+
+## Architecture
+
+```
+Mantle (protocol settlement)
+        ↓
+CCIP bridge (quarterly batch, ~$5–10/msg)
+        ↓
+Fonbnk Celo USDC deposit address
+        ↓
+Fonbnk Merchant Balance (USD)
+        ↓
+POST /api/v2/order → MTN MoMo to farmer
+```
+
+There are **no Celo contracts or wallets** on our side. Fonbnk holds deposited USDC in custody and credits our merchant balance 1:1.
+
+## Supported Chains
+
+Fonbnk supports **14 chains** for USDC deposits, including **CELO_USDC** — the one we use:
+
+ARBITRUM · AVALANCHE · BASE · BNB · CELO · ETHEREUM · LISK · OPTIMISM · POLYGON · SOLANA · STELLAR · TON · TRON · XRP
+
+## Payment Flow
+
+```
+BatchToken confirmed on Mantle → settlement triggered
+        ↓
+AsiliChain API → POST /api/v2/order
+{
+  "paymentChannels": {
+    "deposit": { "channel": "merchant_balance", "currencyType": "merchant_balance", "currencyCode": "USD" },
+    "payout": { "channel": "mobile_money", "currencyType": "fiat", "currencyCode": "UGX" }
+  },
+  "recipient": { "phone": "+256...", "name": "Farmer Name" }
+}
+        ↓
+Fonbnk: USD → UGX at live rate
+        ↓
+MTN MoMo notification to farmer
+        ↓
+Webhook: order.settled → AsiliChain API
+Status: PAYMENT_CONFIRMED
+
+Total elapsed: < 60 seconds
+```
+
+## Pre-Launch Setup
+
+### Sandbox Testing
+
+Register at [sandbox-dashboard.fonbnk.com](https://sandbox-dashboard.fonbnk.com) to:
+1. Create a merchant account
+2. Get Client ID + API Secret
+3. Get your Celo USDC deposit address
+4. Configure webhook URL
+
+Basic KYC (under $100 order limit) is sufficient for sandbox testing.
+
+### Mainnet Onboarding
+
+1. Full KYB completed
+2. Merchant balance funded via Celo USDC deposit
+3. IP whitelist configured with your API server IP
+4. Webhook URL `/api/webhooks/fonbnk` registered
+
+## Merchant Balance Funding
+
+Maintain a pre-funded pool on Fonbnk's merchant balance. At Phase 1 scale (~50 farmers):
+
+| Item | Value |
+|------|-------|
+| Average loan | $500 |
+| Batch size | $25,000 |
+| CCIP bridge cost | ~$10/quarter |
+| Pre-fund | $30,000 (50 farmers x $500 + 20% buffer) |
+
+Top up quarterly via the CCIP bridge script. Do not bridge per-transaction — batch economics are far better.
+
+## Fonbnk vs. Alternatives
+
+| Factor | Fonbnk | Yellow Card | Kotani Pay |
+|--------|--------|-------------|------------|
+| Uganda MoMo | ✅ | ✅ | ✅ |
+| Celo USDC deposit | ✅ | ❌ | ❌ |
+| Base deposit | ✅ | ❌ | N/A |
+| Mantle deposit | ❌ | ❌ | ❌ |
+| Published pricing | N/A | ~1% (lowest confirmed) | Not public |
+| Merchant balance | ✅ | ✅ | Pool-pull model |
+| Sandbox | ✅ | ✅ | Quote-based only |
+| Africa countries | 16 | ~20 | ~8 |
+
+**Fonbnk chosen** because it supports Celo USDC deposits (aligns with Celo Foundation grants), uses a simple merchant balance model (no contracts needed), and has a self-serve sandbox for testing.

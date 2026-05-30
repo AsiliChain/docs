@@ -37,9 +37,9 @@ Key terms used throughout AsiliChain documentation.
 
 | Term | Definition |
 |------|-----------|
-| **Kotani Pay** | Payment rail for USDC → UGX → MTN Mobile Money conversions. Handles farmer payouts in under 60 seconds. Acquired by Tether October 2025. |
+| **Fonbnk** | Payment rail for USDC → UGX → MTN Mobile Money conversions. Uses a merchant balance model — we deposit USDC to Fonbnk's Celo address, they credit our balance, and disbursements are triggered via API. Handles farmer payouts in under 60 seconds. 14 chains supported. |
 | **TransFi** | Institutional on-ramp for MFI bank wire deposits (UGX or USD) converted to USDC and delivered to LendingVault. ISO27001 + SOC2 Type 2. |
-| **Kotani Pay API** | The `POST /kotanipay/payout` endpoint called by the AsiliChain API after every BATCH_DELIVERED event. |
+| **Fonbnk API** | The `POST /fonbnk/v2/order` endpoint called by the AsiliChain API to trigger farmer disbursements from the merchant balance. |
 | **MTN MoMo** | MTN Mobile Money — the primary mobile payment account through which farmers receive loan disbursements and coffee sale proceeds. |
 | **MAAIF NTS** | Ministry of Agriculture, Animal Industry and Fisheries National Traceability System — Uganda's government GPS-mapping programme for coffee farmers. |
 | **GFW** | Global Forest Watch — satellite deforestation monitoring API checked at farm registration and DDS generation. |
@@ -61,7 +61,7 @@ Key terms used throughout AsiliChain documentation.
 | **MAAIF** | Ministry of Agriculture, Animal Industry and Fisheries — issues the National Traceability System IDs and GPS maps. |
 | **UMRA** | Uganda Microfinance Regulatory Authority — licences Tier IV MFIs. All MFI partners must be UMRA-licensed. |
 | **BoU** | Bank of Uganda — regulates payment service providers and mobile money. |
-| **FIA** | Financial Intelligence Authority — registers Virtual Asset Service Providers (VASPs) in Uganda. Kotani Pay must hold FIA registration. |
+| **FIA** | Financial Intelligence Authority — registers Virtual Asset Service Providers (VASPs) in Uganda. Fonbnk must hold FIA registration. |
 | **UWRSA** | Uganda Warehouse Receipt System Authority Act (2006) — establishes warehouse receipts as negotiable instruments under Ugandan law. The BatchToken's legal anchor. |
 | **TRACES** | EU Trade Control and Expert System — the platform where EUDR DDS documents are filed. |
 

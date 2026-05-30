@@ -114,7 +114,7 @@ export default defineConfig({
             { label: 'BatchToken Lifecycle', link: '/developer/rwa/batch-token-lifecycle' },
             { label: 'Chainlink', link: '/developer/integrations/chainlink' },
             { label: 'Alchemy', link: '/developer/integrations/alchemy' },
-            { label: 'Kotani Pay — Farmer Payouts', link: '/developer/integrations/kotani-pay' },
+            { label: 'Fonbnk — Farmer Payouts', link: '/developer/integrations/fonbnk' },
             { label: 'TransFi — MFI Deposits', link: '/developer/integrations/transfi' },
             { label: 'MAAIF NTS', link: '/developer/integrations/maaif-nts' },
             { label: 'Global Forest Watch', link: '/developer/integrations/gfw' },

@@ -15,7 +15,7 @@ sequenceDiagram
     participant M as Mantle (Contracts)
     participant LV as LendingVault.sol
     participant H as Hedera HCS
-    participant KP as Kotani Pay
+    participant FB as Fonbnk
     participant F as 👨‍🌾 Farmer MTN MoMo
     BUY->>EXP: Pays USDC for shipment
     EXP->>M: TraceLog.updateStage(batchId, EXPORTED)
@@ -25,8 +25,8 @@ sequenceDiagram
     LV->>LV: Deduct 4% AsiliChain protocol fee
     LV->>M: CreditScore.update(farmerID, +50)
     M-->>H: SETTLED stage recorded
-    LV->>KP: POST /payout (net balance to farmer)
-    KP-->>F: UGX credited to MTN MoMo
+    LV->>FB: POST /fonbnk/v2/order (net balance to farmer)
+    FB-->>F: UGX credited to MTN MoMo
 ```
 
 ## The Settlement Calculation
@@ -39,7 +39,7 @@ For a loan of $450 USDC at 16% APR over 6 months:
 | Interest (8% MFI yield) | $18.00 | LendingVault → MFI pool |
 | AsiliChain protocol fee (4%) | $9.00 | ProtocolFee.sol |
 | Credit loss reserve (2%) | $4.50 | Smart contract buffer |
-| Remaining from buyer payment | $518.50+ | Farmer via Kotani Pay |
+| Remaining from buyer payment | $518.50+ | Farmer via Fonbnk |
 
 ## Why This Eliminates Default Risk
 

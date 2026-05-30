@@ -114,7 +114,7 @@ When a field agent registers an independent farmer, they pass
 `INDEPENDENT_AGGREGATOR` as the `cooperativeWallet` argument.
 The farmer is registered identically to a cooperative-member farmer.
 BatchTokens, CreditScore, and EUDR DDS records are all created normally.
-Payout routes directly to the farmer's MTN MoMo via Kotani Pay.
+Payout routes directly to the farmer's MTN MoMo via Fonbnk.
 
 ### Governance
 
@@ -123,7 +123,7 @@ Payout routes directly to the farmer's MTN MoMo via Kotani Pay.
 | Controller | AsiliChain deployer multisig (`DEFAULT_ADMIN_ROLE`) |
 | Set at | Post-deploy — Step 8a in `deploy.ts` |
 | Updatable by | `DEFAULT_ADMIN_ROLE` only via `setIndependentAggregator()` |
-| Payout routing | Kotani Pay routes to individual farmer MTN MoMo — the aggregator wallet is never a payment destination for farmer funds |
+| Payout routing | Fonbnk routes to individual farmer MTN MoMo — the aggregator wallet is never a payment destination for farmer funds |
 | Fee routing | 0.5% protocol fee retained by treasury (not forwarded to a cooperative) |
 
 ### Migration path
@@ -178,7 +178,7 @@ API: FarmerRegistry.registerFarmer(wallet, maaifId,
     ↓
 BatchToken minted with cooperativeId = "INDEPENDENT"
     ↓
-Payout routed directly to farmer MTN MoMo via Kotani Pay
+Payout routed directly to farmer MTN MoMo via Fonbnk
 ProtocolFee: 0.5% deducted, remainder to farmer
 ```
 

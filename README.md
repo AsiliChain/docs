@@ -24,7 +24,7 @@ a farmer's first formal credit relationship.
 - Automated EUDR Due Diligence Statements filed to EU TRACES
 - On-chain credit history, portable across cooperatives and lenders
 
-**Built on:** Mantle Network (Ethereum ZK L2) · Hedera HCS · Kotani Pay · MAAIF NTS
+**Built on:** Mantle Network (Ethereum ZK L2) · Hedera HCS · Fonbnk · MAAIF NTS
 
 ---
 
@@ -82,7 +82,7 @@ astro.config.mjs          # Astro + Starlight configuration
 |-------|-----------|---------|
 | Smart contracts | 7 UUPS Solidity contracts on Mantle (chainId 5000) | Lending, collateral, traceability, fees |
 | Audit log | Hedera HCS | Immutable stage events, regulatory-grade audit trail |
-| Farmer payments | Kotani Pay → MTN Mobile Money | USDC → UGX in under 60 seconds |
+| Farmer payments | Fonbnk → MTN Mobile Money | USDC → UGX in under 60 seconds |
 | MFI deposits | TransFi | Bank wire → USDC → LendingVault |
 | Farmer data | MAAIF National Traceability System | GPS farm boundaries, farmer IDs |
 | Deforestation check | Global Forest Watch API | EUDR Article 4 compliance |

@@ -123,7 +123,7 @@ paths:
     post:
       tags: [Batches]
       summary: Submit a coffee batch
-      description: Mints a BatchToken on Mantle. Writes DELIVERED event to Hedera HCS. Triggers Kotani Pay payment.
+      description: Mints a BatchToken on Mantle. Writes DELIVERED event to Hedera HCS. Triggers Fonbnk payout.
       requestBody:
         required: true
         content:
@@ -269,7 +269,7 @@ paths:
     post:
       tags: [Payments]
       summary: Trigger farmer payout
-      description: Calls Kotani Pay to convert USDC to UGX and credit farmer MTN MoMo.
+      description: Calls Fonbnk to disburse from merchant balance and credit farmer MTN MoMo.
       requestBody:
         required: true
         content:
@@ -690,7 +690,7 @@ components:
           type: number
         estimated_ugx:
           type: integer
-        kotanipay_reference:
+        fonbnk_order_id:
           type: string
         estimated_completion_seconds:
           type: integer

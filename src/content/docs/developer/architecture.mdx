@@ -12,8 +12,8 @@ Proof-of-Stake · ultimate settlement"]
 OP Succinct/SP1 · 1-hr finality · type-1 zkEVM"]
     AC["⚡ AsiliChain Contracts
 All 7 contracts on Mantle"]
-    KP["📱 Kotani Pay — Farmer payouts
-USSD + API · USDC → MTN MoMo"]
+    FB["📱 Fonbnk — Farmer payouts
+Merchant balance · USDC → MTN MoMo"]
     TF["🏦 TransFi — MFI deposits
 Bank wire → USDC → LendingVault"]
     HCS["📋 Hedera HCS — Audit layer
@@ -22,7 +22,7 @@ IBM · Google · FedEx · Boeing governance"]
 GPS + Farmer IDs"]
     L1 -->|"ZK proofs verified"| L2
     L2 --> AC
-    AC -->|"Farmer payout trigger"| KP
+    AC -->|"Farmer payout trigger"| FB
     TF -->|"USDC deposit"| AC
     AC -.->|"Every stage event"| HCS
     MAAIF -->|"Primary data path"| AC

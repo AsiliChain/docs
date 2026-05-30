@@ -22,7 +22,7 @@ sequenceDiagram
     participant MAAIF as MAAIF NTS
     participant M as Mantle (Contracts)
     participant H as Hedera HCS
-    participant KP as Kotani Pay
+    participant FB as Fonbnk
     participant MTN as MTN MoMo
     F->>USSD: Dials *384#, selects "Deliver coffee"
     USSD->>API: Session data + farmer ID
@@ -30,8 +30,8 @@ sequenceDiagram
     MAAIF-->>API: Farmer confirmed, farm GPS returned
     API->>M: BatchToken.mint(farmerID, weight, grade, GPS)
     M-->>H: Stage event logged (DELIVERED)
-    API->>KP: POST /kotanipay/payout (amount_usdc, phone)
-    KP-->>MTN: USDC → UGX → MoMo credit
+    API->>FB: POST /fonbnk/v2/order (amount_usdc, phone)
+    FB-->>MTN: Merchant balance → UGX → MoMo credit
     MTN-->>F: Payment notification (< 60 seconds)
 ```
 
@@ -41,7 +41,7 @@ Every batch delivered through AsiliChain produces four outputs automatically, re
 
 | Output | How it works | Who benefits |
 |--------|-------------|-------------|
-| **60-second payment** | Kotani Pay converts USDC to UGX and credits MTN MoMo | Every farmer |
+| **60-second payment** | Fonbnk converts merchant balance to UGX and credits MTN MoMo | Every farmer |
 | **EUDR compliance** | GPS + stage data auto-generates a DDS at export time | Cooperatives, exporters |
 | **Market price transparency** | Chainlink oracle prices are visible to the cooperative dashboard | Every farmer |
 | **On-chain credit history** | CreditScore begins building from first delivery, usable for future loans | Every farmer |

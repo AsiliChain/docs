@@ -34,7 +34,7 @@ curl https://api.asilichain.xyz/payments/PAY-2026-004821-001 \
   "amount_usdc": 518.50,
   "amount_ugx": 1910882,
   "exchange_rate": 3684.5,
-  "kotanipay_reference": "KP-2026-XYZ",
+  "fonbnk_order_id": "FB-2026-XYZ",
   "mtn_transaction_id": "MTN20260420123456",
   "reason": "NET_COFFEE_PAYMENT",
   "created_at": "2026-04-20T12:00:00Z",
@@ -75,7 +75,7 @@ curl https://api.asilichain.xyz/payments/PAY-2026-004821-001 \
   "loan_id": "LOAN-2026-004821",
   "amount_usdc": 450.00,
   "amount_ugx": 1657200,
-  "kotanipay_reference": "KP-2026-ABC",
+  "fonbnk_order_id": "FB-2026-ABC",
   "mtn_transaction_id": "MTN20260415093022",
   "created_at": "2026-04-15T09:00:00Z",
   "completed_at": "2026-04-15T09:00:52Z",
@@ -88,7 +88,7 @@ curl https://api.asilichain.xyz/payments/PAY-2026-004821-001 \
 | Status | Applies to | Meaning |
 |--------|-----------|---------|
 | `PENDING` | All | Created, not yet sent to payment rail |
-| `PROCESSING` | Payouts | Sent to Kotani Pay, awaiting MTN confirmation |
+| `PROCESSING` | Payouts | Sent to Fonbnk, awaiting MTN confirmation |
 | `COMPLETED` | All | Successfully delivered |
 | `FAILED` | All | Rejected by payment rail |
 | `RETRY_1` | Payouts | First retry in progress (30s delay) |

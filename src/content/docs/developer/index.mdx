@@ -13,7 +13,7 @@ This section covers the technical architecture, smart contract specifications, i
 | [Architecture](./architecture) | Single-chain Mantle design, Ethereum relationship, Hedera HCS |
 | [Smart Contracts](./contracts) | All 7 contracts — specifications, interfaces, deployment order |
 | [RWA Architecture](./rwa/index) | BatchToken as RWA, UWRSA legal anchor, Mantle TaaS |
-| [Payment Integration](./integrations/kotani-pay) | Kotani Pay + TransFi integration guides |
+| [Payment Integration](./integrations/fonbnk) | Fonbnk + TransFi integration guides |
 | [Security](./security) | Access control, audit requirements, upgrade safety |
 | [Failure Modes](./failure-modes) | How the protocol behaves under adverse conditions |
 
@@ -23,7 +23,7 @@ This section covers the technical architecture, smart contract specifications, i
 Smart contracts:    Solidity 0.8.20 · OpenZeppelin Upgradeable
 Chain:              Mantle Network (chainId 5000) — ZK Rollup via OP Succinct/SP1
 Audit log:          Hedera HCS
-Farmer payouts:     Kotani Pay API (USDC → MTN MoMo)
+Farmer payouts:     Fonbnk API (merchant balance → MTN MoMo)
 MFI deposits:       TransFi (bank wire → USDC → LendingVault)
 Price feeds:        Chainlink AggregatorV3Interface
 RPC + webhooks:     Alchemy
@@ -39,6 +39,6 @@ These three items are **blocking** — do not deploy to mainnet without them:
 
 | Verification | Test | Blocking? |
 |-------------|------|-----------|
-| Kotani Pay USDC on Mantle → Uganda MTN MoMo | Send $1 test payout from Mantle Sepolia to Uganda MTN test number | YES |
+| Fonbnk merchant balance → Uganda MTN MoMo | Sandbox test: deposit Celo USDC → disburse to Uganda MTN | YES |
 | TransFi Uganda bank wire → USDC → Mantle | Sandbox deposit simulation | YES (Phase 2) |
 | Alchemy Mantle webhook fires for EXPORTED event | Emit test event, confirm webhook in < 30s | YES |

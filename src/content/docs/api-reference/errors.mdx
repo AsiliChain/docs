@@ -53,7 +53,7 @@ All AsiliChain API errors return a consistent JSON structure with a machine-read
 | `LOAN_NOT_FOUND` | 404 | No active loan for this batch | Batch has no current loan |
 | `STALE_PRICE_FEED` | 503 | Chainlink feed >1 hour old | Loan origination paused — retry when feed updates |
 | `INVALID_SIGNATURE` | 401 | Alchemy webhook signature mismatch | Check `ALCHEMY_WEBHOOK_SECRET` configuration |
-| `PAYOUT_FAILED` | 500 | Kotani Pay API returned error | Farmer payout queued for retry; batch still settled |
+| `PAYOUT_FAILED` | 500 | Fonbnk API returned error | Farmer payout queued for retry; batch still settled |
 | `DDS_TRACES_PENDING` | 202 | DDS generated but TRACES filing in retry queue | DDS available at `ipfs_url`; TRACES reference pending |
 | `COOPERATIVE_NOT_FOUND` | 404 | Cooperative ID not recognised | Verify cooperative is onboarded |
 | `INSUFFICIENT_COLLATERAL` | 422 | BatchToken value below minimum loan threshold | Minimum loan: $50 USDC |

@@ -4,7 +4,7 @@ order: 1
 label: Farmer Payout
 ---
 
-Triggers a USDC → UGX → MTN Mobile Money payout to a farmer via Kotani Pay. Called automatically by the Alchemy webhook on EXPORTED event. Can also be called manually by a COOPERATIVE token for exceptional cases (e.g. net-only payment without a loan).
+Triggers a merchant balance → UGX → MTN Mobile Money payout to a farmer via Fonbnk. Called automatically by the Alchemy webhook on EXPORTED event. Can also be called manually by a COOPERATIVE token for exceptional cases (e.g. net-only payment without a loan).
 
 ## Endpoint
 
@@ -53,7 +53,7 @@ curl -X POST https://api.asilichain.xyz/payments/farmer-payout \
   "amount_usdc": 518.50,
   "estimated_ugx": 1910882,
   "phone": "+256XXXXXXXX",
-  "kotanipay_reference": "KP-2026-XYZ",
+  "fonbnk_order_id": "FB-2026-XYZ",
   "estimated_completion_seconds": 60,
   "created_at": "2026-04-20T12:00:00Z"
 }
@@ -71,7 +71,7 @@ GET /payments/farmer-payout/{payout_id}
   "status": "COMPLETED",
   "amount_usdc": 518.50,
   "amount_ugx": 1910882,
-  "kotanipay_reference": "KP-2026-XYZ",
+  "fonbnk_order_id": "FB-2026-XYZ",
   "mtn_transaction_id": "MTN20260420123456",
   "completed_at": "2026-04-20T12:00:47Z",
   "elapsed_seconds": 47
@@ -82,9 +82,9 @@ GET /payments/farmer-payout/{payout_id}
 
 | Status | Meaning |
 |--------|---------|
-| `PROCESSING` | Kotani Pay accepted, MTN MoMo pending |
+| `PROCESSING` | Fonbnk accepted, MTN MoMo pending |
 | `COMPLETED` | Farmer received MTN MoMo notification |
-| `FAILED` | Kotani Pay returned error — retry queued |
+| `FAILED` | Fonbnk returned error — retry queued |
 | `RETRY_1` / `RETRY_2` / `RETRY_3` | Automatic retry in progress |
 | `MANUAL_REVIEW` | Three retries exhausted — requires human intervention |
 
@@ -99,4 +99,4 @@ On `FAILED`, the system automatically retries at 30s / 60s / 120s intervals. On 
 | `FARMER_NOT_REGISTERED` | `farmer_id` not in FarmerRegistry |
 | `PHONE_NOT_FOUND` | No phone number on record for farmer |
 | `DUPLICATE_PAYOUT` | Payout already processed for this batch + reason |
-| `KOTANIPAY_UNAVAILABLE` | Kotani Pay API unreachable after 3 attempts |
+| `FONBNK_UNAVAILABLE` | Fonbnk API unreachable after 3 attempts |
