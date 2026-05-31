@@ -77,3 +77,35 @@ value. Each one is documented in its own page.
 | USSD Session Agent | Between Africa's Talking and AsiliChain API | RWA Coordination Agent |
 | DDS Anomaly Detector | Between TraceLog GRADED event and DDS pipeline | RWA Coordination Agent |
 | Cooperative Intelligence Agent | Cooperative dashboard data layer | Financial Strategy Agent |
+
+## Phase 1 Implementation (API Layer)
+
+Two agents are currently implemented in the API layer under `lib/agents/`:
+
+### LendingVault Risk Monitor
+
+| Field | Value |
+|-------|-------|
+| Registry key | `risk-monitor` |
+| Agent ID | `asilichain-risk-monitor` |
+| Capabilities | LTV calculation, portfolio risk aggregation, price feed staleness detection, Hedera HCS audit trail |
+| Trigger | `scheduled` — runs every 15 minutes |
+| HCS event type | `RISK_MONITOR_REPORT` |
+| Source | `lib/agents/risk-monitor.ts`, `app/api/agents/risk-monitor/route.ts` |
+
+Reads loan positions from LendingVault, computes current LTV using `pricePerKgBase`, batch weight, and grade multiplier. Each active loan is classified as **healthy** (<80% maxLTV), **warning** (80–100%), or **critical** (≥100%). Portfolio-level statistics are aggregated and written to Hedera HCS.
+
+### DDS Anomaly Detector
+
+| Field | Value |
+|-------|-------|
+| Registry key | `anomaly-detector` |
+| Agent ID | `asilichain-anomaly-detector` |
+| Capabilities | Missing purchase order detection, stale export detection, weight outlier detection, stage distribution analysis, Hedera HCS audit trail |
+| Trigger | `event` — fires on `BATCH_SUBMITTED` |
+| HCS event type | `ANOMALY_SCAN_COMPLETE` |
+| Source | `lib/agents/anomaly-detector.ts`, `app/api/agents/anomaly-detector/route.ts` |
+
+Scans all batch tokens via multicall, reads `stages` from TraceLog and `batchToActiveOrder` from PurchaseOrder. Detects stalled exports (72h threshold), missing buyer commitments on WAREHOUSED/COMMITTED batches, missing grades, weight outliers, and stage distribution imbalances.
+
+ERC-8004 on-chain registration is planned for Phase 3. In Phase 1, agent metadata lives in the ERC-8004-aligned `lib/agents/registry.ts` with `erc8004AgentId` placeholder for future on-chain registration.
