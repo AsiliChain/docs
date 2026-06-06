@@ -20,9 +20,9 @@ sequenceDiagram
     BUY->>EXP: Pays USDC for shipment
     EXP->>M: TraceLog.updateStage(batchId, EXPORTED)
     M->>LV: EXPORTED event detected
-    LV->>LV: Calculate: principal + interest
+    LV->>LV: Calculate: principal + interest + 4% APR protocol fee + 2% APR reserve
     LV->>LV: Repay MFI pool (principal + interest)
-    LV->>LV: Deduct 4% AsiliChain protocol fee
+    LV->>LV: Transfer 4% APR protocol fee to ProtocolFee.sol
     LV->>M: CreditScore.update(farmerID, +50)
     M-->>H: SETTLED stage recorded
     LV->>FB: POST /fonbnk/v2/order (net balance to farmer)
@@ -31,15 +31,16 @@ sequenceDiagram
 
 ## The Settlement Calculation
 
-For a loan of $450 USDC at 16% APR over 6 months:
+All rates are APR on principal. For a $2,500 loan at 16% total APR over 90 days:
 
-| Component | Amount (USDC) | Recipient |
-|-----------|--------------|-----------|
-| Principal repayment | $450.00 | LendingVault → MFI pool |
-| Interest (8% MFI yield) | $18.00 | LendingVault → MFI pool |
-| AsiliChain protocol fee (4%) | $9.00 | ProtocolFee.sol |
-| Credit loss reserve (2%) | $4.50 | Smart contract buffer |
-| Remaining from buyer payment | $518.50+ | Farmer via Fonbnk |
+| Component | Rate (APR) | Amount | Recipient |
+|---|---|---|---|
+| Principal repayment | — | $2,500.00 | LendingVault → MFI pool |
+| MFI interest | 10% | $61.64 | LendingVault → MFI pool |
+| Protocol fee | 4% | $24.66 | ProtocolFee.sol |
+| Credit loss reserve | 2% | $12.33 | LendingVault reserve buffer |
+| Net to farmer | — | $2,401.37 | Farmer via Fonbnk |
+| **Total from buyer** | **16%** | **$5,000.00** | |
 
 ## Why This Eliminates Default Risk
 

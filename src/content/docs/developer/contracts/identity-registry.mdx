@@ -1,0 +1,58 @@
+---
+title: IdentityRegistry.sol
+order: 9
+label: IdentityRegistry.sol
+---
+
+ERC-8004 compliant identity registry for AI agents. Each agent gets a unique NFT (token ID) that proves their authorization to operate within the AsiliChain protocol. Deployed as step 8b in the deployment sequence (no contract dependencies).
+
+## ERC-8004 Standard
+
+ERC-8004 defines a NFT-based agent identity standard. Each token represents an agent with:
+- A unique `agentId` (token ID)
+- An owner (the agent's wallet address)
+- On-chain metadata (future: capabilities, reputation, key material)
+
+AsiliChain uses ERC-8004 to give each AI agent (Risk Monitor, Anomaly Detector) a verifiable on-chain identity that cannot be forged.
+
+## Key Functions
+
+### `registerFor(address agentWallet)`
+
+Mints an ERC-8004 NFT directly to a specified wallet. Unlike `register()` (which mints to `msg.sender`), this allows the API or a cooperative to issue an identity NFT to the agent's wallet without requiring the agent to call the contract themselves.
+
+```solidity
+function registerFor(address agentWallet) external returns (uint256 agentId);
+```
+
+Called by the `POST /api/agents/invite` endpoint after granting `AGENT_ROLE`. The returned `agentId` is included in the API response as `erc8004AgentId`.
+
+### `register()`
+
+Mints an ERC-8004 NFT to `msg.sender`. Used during initial deployment for the built-in agents.
+
+### `balanceOf(address)`, `ownerOf(uint256)`
+
+Standard ERC-721 queries. `balanceOf(agentWallet) > 0` confirms an agent has been registered.
+
+## Agent Registration Flow
+
+```
+Cooperative manager invites agent via API
+        │
+        ▼
+POST /api/agents/invite
+        │
+        ├── FarmerRegistry.grantRole(AGENT_ROLE, agentWallet)
+        │     └── Reverts if agentCount >= maxAgents (cap enforcement)
+        │
+        └── IdentityRegistry.registerFor(agentWallet)
+              └── Returns agentId
+```
+
+## Deployed AI Agents
+
+| Agent | Token ID | Role |
+|---|---|---|
+| Risk Monitor | 0 | LTV monitoring, risk classification |
+| Anomaly Detector | 1 | Supply chain anomaly detection |

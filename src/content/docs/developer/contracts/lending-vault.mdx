@@ -4,52 +4,109 @@ order: 5
 label: LendingVault.sol
 ---
 
-UUPS upgradeable lending vault. Reads BatchToken collateral directly on Mantle. Integrates Chainlink price feeds with staleness guard and timelocked admin override.
+UUPS upgradeable lending vault that issues coffee-collateralized loans. Loan repayment is auto-triggered by the API when a batch reaches EXPORTED stage. Fees are calculated as APR on principal — same formula as interest.
 
-## Key Design Decisions
+## Collateral Model
 
-| Decision | Rationale |
-|----------|-----------|
-| UUPS upgradeable | Allows bug fixes without data migration. Upgrade requires DEFAULT_ADMIN_ROLE + 48-hour timelock. |
-| Chainlink 24-hr staleness guard | Reverts on stale price rather than using outdated price. Prevents mispriced loans. |
-| 48-hr timelock on price override | Prevents hasty admin decisions. Emergency-only mechanism. |
-| BatchToken same chain | Direct `BatchToken.balanceOf()` call — no bridge message needed. |
+Loans are collateralized by BatchTokens (ERC-721). The vault reads batch valuation directly from BatchToken on the same chain:
 
-## Chainlink Integration
+```
+batchValue = pricePerKgBase × weightKg × gradeMultiplier
+
+loanPrincipal = batchValue × ltvBasisPoints / 10000
+```
+
+BatchToken's `hasActiveLoan()` flag prevents double-collateralization — a batch cannot back more than one loan.
+
+## Fee Structure
+
+All rates are APR percentages on principal (annualized). This keeps the total cost predictable regardless of loan duration.
+
+| Component | Rate (APR) | Recipient |
+|---|---|---|
+| MFI interest | 10% (1000 bps) | LendingVault — MFI pool |
+| Protocol fee | 4% (400 bps) | ProtocolFee.sol |
+| Credit loss reserve | 2% (200 bps) | Vault reserve buffer |
+| **Total cost to farmer** | **16% (1600 bps)** | |
+
+Example for a $2,500 loan at 90 days:
+
+| Component | Calculation | Amount |
+|---|---|---|
+| MFI interest | $2,500 × 10% × 90/365 | $61.64 |
+| Protocol fee | $2,500 × 4% × 90/365 | $24.66 |
+| Reserve | $2,500 × 2% × 90/365 | $12.33 |
+| **Total cost** | $2,500 × 16% × 90/365 | **$98.63** |
+
+## Key Functions
+
+### `originate(batchTokenId, farmerWallet)`
+
+Issues a loan against a BatchToken. The LTV is determined by the farmer's CreditScore tier, capped by `maxLtvBps` (default 80%).
+
+1. Checks farmer exists, batch is free, protocol is not paused
+2. Reads batch valuation and CreditScore LTV tier
+3. Transfers principal USDC from vault to farmer
+4. Locks batch as collateral (sets `hasActiveLoan = true`)
+5. Stores loan with term (default 90 days)
 
 ```solidity
-pragma solidity ^0.8.20;
-
-import {AggregatorV3Interface} from
-    "@chainlink/contracts/src/v0.8/shared/interfaces/AggregatorV3Interface.sol";
-import "@openzeppelin/contracts-upgradeable/proxy/utils/UUPSUpgradeable.sol";
-import "@openzeppelin/contracts-upgradeable/access/AccessControlUpgradeable.sol";
-
-contract LendingVault is UUPSUpgradeable, AccessControlUpgradeable {
-
-    AggregatorV3Interface internal coffeeUsdFeed;
-    AggregatorV3Interface internal weatherFeed;
-
-    uint256 public constant STALENESS_THRESHOLD = 86400;   // 24 hours
-    uint256 public constant OVERRIDE_TIMELOCK   = 172800;  // 48 hours
-
-    function getCoffeePrice() public view returns (uint256) {
-        (,int256 price,,uint256 updatedAt,) = coffeeUsdFeed.latestRoundData();
-        if (block.timestamp - updatedAt > STALENESS_THRESHOLD) {
-            require(
-                manualPriceOverride > 0 &&
-                block.timestamp >= manualPriceTimestamp + OVERRIDE_TIMELOCK,
-                "LendingVault: price stale, no valid override"
-            );
-            return manualPriceOverride;
-        }
-        require(price > 0, "LendingVault: invalid price");
-        return uint256(price);
-    }
-
-    function droughtRiskElevated() public view returns (bool) {
-        (,int256 riskScore,,,) = weatherFeed.latestRoundData();
-        return riskScore > 7000; // >70% drought probability freezes new loans
-    }
-}
+function originate(uint256 batchTokenId, address farmerWallet) external;
 ```
+
+### `settle(batchTokenId, usdcAmount)`
+
+Processes repayment when the API confirms EXPORTED. Called after buyer transfers USDC into vault.
+
+1. Calculates APR-based protocol fee (4%) and reserve (2%) using the loan's actual duration
+2. Transfers protocol fee USDC to ProtocolFee.sol
+3. Accrues reserve in `creditLossReserve` (USDC stays in vault)
+4. Unlocks and burns the BatchToken collateral
+5. Transfers net proceeds to farmer
+
+```solidity
+function settle(uint256 batchTokenId, uint256 usdcAmount) external;
+```
+
+### `deployReserve(recipient, amount)`
+
+Deploys accrued credit loss reserve to cover defaults. `MULTISIG_ROLE` only. Typically used to compensate an MFI after a loan defaults and the collateral cannot be fully recovered.
+
+```solidity
+function deployReserve(address recipient, uint256 amount) external onlyRole(MULTISIG_ROLE);
+```
+
+### `markDefaulted(batchTokenId)`
+
+Marks a loan as defaulted after expiry. **30-day forbearance period** allows for late repayment. Default records a penalty on the farmer's CreditScore.
+
+## Credit Loss Reserve
+
+The `creditLossReserve` is a cumulative buffer that stays in the LendingVault. Each settlement withholds 2% APR of the principal. The reserve is drawn down via `deployReserve()` when defaults must be covered.
+
+```
+  Gross repayment from buyer
+        │
+        ├── Principal + MFI interest → vault (MFI pool)
+        ├── 4% APR protocol fee      → ProtocolFee.sol
+        ├── 2% APR reserve           → creditLossReserve
+        └── Net balance              → farmer
+```
+
+## Roles
+
+| Role | Purpose |
+|---|---|
+| `VAULT_ROLE` | Can call state-changing functions (granted to API wallet) |
+| `MULTISIG_ROLE` | Can deploy credit loss reserve (3-of-5 multisig) |
+| `DEFAULT_ADMIN_ROLE` | Can upgrade contract, update parameters |
+
+## Parameters (Admin-Settable)
+
+| Parameter | Default | Description |
+|---|---|---|
+| `pricePerKgBase` | $5.00/kg | Coffee price for batch valuation |
+| `maxLtvBps` | 8000 (80%) | Maximum LTV cap |
+| `interestRateBps` | 1000 (10%) | MFI interest rate |
+| `loanTermSecs` | 90 days | Loan duration |
+| `forbearancePeriodSecs` | 30 days | Grace period after default |

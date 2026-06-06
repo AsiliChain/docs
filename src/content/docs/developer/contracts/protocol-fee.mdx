@@ -4,19 +4,21 @@ order: 8
 label: ProtocolFee.sol
 ---
 
-Collects and distributes the 4% AsiliChain protocol margin from every loan repayment. Controlled by a 3-of-5 multisig. Transparent on-chain — every fee collection is publicly auditable.
+Collects and distributes the 4% APR AsiliChain protocol margin from every loan repayment. All fee rates are annualized percentages on principal (same as interest). Controlled by a 3-of-5 multisig. Transparent on-chain — every fee collection is publicly auditable.
 
 ## Fee Structure
 
 ```
-Every auto-repayment distributes as follows:
+Every auto-repayment distributes as follows (rates are APR on principal):
 
   Gross repayment from buyer USDC payment
         │
-        ├── Principal + MFI interest → LendingVault MFI pool (repaid)
-        ├── 4% protocol fee          → ProtocolFee.sol (this contract)
-        ├── 1–2% credit loss reserve → LendingVault reserve buffer
-        └── Net balance              → Farmer via Fonbnk
+        ├── Principal + MFI interest (10% APR) → LendingVault MFI pool (repaid)
+        ├── 4% APR protocol fee                → ProtocolFee.sol (this contract)
+        ├── 2% APR credit loss reserve         → LendingVault reserve buffer
+        └── Net balance                        → Farmer via Fonbnk
+  
+  Total cost to farmer: 10% + 4% + 2% = 16% APR
 ```
 
 ## Fee Allocation (Protocol Treasury)

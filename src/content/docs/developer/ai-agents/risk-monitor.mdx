@@ -84,7 +84,7 @@ on every cycle:
 ```json
 {
   "agent": "asilichain-risk-monitor",
-  "erc8004_agent_id": "0xAGENT_NFT_ID",
+  "erc8004_agent_id": 0,
   "timestamp": "2026-04-17T10:00:00Z",
   "coffee_price_usdc": 2.34,
   "active_loans": 47,
@@ -103,23 +103,10 @@ can confirm the agent used the correct price and LTV data.
 
 ## ERC-8004 Registration
 
-```typescript
-// Agent registration on Mantle mainnet
-const agentMetadata = {
-  type: "https://eips.ethereum.org/EIPS/eip-8004#registration-v1",
-  name: "AsiliChain LendingVault Risk Monitor",
-  description: "RWA Coordination Agent. Monitors BatchToken collateral positions against Chainlink coffee price feed. Recommends forbearance and liquidation when LTV thresholds are breached. Every decision recorded on Mantle.",
-  services: [
-    {
-      name: "MCP",
-      endpoint: "https://agents.asilichain.xyz/risk-monitor/mcp",
-      version: "2025-06-18"
-    }
-  ],
-  x402Support: false,
-  active: true
-};
-```
+Registered on **IdentityRegistry** (Mantle Sepolia):
+- Proxy: `0x62a6b58f8c3625F0c5f46D6C86A65595AA769C89`
+- Agent ID: **0**
+- Owner: deployer wallet
 
 ## Phase Deployment
 

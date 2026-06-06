@@ -101,24 +101,28 @@ not make them unilaterally. Autonomous execution of
 high-stakes actions is a Phase 3 capability, gated on
 an established on-chain track record.
 
-## Integration with ERC-8004 Registries
+## ERC-8004 Identity Registry (Deployed)
 
-AsiliChain agents interact with three registries
-deployed on Mantle mainnet:
+AsiliChain deployed its own ERC-8004-compliant
+IdentityRegistry on **Mantle Sepolia** (chain 5003):
 
-```typescript
-// ERC-8004 registry addresses on Mantle mainnet
-const ERC8004_IDENTITY_REGISTRY   = "0x...";  // confirm from Mantle docs
-const ERC8004_REPUTATION_REGISTRY = "0x...";  // confirm from Mantle docs
-const ERC8004_VALIDATION_REGISTRY = "0x...";  // confirm from Mantle docs
+```
+Proxy:       0x62a6b58f8c3625F0c5f46D6C86A65595AA769C89
+Implementation: 0x2E9D3EDf3406c4bd1a8f2CAE814c35D2294Fa02e
+Owner:       0xB70f03dE20c9D4c90246c830F81D44f377A652C0
 ```
 
-:::note[Registry addresses]
-Confirm current ERC-8004 registry contract addresses
-from the Mantle developer documentation before
-deployment. These were deployed on Mantle mainnet in
-February 2026 and may have been updated since.
-:::
+Registered agents:
+
+| Agent | Agent ID | Token Owner |
+|-------|----------|-------------|
+| risk-monitor | 0 | deployer |
+| anomaly-detector | 1 | deployer |
+
+Reputation and Validation Registries are not yet deployed.
+AsiliChain agents currently register on the Identity Registry
+only — reputation will be earned on-chain as agents execute
+cycles.
 
 ## Agent Technology Stack
 

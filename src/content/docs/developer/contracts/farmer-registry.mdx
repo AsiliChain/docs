@@ -3,42 +3,46 @@ title: FarmerRegistry.sol
 order: 1
 label: FarmerRegistry.sol
 badge:
-  text: Implemented
+  text: Sprint 3 Updated
   variant: success
 ---
 
-The first contract deployed. Stores verified farmer identities, MAAIF national IDs, GPS farm data references, and cooperative memberships. All other contracts depend on it.
+The first contract deployed. Stores verified farmer identities, Uganda NIN (National ID), phone numbers, MAAIF government IDs, GPS farm data references, and cooperative memberships. All other contracts depend on it.
 
 :::important Contract Status
-✅ Implemented — `FarmerRegistry.sol` is the first completed contract in
-the AsiliChain protocol. Compiles cleanly against OZ 5.6.1 on Solidity
-0.8.28. 63 tests passing (9 describe blocks). All other contracts in
-the Smart Contracts Index are specced but not yet written.
+✅ Implemented — UUPS upgradeable. Sprint 1 added `nationalId`, `farmerName`, `phoneNumber` fields and cooperative self-management of agents. Sprint 3 added **on-chain agent cap enforcement**: `max(3, ceil(totalFarmers/50))` enforced in `_grantRole` override.
 :::
 
 ## Responsibilities
 
-- Stores the canonical list of verified farmers
-- Links MAAIF national farmer IDs to cooperative wallet addresses
+- Stores the canonical list of verified farmers keyed by deterministic NIN-derived address
+- Links Uganda NIN to wallet address (one-to-one, enforced via `maaifToWallet` reverse lookup)
+- Stores farmer name and phone number required for Fonbnk MTN MoMo payouts
 - References GPS polygon IPFS CIDs (not raw coordinates on-chain)
-- Controls which cooperative agents can register farmers (`AGENT_ROLE`)
+- **Cooperatives self-manage agents** via `_setRoleAdmin(AGENT_ROLE, COOP_ROLE)` — no protocol admin bottleneck
+- **Agent cap enforced on-chain**: a cooperative can have at most `max(3, ceil(totalFarmers/50))` active agents. The `_grantRole` override reverts if the cap is exceeded. `_revokeRole` decrements the counter.
 - GFW deforestation check is recorded at registration
 
 ## Key Data Structure
 
 ```solidity
 struct Farmer {
-    string  maaifFarmerId;        // MAAIF National Traceability System ID
-    address cooperativeWallet;    // Cooperative wallet — or INDEPENDENT_AGGREGATOR
-    bytes32 farmBoundaryIpfsCid;  // IPFS CID of GeoJSON polygon (EUDR DDS)
-    uint256 farmAreaHectares;     // Farm area × 100 (e.g. 250 = 2.50 ha)
-    bool    gfwDeforestationFree; // Global Forest Watch check result (GFW)
-    bool    active;               // false = deactivated (soft delete)
+    // ─── Original fields ───
+    string  maaifFarmerId;          // MAAIF National Traceability System ID
+    address cooperativeWallet;      // Cooperative wallet — or INDEPENDENT_AGGREGATOR
+    bytes32 farmBoundaryIpfsCid;    // IPFS CID of GeoJSON polygon (EUDR DDS)
+    uint256 farmAreaHectares;       // Farm area × 100 (e.g. 250 = 2.50 ha)
+    bool    gfwDeforestationFree;   // Global Forest Watch check result
+    bool    active;                 // false = deactivated (soft delete)
     uint256 registrationTimestamp;
+    // ─── Sprint 1 fields (append only) ───
+    string  nationalId;             // Uganda NIN — primary on-chain identity
+    string  farmerName;             // Human-readable name (Fonbnk recipientName)
+    string  phoneNumber;            // MTN phone (+2567XXXXXXXX) — Fonbnk recipientPhone
 }
 
 mapping(address => Farmer) public farmers;        // wallet → Farmer
-mapping(string => address) public maaifToWallet;  // MAAIF ID → wallet (uniqueness guard)
+mapping(string => address) public maaifToWallet;  // MAAIF ID / NIN → wallet (uniqueness guard)
 address public INDEPENDENT_AGGREGATOR;            // Set post-deploy via setIndependentAggregator()
 ```
 
@@ -46,163 +50,103 @@ address public INDEPENDENT_AGGREGATOR;            // Set post-deploy via setInde
 
 ```solidity
 // Register a new farmer — AGENT_ROLE required
-// Pass INDEPENDENT_AGGREGATOR as cooperativeWallet for independent farmers
+// Wallet is derived deterministically from NIN (not passed by caller)
 function registerFarmer(
     address farmerWallet,
     string calldata maaifFarmerId,
     address cooperativeWallet,
     bytes32 farmBoundaryIpfsCid,
     uint256 farmAreaHectares,
-    bool gfwDeforestationFree
+    bool gfwDeforestationFree,
+    string calldata nationalId,          // NEW: Uganda NIN
+    string calldata farmerName,          // NEW: farmer display name
+    string calldata phoneNumber          // NEW: MTN phone for payouts
 ) external onlyRole(AGENT_ROLE);
 
 // Returns true if farmer is registered and active
 function isRegistered(address farmerWallet) external view returns (bool);
 
 // Returns full Farmer struct. Reverts only if never registered.
-// Readable for deactivated farmers — BatchToken and LendingVault need this.
 function getFarmer(address farmerWallet) external view returns (Farmer memory);
 
 // Returns true if farmer's cooperativeWallet == INDEPENDENT_AGGREGATOR.
-// Returns false if INDEPENDENT_AGGREGATOR has not been set yet.
-function isIndependent(address farmerWallet) public view returns (bool);
+function isIndependent(address farmerWallet) external view returns (bool);
 
-// Update GFW verification result — AGENT_ROLE required
-// Used when API layer runs a fresh GFW check (e.g. annually)
-function verifyFarmer(address farmerWallet, bool gfwDeforestationFree)
-    external onlyRole(AGENT_ROLE);
+// NEW: Returns the number of farmers registered under a cooperative wallet.
+// Used by API to enforce agent caps: max(3, ceil(farmerCount / 50))
+function getFarmerCount(address cooperativeWallet) external view returns (uint256);
 
-// Soft-delete a farmer. AGENT_ROLE or COOP_ROLE.
-// Phase 1: any holder of either role can deactivate any farmer.
-// Cooperative-scoped deactivation (own members only) is deferred to v2.
-// MAAIF ID reservation is preserved — re-registration of same ID is blocked.
+// Update GFW deforestation status — AGENT_ROLE
+function verifyFarmer(address farmerWallet, bool gfwDeforestationFree) external;
+
+// Deactivate a farmer — AGENT_ROLE or COOP_ROLE
 function deactivateFarmer(address farmerWallet) external;
 
-// Set or rotate the INDEPENDENT_AGGREGATOR address — DEFAULT_ADMIN_ROLE
-// Must be called before any independent farmer is registered.
-function setIndependentAggregator(address aggregator)
-    external onlyRole(DEFAULT_ADMIN_ROLE);
+// Set or update the INDEPENDENT_AGGREGATOR — DEFAULT_ADMIN_ROLE
+function setIndependentAggregator(address aggregator) external;
 
-// Migrate a single independent farmer to a named cooperative — DEFAULT_ADMIN_ROLE
-// Farmer must be active and currently independent.
-// newCooperativeWallet must be non-zero and != INDEPENDENT_AGGREGATOR.
-function migrateFarmer(address farmerWallet, address newCooperativeWallet)
-    external onlyRole(DEFAULT_ADMIN_ROLE);
+// Migrate an independent farmer to a named cooperative — DEFAULT_ADMIN_ROLE
+function migrateFarmer(address farmerWallet, address newCooperativeWallet) external;
 ```
 
-## Access Control Roles
-
-| Role | Granted to | Permissions |
-|---|---|---|
-| `DEFAULT_ADMIN_ROLE` | AsiliChain deployer multisig | Grant/revoke all roles; `setIndependentAggregator()`; `migrateFarmer()`; upgrade contract. See [Deployment Guide](/developer/deployment). |
-| `AGENT_ROLE` | Field agent wallets | `registerFarmer()`; `verifyFarmer()`; `deactivateFarmer()` |
-| `COOP_ROLE` | Cooperative wallet | `deactivateFarmer()` only. Phase 1: can deactivate any farmer. Cooperative-scoped deactivation deferred to v2. |
-
-
-
-## Independent Farmers
-
-Most Ugandan coffee farmers operate outside formal cooperatives.
-A 2020 IITA study across five districts found 55% selling to
-independent intermediaries; broader ILO research (2021) puts the
-unorganised majority at ~77% nationally. AsiliChain handles this
-through a protocol-managed **`INDEPENDENT_AGGREGATOR`** wallet — a
-multisig address set at deployment and stored as a public state variable.
-Full citations are in [References](/overview/references).
-
-When a field agent registers an independent farmer, they pass
-`INDEPENDENT_AGGREGATOR` as the `cooperativeWallet` argument.
-The farmer is registered identically to a cooperative-member farmer.
-BatchTokens, CreditScore, and EUDR DDS records are all created normally.
-Payout routes directly to the farmer's MTN MoMo via Fonbnk.
-
-### Governance
-
-| Property | Value |
-|---|---|
-| Controller | AsiliChain deployer multisig (`DEFAULT_ADMIN_ROLE`) |
-| Set at | Post-deploy — Step 8a in `deploy.ts` |
-| Updatable by | `DEFAULT_ADMIN_ROLE` only via `setIndependentAggregator()` |
-| Payout routing | Fonbnk routes to individual farmer MTN MoMo — the aggregator wallet is never a payment destination for farmer funds |
-| Fee routing | 0.5% protocol fee retained by treasury (not forwarded to a cooperative) |
-
-### Migration path
-
-A farmer who later joins a cooperative is migrated individually by
-`DEFAULT_ADMIN_ROLE` via `migrateFarmer(farmerWallet, newCooperativeWallet)`.
-This updates only that farmer's `cooperativeWallet` field and emits
-`FarmerMigrated` for audit trail. It does not affect any other farmer.
-
-:::caution Aggregator rotation
-If `INDEPENDENT_AGGREGATOR` is rotated to a new multisig address via
-`setIndependentAggregator()`, existing farmer records are NOT
-retroactively updated. `isIndependent()` reads each farmer's stored
-`cooperativeWallet`, not the current global value. Use `migrateFarmer()`
-to update individual records after a rotation. If all independent farmers
-must be migrated, batch the operation or handle it in an upgrade.
-See [Deployment Guide](/developer/deployment) for the operational warning.
-:::
-
-## Registration Flow
-
-```
-Field agent opens agent app (or MAAIF NTS API called)
-        ↓
-MAAIF NTS: returns farmerID + GPS polygon GeoJSON
-        ↓
-API: GFW check on farm polygon centroid
-        ↓
-API: pinGeoJSON(polygon) → Pinata → IPFS CID returned
-        ↓
-API: FarmerRegistry.registerFarmer(wallet, maaifId, ipfsCid, area, gfwStatus)
-        ↓
-HCS: REGISTERED event written
-```
-
-**Independent farmer path (same flow, one difference at step 5):**
-
-```
-Field agent opens agent app
-    ↓
-MAAIF NTS: returns farmerID + GPS polygon GeoJSON
-    ↓
-API: GFW check on farm polygon centroid
-    ↓
-API: pinGeoJSON(polygon) → Pinata → IPFS CID returned
-    ↓
-API: reads farmerRegistry.INDEPENDENT_AGGREGATOR()
-     passes it as cooperativeWallet argument
-    ↓
-API: FarmerRegistry.registerFarmer(wallet, maaifId,
-     INDEPENDENT_AGGREGATOR, ipfsCid, area, gfwStatus)
-    ↓
-BatchToken minted with cooperativeId = "INDEPENDENT"
-    ↓
-Payout routed directly to farmer MTN MoMo via Fonbnk
-ProtocolFee: 0.5% deducted, remainder to farmer
-```
-
-## Events
+## Role Management
 
 ```solidity
-event FarmerRegistered(
-    address indexed farmerWallet,
-    string maaifId,
-    address indexed cooperativeWallet
-);
-
-event FarmerVerified(
-    address indexed farmerWallet,
-    bool gfwDeforestationFree
-);
-
-event FarmerDeactivated(address indexed farmerWallet);
-
-event IndependentAggregatorSet(address indexed aggregator);
-
-event FarmerMigrated(
-    address indexed farmerWallet,
-    address indexed fromCooperative,
-    address indexed toCooperative
-);
+bytes32 public constant AGENT_ROLE = keccak256("AGENT_ROLE");
+bytes32 public constant COOP_ROLE  = keccak256("COOP_ROLE");
 ```
+
+**Sprint 1:** Cooperatives self-manage their agents:
+
+```solidity
+_setRoleAdmin(AGENT_ROLE, COOP_ROLE);
+```
+
+This means:
+- Protocol admin grants `COOP_ROLE` once (cooperative wallet)
+- Cooperative manager grants `AGENT_ROLE` to field agents directly
+- Cooperative manager revokes `AGENT_ROLE` when an agent leaves
+- No protocol admin involvement in day-to-day agent management
+
+**Sprint 3 — Agent cap enforcement:**
+
+The contract tracks `totalFarmers` and `agentCount` counters. The `_grantRole` and `_revokeRole` functions are overridden to enforce:
+
+```solidity
+function _computeMaxAgents() internal view returns (uint256) {
+    uint256 base = totalFarmers / 50; // 1 agent per 50 farmers
+    if (totalFarmers % 50 != 0) base += 1; // ceil division
+    return base < 3 ? 3 : base; // minimum 3 agents
+}
+```
+
+The cap applies globally (not per-cooperative). A cooperative cannot have more agents than `max(3, ceil(totalFarmers / 50))` regardless of how many farmers they manage.
+
+## Wallet Derivation
+
+Farmer wallet addresses are **not generated** — they are derived deterministically from NIN:
+
+```typescript
+function addressFromNin(nin: string): `0x${string}` {
+  const hash = keccak256(toBytes(`asilichain:${nin}`));
+  return `0x${hash.slice(26)}`;
+}
+```
+
+The farmer never signs transactions and does not need a private key. The address is purely an on-chain identifier. For future self-custody, `migrateFarmer()` reassigns to a farmer-controlled wallet.
+
+## INDEPENDENT_AGGREGATOR
+
+~55-77% of Uganda farmers operate outside formal cooperatives. These farmers are registered with `cooperativeWallet = INDEPENDENT_AGGREGATOR`, a protocol-managed multisig set post-deploy.
+
+- `isIndependent(farmerWallet)` — checks if farmer uses INDEPENDENT_AGGREGATOR
+- `migrateFarmer(farmerWallet, newCooperative)` — moves farmer to a cooperative
+- Independent farmer batches can have stages advanced by `AGENT_ROLE` (see TraceLog changes)
+
+## Access Control
+
+| Role | Default Holder | Can |
+|---|---|---|
+| `DEFAULT_ADMIN_ROLE` | AsiliChain deployer multisig | Grant/revoke all roles; `setIndependentAggregator()`; `migrateFarmer()`; upgrade contract |
+| `COOP_ROLE` | Cooperative wallet | Grant/revoke `AGENT_ROLE`; deactivate farmers |
+| `AGENT_ROLE` | Field agent wallets | Register farmers, verify GFW status, deactivate farmers |

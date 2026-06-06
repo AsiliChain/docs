@@ -4,7 +4,7 @@ order: 9
 label: Deployment Guide
 ---
 
-Contracts must be deployed in strict order. Each contract's constructor or initializer requires addresses from previously deployed contracts. Do not skip steps or deploy out of order.
+Contracts must be deployed in strict order. Each contract's initializer requires addresses from previously deployed contracts. Do not skip steps or deploy out of order.
 
 ## Pre-Deployment Checklist
 
@@ -13,7 +13,6 @@ Before running any deployment script:
 - [ ] `MANTLE_RPC_URL` set to `https://rpc.mantle.xyz`
 - [ ] `DEPLOYER_PRIVATE_KEY` loaded (deployer wallet, never commit)
 - [ ] Deployer wallet holds sufficient MNT for gas (~0.1 MNT is more than enough)
-- [ ] Hedera HCS topic created (`hedera-topic-create.ts` script run)
 - [ ] All environment variables in `.env` populated
 - [ ] Fonbnk sandbox test: deposit Celo USDC → disburse to Uganda MTN
 - [ ] `INDEPENDENT_AGGREGATOR_ADDRESS` set to AsiliChain multisig in `.env`
@@ -27,17 +26,26 @@ Always complete a full deployment and end-to-end test on Mantle Sepolia (chainId
 
 ```
 Step 1:  FarmerRegistry.sol       → no dependencies
-Step 2:  CreditScore.sol          → no dependencies
+Step 2:  CreditScore.sol          → requires FarmerRegistry address
 Step 3:  BatchToken.sol           → requires FarmerRegistry address
 Step 4:  TraceLog.sol             → requires BatchToken address
 Step 5:  PurchaseOrder.sol        → requires BatchToken + TraceLog addresses
 Step 6:  ProtocolFee.sol          → no dependencies
 Step 7:  LendingVault.sol         → requires all of the above
-Step 8:  Post-deploy: grant roles → VAULT_ROLE, AGENT_ROLE, COOP_ROLE, BUYER_ROLE
+Step 8:  Post-deploy: grant roles
+         ├── Grant VAULT_ROLE to LendingVault proxy
+         ├── Grant PURCHASE_ORDER_ROLE to PurchaseOrder proxy
+         ├── Grant COOP_ROLE to cooperative wallet(s)
+         └── Grant AGENT_ROLE is handled by COOP_ROLE holders via _setRoleAdmin
 Step 8a: Set INDEPENDENT_AGGREGATOR in FarmerRegistry
          → farmerRegistry.setIndependentAggregator(MULTISIG_ADDRESS)
          Must run before any independent farmer is registered.
          MULTISIG_ADDRESS = INDEPENDENT_AGGREGATOR_ADDRESS from .env
+Step 8b: IdentityRegistry.sol    → ERC-8004 agent identity (no dependencies)
+         Register AI agents via `registerFor()`: risk-monitor (id=0), anomaly-detector (id=1)
+Step 8c: Grant MULTISIG_ROLE on LendingVault to deployer (or multisig wallet)
+         → lendingVault.grantRole(MULTISIG_ROLE, address)
+         Used for `deployReserve()` — deploying credit loss reserve on defaults
 
 :::caution Rotating INDEPENDENT_AGGREGATOR post-launch
 If you ever call `setIndependentAggregator()` with a new address after
@@ -45,11 +53,29 @@ independent farmers have been registered, their existing records are **not**
 updated. `isIndependent()` reads each farmer's stored `cooperativeWallet`,
 not the current global value. You must call `migrateFarmer()` for each
 affected farmer individually, or batch the migration in an upgrade.
-Do this **before** rotating the multisig, not after.
 :::
+
 Step 9:  Post-deploy: set env     → copy all deployed addresses to .env
 Step 10: Verify contracts         → Mantle Explorer source verification
 ```
+
+## Sprint 1 Contract Changes
+
+### FarmerRegistry
+- Added `nationalId`, `farmerName`, `phoneNumber` to `Farmer` struct (append only — storage safe)
+- Added `_setRoleAdmin(AGENT_ROLE, COOP_ROLE)` — cooperatives self-manage agents
+- Added `getFarmerCount(address cooperativeWallet)` — API enforces agent cap
+- Updated `registerFarmer()` signature to accept new fields
+
+### BatchToken
+- Added `getFarmerWallet(uint256 tokenId)` — reads farmer address from batch storage
+- Extended `IBatchToken` interface
+
+### TraceLog
+- Added `farmerRegistry` address via `initializeV2()` reinitializer
+- Modified `_checkStageRole()` to accept `tokenId` parameter
+- Independent farmer batches: `AGENT_ROLE` can advance all stages
+- Cooperative farmer batches: unchanged (COOP_ROLE still required)
 
 ## Running the Deployment Script
 
@@ -63,143 +89,32 @@ npx hardhat run scripts/deploy.ts --network mantleSepolia
 npx hardhat run scripts/deploy.ts --network mantle
 ```
 
-## deploy.ts (core logic)
+## Sprint 3 — Deployed Addresses (Mantle Sepolia, 2026-06-06)
 
-```typescript
-import { ethers, upgrades } from 'hardhat';
-
-async function main() {
-  const [deployer] = await ethers.getSigners();
-  console.log('Deploying from:', deployer.address);
-
-  // Step 1: FarmerRegistry
-  const FarmerRegistry = await ethers.getContractFactory('FarmerRegistry');
-  const farmerRegistry = await upgrades.deployProxy(FarmerRegistry, [], {
-    initializer: 'initialize',
-  });
-  await farmerRegistry.waitForDeployment();
-  const farmerRegistryAddr = await farmerRegistry.getAddress();
-  console.log('FarmerRegistry:', farmerRegistryAddr);
-
-  // Step 2: CreditScore
-  const CreditScore = await ethers.getContractFactory('CreditScore');
-  const creditScore = await upgrades.deployProxy(CreditScore, [], {
-    initializer: 'initialize',
-  });
-  const creditScoreAddr = await creditScore.getAddress();
-  console.log('CreditScore:', creditScoreAddr);
-
-  // Step 3: BatchToken
-  const BatchToken = await ethers.getContractFactory('BatchToken');
-  const batchToken = await upgrades.deployProxy(
-    BatchToken,
-    [farmerRegistryAddr],
-    { initializer: 'initialize' }
-  );
-  const batchTokenAddr = await batchToken.getAddress();
-  console.log('BatchToken:', batchTokenAddr);
-
-  // Step 4: TraceLog
-  const TraceLog = await ethers.getContractFactory('TraceLog');
-  const traceLog = await upgrades.deployProxy(
-    TraceLog,
-    [batchTokenAddr],
-    { initializer: 'initialize' }
-  );
-  const traceLogAddr = await traceLog.getAddress();
-  console.log('TraceLog:', traceLogAddr);
-
-  // Step 5: PurchaseOrder
-  const PurchaseOrder = await ethers.getContractFactory('PurchaseOrder');
-  const purchaseOrder = await upgrades.deployProxy(
-    PurchaseOrder,
-    [batchTokenAddr, traceLogAddr],
-    { initializer: 'initialize' }
-  );
-  const purchaseOrderAddr = await purchaseOrder.getAddress();
-  console.log('PurchaseOrder:', purchaseOrderAddr);
-
-  // Step 6: ProtocolFee
-  const ProtocolFee = await ethers.getContractFactory('ProtocolFee');
-  const protocolFee = await upgrades.deployProxy(ProtocolFee, [], {
-    initializer: 'initialize',
-  });
-  const protocolFeeAddr = await protocolFee.getAddress();
-  console.log('ProtocolFee:', protocolFeeAddr);
-
-  // Step 7: LendingVault
-  const LendingVault = await ethers.getContractFactory('LendingVault');
-  const lendingVault = await upgrades.deployProxy(
-    LendingVault,
-    [
-      batchTokenAddr,
-      traceLogAddr,
-      creditScoreAddr,
-      purchaseOrderAddr,
-      protocolFeeAddr,
-    ],
-    { initializer: 'initialize' }
-  );
-  const lendingVaultAddr = await lendingVault.getAddress();
-  console.log('LendingVault:', lendingVaultAddr);
-
-  // Step 8: Grant roles
-  const VAULT_ROLE = ethers.id('VAULT_ROLE');
-  const AGENT_ROLE = ethers.id('AGENT_ROLE');
-
-  await batchToken.grantRole(VAULT_ROLE, lendingVaultAddr);
-  await creditScore.grantRole(VAULT_ROLE, lendingVaultAddr);
-  await traceLog.grantRole(VAULT_ROLE, lendingVaultAddr);
-
-  // Step 8a: Set INDEPENDENT_AGGREGATOR
-  // ⚠️ ROTATION WARNING: if this address ever changes post-launch,
-  // existing independent farmer records are NOT auto-updated.
-  // Call migrateFarmer() for each affected farmer before rotating.
-  const INDEPENDENT_AGGREGATOR = process.env.INDEPENDENT_AGGREGATOR_ADDRESS!;
-  if (!INDEPENDENT_AGGREGATOR)
-    throw new Error('INDEPENDENT_AGGREGATOR_ADDRESS not set in .env');
-  await farmerRegistry.setIndependentAggregator(INDEPENDENT_AGGREGATOR);
-  console.log('INDEPENDENT_AGGREGATOR set to:', INDEPENDENT_AGGREGATOR);
-
-  console.log('\n=== DEPLOYMENT COMPLETE — copy to .env ===');
-  console.log(`FARMER_REGISTRY_ADDRESS=${farmerRegistryAddr}`);
-  console.log(`CREDIT_SCORE_ADDRESS=${creditScoreAddr}`);
-  console.log(`BATCH_TOKEN_ADDRESS=${batchTokenAddr}`);
-  console.log(`TRACE_LOG_ADDRESS=${traceLogAddr}`);
-  console.log(`PURCHASE_ORDER_ADDRESS=${purchaseOrderAddr}`);
-  console.log(`PROTOCOL_FEE_ADDRESS=${protocolFeeAddr}`);
-  console.log(`LENDING_VAULT_ADDRESS=${lendingVaultAddr}`);
-  console.log(`INDEPENDENT_AGGREGATOR_ADDRESS=${INDEPENDENT_AGGREGATOR}`);
-}
-
-main().catch(console.error);
+```
+FarmerRegistry     0xa2F5Bb2Aa25deC5c7F8e1fE9455E725F6CBb15F1
+CreditScore        0xd8b18B874F58C7adef805f5Efb02433febc41Ad2
+BatchToken         0x9e5B886b4dB39b8C86a75Ae139d28376EF32694c
+TraceLog           0x99280b9B1D7c07B144b32DBa192a89781d6c872D
+PurchaseOrder      0xea62E8dFA98eF3E2eBD1f6dcBC839302984a3eDA
+ProtocolFee        0x687D03c79125eD82E19CcBA377FaA8f49b47d971
+IdentityRegistry   0xA31AE6917C1C9A746d71b0475Ca211F44D2135F4
+LendingVault       0x069b761A76778e5f4bb39B130e304F3183F8b858
+USDC (Mock)        0x987758676f7c2219754039AF65FCBB218b707BD4
 ```
 
-## Hardhat Network Config
+### LendingVault Upgrades (In-Place UUPS)
 
-```typescript
-// hardhat.config.ts
-networks: {
-  mantle: {
-    url: process.env.MANTLE_RPC_URL || 'https://rpc.mantle.xyz',
-    accounts: [process.env.DEPLOYER_PRIVATE_KEY!],
-    chainId: 5000,
-  },
-  mantleSepolia: {
-    url: 'https://rpc.sepolia.mantle.xyz',
-    accounts: [process.env.DEPLOYER_PRIVATE_KEY!],
-    chainId: 5003,
-  },
-}
-```
+| Version | What Changed | New Impl Address |
+|---|---|---|
+| v3 | Credit loss reserve (2%), `deployReserve()`, `MULTISIG_ROLE` | `0xb6E50B3d00FbB45b6ebDD292aEB0755FCc28aB94` |
+| v4 | APR-based fees (was flat % of totalDue, now APR on principal) | `0x3BF681FDa168Dc28B81E3E38a87b33295A443cA7` |
 
-## Post-Deployment Verification
+Proxy remains at `0x069b761A76778e5f4bb39B130e304F3183F8b858` through both upgrades.
 
-```bash
-# Verify on Mantle Explorer
-npx hardhat verify --network mantle FARMER_REGISTRY_ADDRESS
-npx hardhat verify --network mantle BATCH_TOKEN_ADDRESS FARMER_REGISTRY_ADDRESS
-# ... repeat for all contracts with their constructor args
-```
+### Deployed AI Agents
 
-After verification, contract source is public on https://explorer.mantle.xyz — readable by MFI due diligence teams and EU auditors without needing to contact AsiliChain.
+| Agent | IdentityRegistry Token ID | Owner |
+|---|---|---|
+| Risk Monitor | 0 | Deployer (`0xB70f...`) |
+| Anomaly Detector | 1 | Deployer (`0xB70f...`) |
