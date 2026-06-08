@@ -15,7 +15,7 @@ concurrency:
   cancel-in-progress: false
 
 jobs:
-  deploy-redirect:
+  deploy:
     runs-on: ubuntu-latest
     environment:
       name: github-pages
@@ -55,13 +55,6 @@ REDIRECT
         with:
           path: ./dist
 
-  deploy:
-    needs: deploy-redirect
-    runs-on: ubuntu-latest
-    environment:
-      name: github-pages
-      url: https://asilichain.github.io/docs/
-    steps:
       - name: Deploy to GitHub Pages
         id: deployment
         uses: actions/deploy-pages@v4
