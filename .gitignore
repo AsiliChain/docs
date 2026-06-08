@@ -25,3 +25,4 @@ fix_*.pymemory-bank/
 
 .opencode/
 .sisyphus/
+.vercel

@@ -15,35 +15,52 @@ concurrency:
   cancel-in-progress: false
 
 jobs:
-  build:
+  deploy-redirect:
     runs-on: ubuntu-latest
+    environment:
+      name: github-pages
+      url: https://asilichain.github.io/docs/
     steps:
-      - name: Checkout
-        uses: actions/checkout@v4
-      
-      - name: Setup Node
-        uses: actions/setup-node@v4
-        with:
-          node-version: "22"
-          cache: npm
-      
-      - name: Install dependencies
-        run: npm ci
-      
-      - name: Build
-        run: npm run build
-      
+      - name: Create redirect pages
+        run: |
+          mkdir -p dist
+          cat > dist/index.html << 'REDIRECT'
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta http-equiv="refresh" content="0; url=https://docs.asilichain.xyz/">
+  <title>AsiliChain Docs — Moved</title>
+  <script>
+    (function() {
+      var path = window.location.pathname;
+      var newPath = path.replace(/^\/docs/, '') || '/';
+      window.location.replace('https://docs.asilichain.xyz' + newPath);
+    })();
+  </script>
+  <style>
+    body { font-family: system-ui, sans-serif; display: flex; justify-content: center; align-items: center; min-height: 100vh; margin: 0; background: #1a1a1a; color: #e0e0e0; }
+    a { color: #c8922a; }
+  </style>
+</head>
+<body>
+  <p>AsiliChain Docs have moved to <a href="https://docs.asilichain.xyz/">docs.asilichain.xyz</a>.</p>
+</body>
+</html>
+REDIRECT
+          cp dist/index.html dist/404.html
+
       - name: Upload artifact
         uses: actions/upload-pages-artifact@v3
         with:
           path: ./dist
 
   deploy:
-    needs: build
+    needs: deploy-redirect
     runs-on: ubuntu-latest
     environment:
       name: github-pages
-      url: ${{ steps.deployment.outputs.page_url }}
+      url: https://asilichain.github.io/docs/
     steps:
       - name: Deploy to GitHub Pages
         id: deployment
