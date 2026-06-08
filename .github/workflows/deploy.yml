@@ -1,57 +1,26 @@
 name: Deploy Docs
-
 on:
   push:
     branches: [main]
   workflow_dispatch:
-
 permissions:
   contents: read
   pages: write
   id-token: write
-
 concurrency:
-  group: "pages"
+  group: pages
   cancel-in-progress: false
-
 jobs:
   build:
     runs-on: ubuntu-latest
     steps:
-      - name: Create redirect pages
-        run: |
-          mkdir -p dist
-          cat > dist/index.html << 'REDIRECT'
-<!DOCTYPE html>
-<html lang="en">
-<head>
-  <meta charset="utf-8">
-  <meta http-equiv="refresh" content="0; url=https://docs.asilichain.xyz/">
-  <title>AsiliChain Docs — Moved</title>
-  <script>
-    (function() {
-      var path = window.location.pathname;
-      var newPath = path.replace(/^\/docs/, '') || '/';
-      window.location.replace('https://docs.asilichain.xyz' + newPath);
-    })();
-  </script>
-  <style>
-    body { font-family: system-ui, sans-serif; display: flex; justify-content: center; align-items: center; min-height: 100vh; margin: 0; background: #1a1a1a; color: #e0e0e0; }
-    a { color: #c8922a; }
-  </style>
-</head>
-<body>
-  <p>AsiliChain Docs have moved to <a href="https://docs.asilichain.xyz/">docs.asilichain.xyz</a>.</p>
-</body>
-</html>
-REDIRECT
-          cp dist/index.html dist/404.html
-
+      - run: mkdir -p dist
+      - run: echo '<!DOCTYPE html><html lang="en"><head><meta charset="utf-8"><meta http-equiv="refresh" content="0;url=https://docs.asilichain.xyz/"><script>(function(){var p=window.location.pathname;window.location.replace("https://docs.asilichain.xyz"+(p.replace(/^\/docs/,"")||"/"));})();</script><style>body{font-family:system-ui,sans-serif;display:flex;justify-content:center;align-items:center;min-height:100vh;margin:0;background:#1a1a1a;color:#e0e0e0}a{color:#c8922a}</style></head><body><p>AsiliChain Docs moved to <a href="https://docs.asilichain.xyz/">docs.asilichain.xyz</a>.</p></body></html>' > dist/index.html
+      - run: cp dist/index.html dist/404.html
       - name: Upload artifact
         uses: actions/upload-pages-artifact@v3
         with:
           path: ./dist
-
   deploy:
     needs: build
     runs-on: ubuntu-latest
