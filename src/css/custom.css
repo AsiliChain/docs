@@ -112,7 +112,30 @@ header.header {
 
 /* 5. CONTENT */
 .sl-markdown-content {
-  max-width: 740px;
+  max-width: none;
+}
+
+/* Let figures and images expand to full content width */
+.sl-markdown-content figure {
+  max-width: 100%;
+  margin-inline: 0;
+}
+
+.sl-markdown-content figure img {
+  width: 100%;
+  height: auto;
+}
+
+/* Shrink right sidebar so diagrams get more space */
+.right-sidebar-panel {
+  width: 200px;
+  min-width: 180px;
+}
+
+@media (min-width: 72rem) {
+  .right-sidebar-panel {
+    max-width: 200px;
+  }
 }
 
 /* Headings */
