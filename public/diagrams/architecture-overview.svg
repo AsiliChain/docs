@@ -92,10 +92,11 @@
 
   <!-- Vertical dashed separator for layers -->
   <line x1="940" y1="48" x2="940" y2="530" stroke="#bbb" stroke-width="0.5"/>
-  <text x="935" y="540" text-anchor="end" class="small-label" fill="#888">Layer 1</text>
-  <text x="935" y="200" text-anchor="end" class="small-label" fill="#888">Layer 2</text>
-  <text x="935" y="290" text-anchor="end" class="small-label" fill="#888">Application</text>
-  <text x="935" y="420" text-anchor="end" class="small-label" fill="#888">Identity &amp; Audit</text>
+  <text x="935" y="78" text-anchor="end" class="small-label" fill="#888">Layer 1</text>
+  <text x="935" y="162" text-anchor="end" class="small-label" fill="#888">Layer 2</text>
+  <text x="935" y="251" text-anchor="end" class="small-label" fill="#888">Application</text>
+  <text x="935" y="375" text-anchor="end" class="small-label" fill="#888">Audit</text>
+  <text x="935" y="465" text-anchor="end" class="small-label" fill="#888">Identity</text>
 
   <!-- Layer brackets -->
   <line x1="30" y1="48" x2="30" y2="100" stroke="#aaa" stroke-width="0.5"/>

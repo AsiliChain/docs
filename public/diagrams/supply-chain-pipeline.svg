@@ -137,8 +137,8 @@
   <text x="830" y="380" text-anchor="middle" class="footnote">90d</text>
 
   <!-- HCS audit badge -->
-  <rect x="610" y="95" width="180" height="18" rx="3" stroke="#000" stroke-width="0.5" fill="none" stroke-dasharray="2 2"/>
-  <text x="700" y="107" text-anchor="middle" class="footnote">Each stage recorded on Hedera HCS</text>
+  <rect x="610" y="298" width="180" height="18" rx="3" stroke="#000" stroke-width="0.5" fill="none" stroke-dasharray="2 2"/>
+  <text x="700" y="310" text-anchor="middle" class="footnote">Each stage recorded on Hedera HCS</text>
 
   <defs>
     <marker id="arrow" markerWidth="8" markerHeight="6" refX="8" refY="3" orient="auto">
