@@ -1,4 +1,4 @@
-<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 900 580" fill="none">
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 960 580" fill="none">
   <style>
     text { font-family: 'Inter', system-ui, sans-serif; fill: #000; }
     .title { font-size: 13px; font-weight: 700; letter-spacing: 0.08em; text-transform: uppercase; }
@@ -91,11 +91,11 @@
   <text x="450" y="471" text-anchor="middle" class="subtitle" fill="#555">ERC-8004 Agent NFT Identity</text>
 
   <!-- Vertical dashed separator for layers -->
-  <line x1="900" y1="48" x2="900" y2="530" stroke="#bbb" stroke-width="0.5"/>
-  <text x="895" y="540" text-anchor="end" class="small-label" fill="#888">Layer 1</text>
-  <text x="895" y="200" text-anchor="end" class="small-label" fill="#888">Layer 2</text>
-  <text x="895" y="290" text-anchor="end" class="small-label" fill="#888">Application</text>
-  <text x="895" y="420" text-anchor="end" class="small-label" fill="#888">Identity &amp; Audit</text>
+  <line x1="940" y1="48" x2="940" y2="530" stroke="#bbb" stroke-width="0.5"/>
+  <text x="935" y="540" text-anchor="end" class="small-label" fill="#888">Layer 1</text>
+  <text x="935" y="200" text-anchor="end" class="small-label" fill="#888">Layer 2</text>
+  <text x="935" y="290" text-anchor="end" class="small-label" fill="#888">Application</text>
+  <text x="935" y="420" text-anchor="end" class="small-label" fill="#888">Identity &amp; Audit</text>
 
   <!-- Layer brackets -->
   <line x1="30" y1="48" x2="30" y2="100" stroke="#aaa" stroke-width="0.5"/>
