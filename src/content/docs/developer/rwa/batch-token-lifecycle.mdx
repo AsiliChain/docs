@@ -8,32 +8,10 @@ Every BatchToken follows a defined lifecycle from mint to burn. Understanding th
 
 ## Full Lifecycle Diagram
 
-```mermaid
-stateDiagram-v2
-    [*] --> DELIVERED : BatchToken.mintBatch()
-Field agent submits delivery
-    DELIVERED --> GRADED : TraceLog.updateStage(GRADED)
-Quality officer signs off
-    GRADED --> MILLED : TraceLog.updateStage(MILLED)
-Mill operator confirms
-    MILLED --> WAREHOUSED : TraceLog.updateStage(WAREHOUSED)
-Warehouse manager confirms
-UWRSA receipt issued
-    WAREHOUSED --> COMMITTED : PurchaseOrder.confirmPurchaseOrder()
-Buyer PO confirmed
-Auto-advances TraceLog
-    COMMITTED --> EXPORTED : TraceLog.updateStage(EXPORTED)
-UCDA export confirmed
-⚡ Triggers LendingVault.onExported()
-    EXPORTED --> SETTLED : LendingVault.onExported()
-Auto-executes:
-- Repay MFI pool
-- Collect protocol fee
-- Update CreditScore
-- Emit NetDisbursementReady
-    SETTLED --> [*] : BatchToken.burnSettled()
-Token destroyed
-```
+<figure>
+  <img src="/diagrams/supply-chain-pipeline.svg" alt="Coffee supply chain pipeline: 8 stages from farm delivery to funds distribution, with collateral loan originating at warehousing stage." />
+  <figcaption>Full BatchToken lifecycle — eight custody stages from farm to settlement</figcaption>
+</figure>
 
 ## Collateral State at Each Stage
 

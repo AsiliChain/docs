@@ -1,0 +1,148 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 960 420" fill="none">
+  <style>
+    text { font-family: 'Inter', 'SF Mono', system-ui, sans-serif; fill: #000; }
+    .title { font-size: 13px; font-weight: 700; letter-spacing: 0.08em; text-transform: uppercase; }
+    .stage-num { font-size: 14px; font-weight: 800; }
+    .stage-name { font-size: 9px; font-weight: 700; text-transform: uppercase; letter-spacing: 0.06em; }
+    .stage-desc { font-size: 7px; fill: #555; }
+    .detail-label { font-size: 7.5px; fill: #333; }
+    .arrow-label { font-size: 7px; font-weight: 500; fill: #444; }
+    .footnote { font-size: 7.5px; fill: #666; }
+  </style>
+
+  <!-- Title -->
+  <text x="480" y="28" text-anchor="middle" class="title" fill="#000">Coffee Supply Chain — Eight-Stage Traceability Pipeline</text>
+
+  <!-- Stages 1-4 row -->
+  <!-- Stage 1: DELIVERED -->
+  <rect x="20" y="60" width="105" height="70" rx="6" stroke="#000" stroke-width="1.5" fill="#fff"/>
+  <text x="72" y="83" text-anchor="middle" class="stage-num" fill="#000">01</text>
+  <text x="72" y="98" text-anchor="middle" class="stage-name" fill="#000">DELIVERED</text>
+  <text x="72" y="112" text-anchor="middle" class="stage-desc">Farmer brings cherry</text>
+  <text x="72" y="122" text-anchor="middle" class="stage-desc">to cooperative</text>
+
+  <line x1="125" y1="95" x2="155" y2="95" stroke="#000" stroke-width="1.2" marker-end="url(#arrow)"/>
+
+  <!-- Stage 2: GRADED -->
+  <rect x="158" y="60" width="105" height="70" rx="6" stroke="#000" stroke-width="1.5" fill="#fff"/>
+  <text x="210" y="83" text-anchor="middle" class="stage-num" fill="#000">02</text>
+  <text x="210" y="98" text-anchor="middle" class="stage-name" fill="#000">GRADED</text>
+  <text x="210" y="112" text-anchor="middle" class="stage-desc">Screen 18/15, PB,</text>
+  <text x="210" y="122" text-anchor="middle" class="stage-desc">FAQ assigned</text>
+
+  <line x1="263" y1="95" x2="293" y2="95" stroke="#000" stroke-width="1.2" marker-end="url(#arrow)"/>
+
+  <!-- Stage 3: MILLED -->
+  <rect x="296" y="60" width="105" height="70" rx="6" stroke="#000" stroke-width="1.5" fill="#fff"/>
+  <text x="348" y="83" text-anchor="middle" class="stage-num" fill="#000">03</text>
+  <text x="348" y="98" text-anchor="middle" class="stage-name" fill="#000">MILLED</text>
+  <text x="348" y="112" text-anchor="middle" class="stage-desc">Hulled, polished,</text>
+  <text x="348" y="122" text-anchor="middle" class="stage-desc">graded for export</text>
+
+  <line x1="401" y1="95" x2="431" y2="95" stroke="#000" stroke-width="1.2" marker-end="url(#arrow)"/>
+
+  <!-- Stage 4: WAREHOUSED -->
+  <rect x="434" y="60" width="105" height="70" rx="6" stroke="#000" stroke-width="1.5" fill="#fff"/>
+  <text x="486" y="83" text-anchor="middle" class="stage-num" fill="#000">04</text>
+  <text x="486" y="98" text-anchor="middle" class="stage-name" fill="#000">WAREHOUSED</text>
+  <text x="486" y="112" text-anchor="middle" class="stage-desc">Stored in bonded</text>
+  <text x="486" y="122" text-anchor="middle" class="stage-desc">warehouse, PO ready</text>
+
+  <!-- Arrow down to row 2 -->
+  <line x1="486" y1="130" x2="486" y2="170" stroke="#000" stroke-width="1.2" marker-end="url(#arrow)"/>
+  <text x="496" y="154" class="arrow-label" fill="#444">Loan originates</text>
+
+  <!-- Loan checkpoint -->
+  <rect x="434" y="173" width="105" height="36" rx="6" stroke="#000" stroke-width="1" fill="#fff" stroke-dasharray="3 2"/>
+  <text x="486" y="190" text-anchor="middle" class="detail-label">COLLATERAL LOAN</text>
+  <text x="486" y="201" text-anchor="middle" class="detail-label">LTV assessed</text>
+
+  <line x1="486" y1="209" x2="486" y2="235" stroke="#000" stroke-width="1.2" marker-end="url(#arrow)"/>
+
+  <!-- Stages 5-8 row -->
+  <!-- Stage 5: COMMITTED -->
+  <rect x="20" y="238" width="105" height="70" rx="6" stroke="#000" stroke-width="1.5" fill="#fff"/>
+  <text x="72" y="261" text-anchor="middle" class="stage-num" fill="#000">05</text>
+  <text x="72" y="276" text-anchor="middle" class="stage-name" fill="#000">COMMITTED</text>
+  <text x="72" y="290" text-anchor="middle" class="stage-desc">PO issued, buyer</text>
+  <text x="72" y="300" text-anchor="middle" class="stage-desc">commits to purchase</text>
+
+  <line x1="125" y1="273" x2="155" y2="273" stroke="#000" stroke-width="1.2" marker-end="url(#arrow)"/>
+
+  <!-- Stage 6: EXPORTED -->
+  <rect x="158" y="238" width="105" height="70" rx="6" stroke="#000" stroke-width="1.5" fill="#fff"/>
+  <text x="210" y="261" text-anchor="middle" class="stage-num" fill="#000">06</text>
+  <text x="210" y="276" text-anchor="middle" class="stage-name" fill="#000">EXPORTED</text>
+  <text x="210" y="290" text-anchor="middle" class="stage-desc">Coffee ships from</text>
+  <text x="210" y="300" text-anchor="middle" class="stage-desc">Mombasa to buyer</text>
+
+  <line x1="263" y1="273" x2="293" y2="273" stroke="#000" stroke-width="1.2" marker-end="url(#arrow)"/>
+
+  <!-- Stage 7: SETTLED -->
+  <rect x="296" y="238" width="105" height="70" rx="6" stroke="#000" stroke-width="1.5" fill="#fff"/>
+  <text x="348" y="261" text-anchor="middle" class="stage-num" fill="#000">07</text>
+  <text x="348" y="276" text-anchor="middle" class="stage-name" fill="#000">SETTLED</text>
+  <text x="348" y="290" text-anchor="middle" class="stage-desc">Buyer pays USDC,</text>
+  <text x="348" y="300" text-anchor="middle" class="stage-desc">loan repaid</text>
+
+  <line x1="401" y1="273" x2="431" y2="273" stroke="#000" stroke-width="1.2" marker-end="url(#arrow)"/>
+
+  <!-- Stage 8: FUNDS DISTRIBUTED -->
+  <rect x="434" y="238" width="125" height="70" rx="6" stroke="#000" stroke-width="1.5" fill="#fff"/>
+  <text x="496" y="261" text-anchor="middle" class="stage-num" fill="#000">08</text>
+  <text x="496" y="276" text-anchor="middle" class="stage-name" fill="#000">FUNDS DISTRIBUTED</text>
+  <text x="496" y="290" text-anchor="middle" class="stage-desc">Protocol fee withheld</text>
+  <text x="496" y="300" text-anchor="middle" class="stage-desc">Reserve withheld · Farmer paid</text>
+
+  <!-- Side annotations -->
+  <!-- FARMER section -->
+  <rect x="10" y="45" width="560" height="20" rx="3" stroke="#aaa" stroke-width="0.5" fill="none"/>
+  <text x="14" y="58" class="footnote">FARMER → COOPERATIVE</text>
+
+  <!-- BUYER section -->
+  <rect x="10" y="225" width="560" height="20" rx="3" stroke="#aaa" stroke-width="0.5" fill="none"/>
+  <text x="14" y="238" class="footnote">BUYER → EXPORT → SETTLEMENT</text>
+
+  <!-- Right side: key annotations -->
+  <line x1="590" y1="60" x2="590" y2="320" stroke="#ddd" stroke-width="0.5"/>
+  <text x="600" y="80" class="detail-label">Key milestones</text>
+
+  <circle cx="600" cy="105" r="3" fill="#000"/>
+  <text x="610" y="108" class="footnote">Grade &amp; weight assigned</text>
+
+  <circle cx="600" cy="140" r="3" fill="#000"/>
+  <text x="610" y="143" class="footnote">EUDR compliance check</text>
+
+  <circle cx="600" cy="175" r="3" fill="#000"/>
+  <text x="610" y="178" class="footnote">Collateral loan originates</text>
+
+  <circle cx="600" cy="210" r="3" fill="#000"/>
+  <text x="610" y="213" class="footnote">Purchase order issued</text>
+
+  <circle cx="600" cy="245" r="3" fill="#000"/>
+  <text x="610" y="248" class="footnote">Buyer payment → USDC</text>
+
+  <circle cx="600" cy="280" r="3" fill="#000"/>
+  <text x="610" y="283" class="footnote">4% protocol fee + 2% reserve</text>
+
+  <!-- Temperature / time gauge -->
+  <rect x="600" y="330" width="280" height="60" rx="6" stroke="#000" stroke-width="1" fill="#fff"/>
+  <text x="740" y="350" text-anchor="middle" class="detail-label">TYPICAL TIMELINE: 90–120 DAYS</text>
+  <line x1="610" y1="365" x2="870" y2="365" stroke="#000" stroke-width="0.8"/>
+  <line x1="650" y1="360" x2="650" y2="370" stroke="#000" stroke-width="0.5"/>
+  <line x1="740" y1="360" x2="740" y2="370" stroke="#000" stroke-width="0.5"/>
+  <line x1="830" y1="360" x2="830" y2="370" stroke="#000" stroke-width="0.5"/>
+  <text x="650" y="380" text-anchor="middle" class="footnote">30d</text>
+  <text x="740" y="380" text-anchor="middle" class="footnote">60d</text>
+  <text x="830" y="380" text-anchor="middle" class="footnote">90d</text>
+
+  <!-- HCS audit badge -->
+  <rect x="610" y="95" width="180" height="18" rx="3" stroke="#000" stroke-width="0.5" fill="none" stroke-dasharray="2 2"/>
+  <text x="700" y="107" text-anchor="middle" class="footnote">Each stage recorded on Hedera HCS</text>
+
+  <defs>
+    <marker id="arrow" markerWidth="8" markerHeight="6" refX="8" refY="3" orient="auto">
+      <path d="M0,0 L8,3 L0,6 Z" fill="#000"/>
+    </marker>
+  </defs>
+</svg>

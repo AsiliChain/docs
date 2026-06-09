@@ -9,8 +9,8 @@ export default defineConfig({
   trailingSlash: 'never',
   integrations: [
     mermaid({
-      theme: 'default',
-      autoTheme: true,
+      theme: 'base',
+      autoTheme: false,
     }),
     starlight({
       title: 'AsiliChain',

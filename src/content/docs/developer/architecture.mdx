@@ -4,29 +4,10 @@ order: 1
 label: Architecture Overview
 ---
 
-```mermaid
-graph TD
-    L1["🔷 Ethereum Mainnet
-Proof-of-Stake · ultimate settlement"]
-    L2["🔵 Mantle Network — ZK Rollup
-OP Succinct/SP1 · 1-hr finality · type-1 zkEVM"]
-    AC["⚡ AsiliChain Contracts
-All 7 contracts on Mantle"]
-    FB["📱 Fonbnk — Farmer payouts
-Merchant balance · USDC → MTN MoMo"]
-    TF["🏦 TransFi — MFI deposits
-Bank wire → USDC → LendingVault"]
-    HCS["📋 Hedera HCS — Audit layer
-IBM · Google · FedEx · Boeing governance"]
-    MAAIF["🏛️ MAAIF NTS — Government data
-GPS + Farmer IDs"]
-    L1 -->|"ZK proofs verified"| L2
-    L2 --> AC
-    AC -->|"Farmer payout trigger"| FB
-    TF -->|"USDC deposit"| AC
-    AC -.->|"Every stage event"| HCS
-    MAAIF -->|"Primary data path"| AC
-```
+<figure>
+  <img src="/diagrams/architecture-overview.svg" alt="AsiliChain architecture diagram: Ethereum mainnet verified by Mantle ZK rollup, housing 7 smart contracts, connected to Fonbnk for farmer payouts, TransFi for MFI deposits, Hedera HCS for audit logging, and MAAIF NTS for government data." />
+  <figcaption>Protocol architecture — all contracts deployed on Mantle Network with off-chain integrations</figcaption>
+</figure>
 
 ## Single-Chain Design Rationale
 

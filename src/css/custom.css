@@ -346,3 +346,32 @@ header.header {
 .sl-markdown-content th {
   min-width: 120px;
 }
+
+/* ─── Mermaid Brand Theme ─── */
+.mermaid svg {
+  max-width: 100%;
+  height: auto;
+}
+
+.mermaid .label {
+  font-family: 'Inter', system-ui, sans-serif;
+  font-weight: 500;
+}
+
+:root .mermaid {
+  --mermaid-font-family: 'Inter', system-ui, sans-serif;
+  --mermaid-border-color: #7a3b10;
+  --mermaid-edge-color: #7a3b10;
+  --mermaid-main-bg: #ffffff;
+  --mermaid-node-bg: #fdf6f0;
+  --mermaid-node-border: #7a3b10;
+  --mermaid-text-color: #1a0f07;
+}
+
+:root[data-theme='dark'] .mermaid {
+  --mermaid-main-bg: #1c0f07;
+  --mermaid-node-bg: #2e1a0f;
+  --mermaid-node-border: #c47a3a;
+  --mermaid-edge-color: #c47a3a;
+  --mermaid-text-color: #f0e8e0;
+}
