@@ -15,11 +15,11 @@ export default defineConfig({
     starlight({
       title: 'AsiliChain',
       logo: {
-        src: './public/asilichain_logo.png',
+        src: './public/asilichain-symbol.svg',
         alt: 'AsiliChain',
         replacesTitle: false,
       },
-      favicon: '/favicon.png',
+      favicon: '/favicon.svg',
       description: 'Traceability, collateral finance, and EUDR compliance for Africa\'s coffee farmers.',
       components: {
         Header: './src/components/Header.astro',
