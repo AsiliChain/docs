@@ -14,26 +14,10 @@ AsiliChain activates Uganda's government coffee farmer data financially, turning
 
 ## The Core Loop
 
-```mermaid
-sequenceDiagram
-    participant F as 👨‍🌾 Farmer
-    participant USSD as *384# USSD
-    participant API as AsiliChain API
-    participant MAAIF as MAAIF NTS
-    participant M as Mantle (Contracts)
-    participant H as Hedera HCS
-    participant FB as Fonbnk
-    participant MTN as MTN MoMo
-    F->>USSD: Dials *384#, selects "Deliver coffee"
-    USSD->>API: Session data + farmer ID
-    API->>MAAIF: Verify farmer ID + GPS
-    MAAIF-->>API: Farmer confirmed, farm GPS returned
-    API->>M: BatchToken.mint(farmerID, weight, grade, GPS)
-    M-->>H: Stage event logged (DELIVERED)
-    API->>FB: POST /fonbnk/v2/order (amount_usdc, phone)
-    FB-->>MTN: Merchant balance → UGX → MoMo credit
-    MTN-->>F: Payment notification (< 60 seconds)
-```
+<figure>
+  <img src="/diagrams/core-loop.svg" alt="AsiliChain core loop: 4-step process from farmer registration to export payout, connected flow with brand-colored circles" />
+  <figcaption>The Core Loop — from farm registration to mobile money payout in four steps</figcaption>
+</figure>
 
 ## Four Outputs for Every Farmer
 
